@@ -88,6 +88,8 @@ func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo
 	_roleController.NewRoleHandler(
 		router,
 		roleService,
+		middlewarePageRequest,
+		middlewareAuth,
 	)
 
 	// Auth
