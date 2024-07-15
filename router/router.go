@@ -17,9 +17,7 @@ import (
 	_roleController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/role/delivery/http"
 	_roleRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/role/repository"
 	_roleService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/role/usecase"
-	_shipyardController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/shipyard/delivery/http"
-	_shipyardRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/shipyard/repository"
-	_shipyardService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/shipyard/usecase"
+
 	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
 	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils/services"
 
@@ -28,29 +26,10 @@ import (
 	_authService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/auth/usecase"
 
 	authmiddleware "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helpers/middleware"
-	_classController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/class/delivery/http"
-	_classRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/class/repository"
-	_classService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/class/usecase"
 
 	_categoryController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/category/delivery/http"
 	_categoryRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/category/repository"
 	_categoryService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/category/usecase"
-
-	_cobsubcobController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/cob-subcob/delivery/http"
-	_cobsubcobRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/cob-subcob/repository"
-	_cobsubcobService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/cob-subcob/usecase"
-
-	_carriageController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/carriage/delivery/http"
-	_carriageRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/carriage/repository"
-	_carriageService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/carriage/usecase"
-
-	_conveyanceController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/conveyance/delivery/http"
-	_conveyanceRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/conveyance/repository"
-	_conveyanceService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/conveyance/usecase"
-
-	_contractorController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/contractor/delivery/http"
-	_contractorRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/contractor/repository"
-	_contractorService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/contractor/usecase"
 )
 
 func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo {
@@ -96,15 +75,9 @@ func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo
 
 	// Repositories ------------------------------------------------------------------------------------------------------------------------------------------------------
 	roleRepo := _roleRepo.NewRoleRepository(dbBlips)
-	classRepo := _classRepo.NewClassRepository(dbBlips)
 	authRepo := _authRepo.NewAuthRepository(dbBlips, emailServices)
 	categoryRepo := _categoryRepo.NewCategoryRepository(dbBlips)
-	cobsubcobRepo := _cobsubcobRepo.NewCobSubcobRepository(dbBlips)
-	carriageRepo := _carriageRepo.NewCarriageRepository(dbBlips)
-	conveyanceRepo := _conveyanceRepo.NewConveyanceRepository(dbBlips)
-	contractorRepo := _contractorRepo.NewContractorRepository(dbBlips)
 
-	shipyardRepo := _shipyardRepo.NewShipyardRepository(dbBlips)
 	// Middlewares ------------------------------------------------------------------------------------------------------------------------------------------------------
 	middlewareAuth := authmiddleware.NewMiddlewareAuth(authRepo)
 	// middlewareAuth := middleware.NewMiddlewareAuth(
@@ -133,57 +106,6 @@ func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo
 		authService,
 		middlewareAuth,
 	)
-	//Classes
-	classService := _classService.NewClassUsecase(
-		classRepo,
-		timeoutContext,
-	)
-
-	_classController.NewClassHandler(
-		router,
-		classService,
-		middlewarePageRequest,
-	)
-
-	//Carriage
-	carriageService := _carriageService.NewCarriageUsecase(
-		carriageRepo,
-		timeoutContext,
-	)
-
-	_carriageController.NewCarriageHandler(
-		router,
-		carriageService,
-		middlewarePageRequest,
-	)
-
-	//Conveyance
-	conveyanceService := _conveyanceService.NewConveyanceUsecase(
-		conveyanceRepo,
-		timeoutContext,
-	)
-
-	_conveyanceController.NewConveyanceHandler(
-		router,
-		conveyanceService,
-		middlewarePageRequest,
-	)
-
-	//Contractor
-	contractorService := _contractorService.NewContractorUsecase(
-		contractorRepo,
-		timeoutContext,
-	)
-
-	_contractorController.NewContractorHandler(
-		router,
-		contractorService,
-		middlewarePageRequest,
-	)
-
-	// Shipyard
-	shipyardService := _shipyardService.NewShipyardUsecase(shipyardRepo, timeoutContext)
-	_shipyardController.NewShipyardHandler(router, shipyardService, middlewareAuth, middlewarePageRequest)
 
 	//Categories
 	categoryService := _categoryService.NewCategoryUsecase(
@@ -196,20 +118,6 @@ func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo
 		categoryService,
 		middlewarePageRequest,
 	)
-
-	// cob-subcob
-	cobsubcobService := _cobsubcobService.NewCobSubcobUsecase(
-		categoryRepo,
-		cobsubcobRepo,
-		timeoutContext,
-	)
-
-	_cobsubcobController.NewCobSubcobHandler(
-		router,
-		cobsubcobService,
-		middlewarePageRequest,
-	)
-	_shipyardController.NewShipyardHandler(router, shipyardService, middlewareAuth, middlewarePageRequest)
 
 	return router
 
