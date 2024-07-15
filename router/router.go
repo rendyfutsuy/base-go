@@ -17,7 +17,6 @@ import (
 	_roleController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/role/delivery/http"
 	_roleRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/role/repository"
 	_roleService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/role/usecase"
-
 	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
 	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils/services"
 
@@ -26,10 +25,12 @@ import (
 	_authService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/auth/usecase"
 
 	authmiddleware "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helpers/middleware"
-
-	_categoryController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/category/delivery/http"
-	_categoryRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/category/repository"
-	_categoryService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/category/usecase"
+	_accountController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account/delivery/http"
+	_accountRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account/repository"
+	_accountService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account/usecase"
+	_classController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/class/delivery/http"
+	_classRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/class/repository"
+	_classService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/class/usecase"
 )
 
 func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo {
@@ -46,7 +47,6 @@ func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
-	router.Use(middleware.Logger())
 	router.Use(middleware.Recover())
 
 	// Config Rate Limiter allows 100 requests/sec
@@ -75,15 +75,15 @@ func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo
 
 	// Repositories ------------------------------------------------------------------------------------------------------------------------------------------------------
 	roleRepo := _roleRepo.NewRoleRepository(dbBlips)
+	classRepo := _classRepo.NewClassRepository(dbBlips)
 	authRepo := _authRepo.NewAuthRepository(dbBlips, emailServices)
-	categoryRepo := _categoryRepo.NewCategoryRepository(dbBlips)
+	accountRepo := _accountRepo.NewAccountRepository(dbBlips)
 
 	// Middlewares ------------------------------------------------------------------------------------------------------------------------------------------------------
 	middlewareAuth := authmiddleware.NewMiddlewareAuth(authRepo)
-	// middlewareAuth := middleware.NewMiddlewareAuth(
-	// 	userRepo,
-	// )
 	middlewarePageRequest := _reqContext.NewMiddlewarePageRequest()
+
+	//Roles
 	roleService := _roleService.NewRoleUsecase(
 		roleRepo,
 		// dbValidations,
@@ -107,15 +107,27 @@ func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo
 		middlewareAuth,
 	)
 
-	//Categories
-	categoryService := _categoryService.NewCategoryUsecase(
-		categoryRepo,
+	// account
+	accountService := _accountService.NewAccountUsecase(
+		accountRepo,
+		timeoutContext,
+	)
+	_accountController.NewAccountHandler(
+		router,
+		accountService,
+		middlewarePageRequest,
+		middlewareAuth,
+	)
+
+	//Classes
+	classService := _classService.NewClassUsecase(
+		classRepo,
 		timeoutContext,
 	)
 
-	_categoryController.NewCategoryHandler(
+	_classController.NewClassHandler(
 		router,
-		categoryService,
+		classService,
 		middlewarePageRequest,
 	)
 

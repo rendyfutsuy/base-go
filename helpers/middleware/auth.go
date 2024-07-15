@@ -75,6 +75,7 @@ func (a *MiddlewareAuth) AuthorizationCheck(next echo.HandlerFunc) echo.HandlerF
 		// set token to context
 		c.Set("token", tokenString)
 		c.Set("user", userData)
+		c.Set("authId", userData.ID)
 
 		return next(c)
 	}

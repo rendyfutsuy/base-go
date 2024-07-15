@@ -9,45 +9,49 @@ import (
 	_reqContext "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/middleware/request"
 	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/request"
 	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/response"
-	category "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/category"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/category/dto"
+	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helpers/middleware"
+	account "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account"
+	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account/dto"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
 type ResponseError struct {
-	Message string `json:"message"`
+	Message        string `json:"message"`
+	middlewareAuth middleware.IMiddlewareAuth
 }
 
-type CategoryHandler struct {
-	CategoryUseCase category.Usecase
-	validator       *validator.Validate
-	mwPageRequest   _reqContext.IMiddlewarePageRequest
+type AccountHandler struct {
+	AccountUseCase account.Usecase
+	validator      *validator.Validate
+	mwPageRequest  _reqContext.IMiddlewarePageRequest
+	middlewareAuth middleware.IMiddlewareAuth
 }
 
-func NewCategoryHandler(e *echo.Echo, us category.Usecase, mwP _reqContext.IMiddlewarePageRequest) {
-	handler := &CategoryHandler{
-		CategoryUseCase: us,
-		validator:       validator.New(),
-		mwPageRequest:   mwP,
+func NewAccountHandler(e *echo.Echo, us account.Usecase, mwP _reqContext.IMiddlewarePageRequest, middlewareAuth middleware.IMiddlewareAuth) {
+	handler := &AccountHandler{
+		AccountUseCase: us,
+		validator:      validator.New(),
+		mwPageRequest:  mwP,
+		middlewareAuth: middlewareAuth,
 	}
 
-	r := e.Group("v1/category")
+	r := e.Group("v1/account")
 
-	r.POST("", handler.CreateCategory)
-	r.GET("", handler.GetIndexCategory, handler.mwPageRequest.PageRequestCtx)
-	r.GET("/all", handler.GetAllCategory)
-	r.GET("/:id", handler.GetCategoryByID)
-	r.PUT("/:id", handler.UpdateCategory)
-	r.DELETE("/:id", handler.DeleteCategory)
+	r.Use(handler.middlewareAuth.AuthorizationCheck)
+	r.GET("", handler.GetIndexAccount, handler.mwPageRequest.PageRequestCtx)
+	r.POST("", handler.CreateAccount)
+	r.GET("/all", handler.GetAllAccount)
+	r.GET("/:id", handler.GetAccountByID)
+	r.PUT("/:id", handler.UpdateAccount)
+	r.DELETE("/:id", handler.DeleteAccount)
 }
 
-func (handler *CategoryHandler) CreateCategory(c echo.Context) error {
+func (handler *AccountHandler) CreateAccount(c echo.Context) error {
+	authId := c.Get("authId") // get from middleware
 
-	authId := "authId" // get from middleware
-
-	req := new(dto.ReqCreateCategory)
+	req := new(dto.ReqCreateAccount)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -69,35 +73,35 @@ func (handler *CategoryHandler) CreateCategory(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
 
-	res, err := handler.CategoryUseCase.CreateCategory(c, req, authId)
+	res, err := handler.AccountUseCase.CreateAccount(c, req, authId.(uuid.UUID))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ResponseError{Message: err.Error()})
 	}
 
-	resResp := dto.ToRespCategory(*res)
+	resResp := dto.ToRespAccount(*res)
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(resResp)
 
 	return c.JSON(http.StatusOK, resp)
 }
 
-func (handler *CategoryHandler) GetIndexCategory(c echo.Context) error {
+func (handler *AccountHandler) GetIndexAccount(c echo.Context) error {
 	pageRequest := c.Get("page_request").(*request.PageRequest)
 
-	res, total, err := handler.CategoryUseCase.GetIndexCategory(*pageRequest)
+	res, total, err := handler.AccountUseCase.GetIndexAccount(*pageRequest)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ResponseError{Message: err.Error()})
 	}
 
-	respCategory := []dto.RespCategory{}
+	respAccount := []dto.RespAccount{}
 
 	for _, v := range res {
-		respCategory = append(respCategory, dto.ToRespCategory(v))
+		respAccount = append(respAccount, dto.ToRespAccount(v))
 	}
 
 	respPag := response.PaginationResponse{}
-	respPag, err = respPag.SetResponse(respCategory, total, pageRequest.PerPage, pageRequest.Page)
+	respPag, err = respPag.SetResponse(respAccount, total, pageRequest.PerPage, pageRequest.Page)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
@@ -106,26 +110,26 @@ func (handler *CategoryHandler) GetIndexCategory(c echo.Context) error {
 	return c.JSON(http.StatusOK, respPag)
 }
 
-func (handler *CategoryHandler) GetAllCategory(c echo.Context) error {
+func (handler *AccountHandler) GetAllAccount(c echo.Context) error {
 
-	res, err := handler.CategoryUseCase.GetAllCategory()
+	res, err := handler.AccountUseCase.GetAllAccount()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ResponseError{Message: err.Error()})
 	}
 
-	respCategory := []dto.RespCategory{}
+	respAccount := []dto.RespAccount{}
 
 	for _, v := range res {
-		respCategory = append(respCategory, dto.ToRespCategory(v))
+		respAccount = append(respAccount, dto.ToRespAccount(v))
 	}
 
 	resp := response.NonPaginationResponse{}
-	resp, _ = resp.SetResponse(respCategory)
+	resp, _ = resp.SetResponse(respAccount)
 
 	return c.JSON(http.StatusOK, resp)
 }
 
-func (handler *CategoryHandler) GetCategoryByID(c echo.Context) error {
+func (handler *AccountHandler) GetAccountByID(c echo.Context) error {
 
 	id := c.Param("id")
 
@@ -135,21 +139,21 @@ func (handler *CategoryHandler) GetCategoryByID(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: "Invalid ID format"})
 	}
 
-	res, err := handler.CategoryUseCase.GetCategoryByID(id)
+	res, err := handler.AccountUseCase.GetAccountByID(id)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ResponseError{Message: err.Error()})
 	}
 
-	resResp := dto.ToRespCategory(*res)
+	resResp := dto.ToRespAccount(*res)
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(resResp)
 
 	return c.JSON(http.StatusOK, resp)
 }
 
-func (handler *CategoryHandler) UpdateCategory(c echo.Context) error {
+func (handler *AccountHandler) UpdateAccount(c echo.Context) error {
 
-	authId := "authId" // get from middleware
+	authId := c.Get("authId") // get from middleware
 	id := c.Param("id")
 
 	// validate id
@@ -158,7 +162,7 @@ func (handler *CategoryHandler) UpdateCategory(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: "Invalid ID format"})
 	}
 
-	req := new(dto.ReqUpdateCategory)
+	req := new(dto.ReqUpdateAccount)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -180,21 +184,21 @@ func (handler *CategoryHandler) UpdateCategory(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
 
-	res, err := handler.CategoryUseCase.UpdateCategory(id, req, authId)
+	res, err := handler.AccountUseCase.UpdateAccount(id, req, authId.(uuid.UUID))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ResponseError{Message: err.Error()})
 	}
 
-	resResp := dto.ToRespCategory(*res)
+	resResp := dto.ToRespAccount(*res)
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(resResp)
 
 	return c.JSON(http.StatusOK, resp)
 }
 
-func (handler *CategoryHandler) DeleteCategory(c echo.Context) error {
+func (handler *AccountHandler) DeleteAccount(c echo.Context) error {
 
-	authId := "authId" // get from middleware
+	authId := c.Get("authId") // get from middleware
 	id := c.Param("id")
 
 	// validate id
@@ -203,12 +207,12 @@ func (handler *CategoryHandler) DeleteCategory(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: "Invalid ID format"})
 	}
 
-	res, err := handler.CategoryUseCase.SoftDeleteCategory(id, authId)
+	res, err := handler.AccountUseCase.SoftDeleteAccount(id, authId.(uuid.UUID))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ResponseError{Message: err.Error()})
 	}
 
-	resResp := dto.ToRespCategory(*res)
+	resResp := dto.ToRespAccount(*res)
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(resResp)
 

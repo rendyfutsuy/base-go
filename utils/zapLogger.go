@@ -31,6 +31,25 @@ func InitializedLogger() {
 
 	fmt.Println("config vars")
 	fmt.Println("local")
+	// newUUID := uuid.New()
+
+	//sentry
+	// err := sentry.Init(sentry.ClientOptions{
+	// 	Dsn:         ConfigVars.String("sentry_dsn"),
+	// 	Environment: ConfigVars.String("sentry_env") + "-" + newUUID.String(),
+	// 	SampleRate:  1,
+	// })
+	// if err != nil {
+	// 	Logger.Error("Error initializing Sentry", zap.Error(err))
+	// }
+
+	// sentryWriter := SentryWriter{}
+
+	// sentryCore := zapcore.NewCore(
+	// 	zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+	// 	zapcore.AddSync(sentryWriter),
+	// 	zapcore.InfoLevel,
+	// )
 
 	core := zapcore.NewTee(
 		zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
@@ -38,5 +57,4 @@ func InitializedLogger() {
 		// sentryCore,
 	)
 	Logger = zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
-	zap.ReplaceGlobals(Logger)
 }

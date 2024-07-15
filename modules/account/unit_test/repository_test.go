@@ -9,17 +9,17 @@ import (
 	_ "github.com/lib/pq" // PostgreSQL driver
 
 	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/request"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/category/dto"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/category/repository"
+	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account/dto"
+	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account/repository"
 	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
 )
 
 func TestCreateRepository(t *testing.T) {
 
-	category1 := dto.ToDBCreateCategory{
-		Name:        "Category 2",
+	account1 := dto.ToDBCreateAccount{
+		Name:        "Account 2",
 		Code:        uuid.New().String(),
-		CreatedByID: uuid.New().String(),
+		CreatedByID: uuid.New(),
 	}
 
 	utils.InitConfig("config.json")
@@ -35,13 +35,13 @@ func TestCreateRepository(t *testing.T) {
 	connDB, err := sql.Open("postgres", dbString)
 	t.Log(err)
 
-	categoryRepo := repository.NewCategoryRepository(connDB)
+	accountRepo := repository.NewAccountRepository(connDB)
 
 	// create table
-	err = categoryRepo.CreateTable("D:/ngoding/roketin/tugure-roketin/v2/blips-v2-backend/database/migrations/create_category_table.up.sql")
+	err = accountRepo.CreateTable("D:/ngoding/roketin/tugure-roketin/v2/blips-v2-backend/database/migrations/create_account_table.up.sql")
 	t.Log(err)
 
-	res, err := categoryRepo.CreateCategory(nil, category1)
+	res, err := accountRepo.CreateAccount(account1)
 
 	t.Log(err)
 	t.Log(res)
@@ -62,20 +62,20 @@ func TestGetRepository(t *testing.T) {
 	connDB, err := sql.Open("postgres", dbString)
 	t.Log(err)
 
-	categoryRepo := repository.NewCategoryRepository(connDB)
+	accountRepo := repository.NewAccountRepository(connDB)
 
-	resAll, total, err := categoryRepo.GetIndexCategory(request.PageRequest{
+	resAll, total, err := accountRepo.GetIndexAccount(request.PageRequest{
 		Page:    1,
 		PerPage: 2,
 	})
 
-	// resAll, err := categoryRepo.GetAllCategory()
+	// resAll, err := accountRepo.GetAllAccount()
 
 	t.Log(err)
 	t.Log(total)
 	t.Log(resAll)
 
-	// resOne, err := categoryRepo.GetCategoryByID(resAll[0].ID)
+	// resOne, err := accountRepo.GetAccountByID(resAll[0].ID)
 
 	// t.Log(err)
 	// t.Log(resOne)

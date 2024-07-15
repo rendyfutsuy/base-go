@@ -1,8 +1,6 @@
 package request
 
 import (
-	"encoding/json"
-	"net/http"
 	"strconv"
 
 	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/request"
@@ -42,21 +40,10 @@ func (m *MiddlewarePageRequest) PageRequestCtx(next echo.HandlerFunc) echo.Handl
 		search := c.QueryParam("search")
 
 		// Parse filtering parameters
-		var filters []request.Filter
-		jsonFilters := c.QueryParam("filter[]")
-
-		if jsonFilters != "" {
-			err := json.Unmarshal([]byte(jsonFilters), &filters)
-
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, ResponseError{Message: "Invalid filter parameter"})
-
-			}
-		}
 
 		// Create and attach PageRequest to context
 
-		p := request.NewPageRequest(int(page), int(perPage), search, sortBy, sortOrder, filters)
+		p := request.NewPageRequest(int(page), int(perPage), search, sortBy, sortOrder)
 		c.Set("page_request", p)
 
 		return next(c)
