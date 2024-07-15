@@ -28,9 +28,6 @@ import (
 	_accountController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account/delivery/http"
 	_accountRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account/repository"
 	_accountService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account/usecase"
-	_classController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/class/delivery/http"
-	_classRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/class/repository"
-	_classService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/class/usecase"
 )
 
 func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo {
@@ -75,7 +72,6 @@ func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo
 
 	// Repositories ------------------------------------------------------------------------------------------------------------------------------------------------------
 	roleRepo := _roleRepo.NewRoleRepository(dbBlips)
-	classRepo := _classRepo.NewClassRepository(dbBlips)
 	authRepo := _authRepo.NewAuthRepository(dbBlips, emailServices)
 	accountRepo := _accountRepo.NewAccountRepository(dbBlips)
 
@@ -117,18 +113,6 @@ func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo
 		accountService,
 		middlewarePageRequest,
 		middlewareAuth,
-	)
-
-	//Classes
-	classService := _classService.NewClassUsecase(
-		classRepo,
-		timeoutContext,
-	)
-
-	_classController.NewClassHandler(
-		router,
-		classService,
-		middlewarePageRequest,
 	)
 
 	return router
