@@ -1,0 +1,15 @@
+# ide
+.vscode
+
+# environnement
+config.json
+
+# logger
+log.json
+
+# commands
+Taskfile.yml
+
+# debug file
+__debug_*
+.debug

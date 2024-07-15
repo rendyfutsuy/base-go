@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS shipyards;
+
+ALTER SEQUENCE shipyards_seq RESTART;
