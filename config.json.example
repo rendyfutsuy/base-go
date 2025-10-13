@@ -1,12 +1,12 @@
 {
-  "app_name": "blips v2.0",
+  "app_name": "base v2.0",
   "app_env": "development",
   "database": {
     "host": "localhost",
     "port": 5432,
     "user": "postgres",
     "password": "postgres",
-    "db_name": "blips",
+    "db_name": "base",
     "sslmode": "disable"
   },
   "format": {
