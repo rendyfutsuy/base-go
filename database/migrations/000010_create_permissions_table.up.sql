@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS permissions(
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
   deleted_at TIMESTAMP,
-  name VARCHAR(80) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL UNIQUE,
   deletable boolean NOT NULL
 );
 

@@ -9,8 +9,9 @@ CREATE TABLE IF NOT EXISTS roles(
   updated_by VARCHAR(80),
   deleted_at TIMESTAMP,
   deleted_by VARCHAR(80),
-  name VARCHAR(80) NOT NULL UNIQUE,
-  deletable boolean NOT NULL
+  name VARCHAR(255) NOT NULL UNIQUE,
+  deletable boolean NOT NULL,
+  description TEXT NULL,
 );
 
 CREATE INDEX roles_id_index ON roles (id);
