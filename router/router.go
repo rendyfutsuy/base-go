@@ -48,7 +48,7 @@ import (
 	_roleManagementService "github.com/rendyfutsuy/base-go/modules/role_management/usecase"
 )
 
-func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
+func InitializedRouter(db *sql.DB, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
 	router := echo.New()
 
 	// queries := sqlc.New(db)
@@ -89,10 +89,10 @@ func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration, v *validat
 	}
 
 	// Repositories ------------------------------------------------------------------------------------------------------------------------------------------------------
-	authRepo := _authRepo.NewAuthRepository(dbBlips, emailServices)
-	roleManagementRepo := _roleManagementRepo.NewRoleManagementRepository(dbBlips)
+	authRepo := _authRepo.NewAuthRepository(db, emailServices)
+	roleManagementRepo := _roleManagementRepo.NewRoleManagementRepository(db)
 
-	userManagementRepo := _userManagementRepo.NewUserManagementRepository(dbBlips)
+	userManagementRepo := _userManagementRepo.NewUserManagementRepository(db)
 
 	// Middlewares ------------------------------------------------------------------------------------------------------------------------------------------------------
 	middlewareAuth := authmiddleware.NewMiddlewareAuth(authRepo)

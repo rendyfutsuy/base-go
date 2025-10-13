@@ -38,9 +38,9 @@ func init() {
 		fmt.Println(err)
 	}
 	// Trying to connect to the database
-	app.Database = database.ConnectToDB("Blips")
+	app.Database = database.ConnectToDB("Database")
 	if app.Database == nil {
-		panic("Can't connect to Postgres : Blips!")
+		panic("Can't connect to Postgres : Database!")
 	}
 
 	app.Validator = validator.New()

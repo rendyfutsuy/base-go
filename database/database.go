@@ -25,7 +25,7 @@ func openDB(psqlInfo string) (*sql.DB, error) {
 	return db, nil
 }
 
-func setStringConnectionBlips() string {
+func setStringConnectionDatabase() string {
 	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		utils.ConfigVars.String("database.host"),
 		utils.ConfigVars.Int("database.port"),
@@ -38,8 +38,8 @@ func setStringConnectionBlips() string {
 
 func ConnectToDB(destinationDB string) *sql.DB {
 	var stringConnection string
-	if destinationDB == "Blips" {
-		stringConnection = setStringConnectionBlips()
+	if destinationDB == "Database" {
+		stringConnection = setStringConnectionDatabase()
 	}
 
 	for {
