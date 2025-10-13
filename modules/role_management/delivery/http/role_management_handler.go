@@ -42,15 +42,14 @@ func NewRoleManagementHandler(e *echo.Echo, us role_management.Usecase, mwP _req
 
 	// role show eligible permissions
 	showRoles := []string{
-		"api.role-management.role.index",              // index Role API
-		"api.role-management.role.store",              // store Role API
-		"api.role-management.role.update",             // update Role API
-		"api.role-management.role.delete",             // delete Role API
-		"api.user-management.user.index",              // index User API
-		"api.user-management.user.store",              // store User API
-		"api.user-management.user.update",             // update User API
-		"api.user-management.user.show",               // show User API
-		"api.facultative.integration.user-management", // integration with Facultative
+		"api.role-management.role.index",  // index Role API
+		"api.role-management.role.store",  // store Role API
+		"api.role-management.role.update", // update Role API
+		"api.role-management.role.delete", // delete Role API
+		"api.user-management.user.index",  // index User API
+		"api.user-management.user.store",  // store User API
+		"api.user-management.user.update", // update User API
+		"api.user-management.user.show",   // show User API
 	}
 	r.GET("/role", handler.GetIndexRole, handler.mwPageRequest.PageRequestCtx, handler.middlewarePermission.PermissionValidation(showRoles))
 

@@ -38,14 +38,11 @@ func NewUserManagementHandler(e *echo.Echo, us user_management.Usecase, mwP _req
 
 	// user index eligible permission
 	indexUser := []string{
-		"api.user-management.user.index",              // access user index
-		"api.user.management.user.update",             // access user update
-		"api.user-management.user.block",              // access user block
-		"api.user-management.user.activate",           // access user activate
-		"api.user-management.user.store",              // access user store
-		"api.facultative.integration.user-management", // integration with Facultative
-		"api.treaty.integration.user-management",      // integration with treaty
-		"api.claim.integration.user-management",       // integration with claim
+		"api.user-management.user.index",    // access user index
+		"api.user.management.user.update",   // access user update
+		"api.user-management.user.block",    // access user block
+		"api.user-management.user.activate", // access user activate
+		"api.user-management.user.store",    // access user store
 	}
 	r.GET("/user", handler.GetIndexUser, handler.mwPageRequest.PageRequestCtx, handler.middlewarePermission.PermissionValidation(indexUser))
 
