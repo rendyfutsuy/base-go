@@ -1,6 +1,6 @@
-//	@title			BLIP v2 API Documentation
+//	@title			Base Template API Documentation
 //	@version		0.0-beta
-//	@description	Welcome to the API documentation for the BLIP v2 Web Application. This comprehensive guide is designed to help developers seamlessly integrate and interact with our platform's functionalities. Whether you're building new features, enhancing existing ones, or troubleshooting, this documentation provides all the necessary resources and information.
+//	@description	Welcome to the API documentation for the Base Template Web Application. This comprehensive guide is designed to help developers seamlessly integrate and interact with our platform's functionalities. Whether you're building new features, enhancing existing ones, or troubleshooting, this documentation provides all the necessary resources and information.
 
 // @securityDefinitions.apikey	BearerAuth
 // @in							header
