@@ -2,14 +2,12 @@
   "app_name": "blips v2.0",
   "app_env": "development",
   "database": {
-    "blips": {
-      "host": "localhost",
-      "port": 5432,
-      "user": "postgres",
-      "password": "postgres",
-      "db_name": "blips",
-      "sslmode": "disable"
-    }
+    "host": "localhost",
+    "port": 5432,
+    "user": "postgres",
+    "password": "postgres",
+    "db_name": "blips",
+    "sslmode": "disable"
   },
   "format": {
     "time": "2006-01-02T15:04:05.999Z07:00"

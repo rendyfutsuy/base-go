@@ -27,12 +27,12 @@ func openDB(psqlInfo string) (*sql.DB, error) {
 
 func setStringConnectionBlips() string {
 	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		utils.ConfigVars.String("database.blips.host"),
-		utils.ConfigVars.Int("database.blips.port"),
-		utils.ConfigVars.String("database.blips.user"),
-		utils.ConfigVars.String("database.blips.password"),
-		utils.ConfigVars.String("database.blips.db_name"),
-		utils.ConfigVars.String("database.blips.sslmode"),
+		utils.ConfigVars.String("database.host"),
+		utils.ConfigVars.Int("database.port"),
+		utils.ConfigVars.String("database.user"),
+		utils.ConfigVars.String("database.password"),
+		utils.ConfigVars.String("database.db_name"),
+		utils.ConfigVars.String("database.sslmode"),
 	)
 }
 

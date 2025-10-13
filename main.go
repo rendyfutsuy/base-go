@@ -16,10 +16,10 @@ import (
 
 var (
 	app struct {
-		DatabaseBlips *sql.DB
-		Router        *echo.Echo
-		NewRelicApp   *newrelic.Application
-		Validator     *validator.Validate
+		Database    *sql.DB
+		Router      *echo.Echo
+		NewRelicApp *newrelic.Application
+		Validator   *validator.Validate
 		// QueueClient          *asynq.Client
 	}
 )
@@ -38,8 +38,8 @@ func init() {
 		fmt.Println(err)
 	}
 	// Trying to connect to the database
-	app.DatabaseBlips = database.ConnectToDB("Blips")
-	if app.DatabaseBlips == nil {
+	app.Database = database.ConnectToDB("Blips")
+	if app.Database == nil {
 		panic("Can't connect to Postgres : Blips!")
 	}
 
@@ -54,15 +54,15 @@ func main() {
 	// Set a timeout for each endpoint
 	timeoutContext := time.Duration(utils.ConfigVars.Int("context.timeout")) * time.Second
 
-	app.Router = router.InitializedRouter(app.DatabaseBlips, timeoutContext, app.Validator, app.NewRelicApp)
+	app.Router = router.InitializedRouter(app.Database, timeoutContext, app.Validator, app.NewRelicApp)
 
 	app.Router.Validator = &utils.CustomValidator{Validator: app.Validator}
 
 	app.Router.Logger.Fatal(app.Router.Start(fmt.Sprintf(":%s", utils.ConfigVars.String("app_port"))))
 
 	defer func() {
-		if app.DatabaseBlips != nil {
-			app.DatabaseBlips.Close()
+		if app.Database != nil {
+			app.Database.Close()
 		}
 	}()
 }
