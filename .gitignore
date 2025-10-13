@@ -6,9 +6,22 @@ config.json
 
 # logger
 log.json
+logs
 
 # commands
 Taskfile.yml
 
 # debug file
 __debug_*
+.debug
+
+# temp files
+public/documents
+public/temp
+
+# sonarqube report
+.scannerwork
+
+coverage.out
+
+.DS_Store
