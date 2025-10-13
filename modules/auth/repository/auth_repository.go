@@ -7,14 +7,14 @@ import (
 	"log"
 	"time"
 
-	models "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/models"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/auth"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/auth/dto"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils/services"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	_ "github.com/lib/pq"
+	models "github.com/rendyfutsuy/base-go.git/models"
+	"github.com/rendyfutsuy/base-go.git/modules/auth"
+	"github.com/rendyfutsuy/base-go.git/modules/auth/dto"
+	"github.com/rendyfutsuy/base-go.git/utils"
+	"github.com/rendyfutsuy/base-go.git/utils/services"
 	"golang.org/x/crypto/bcrypt"
 )
 

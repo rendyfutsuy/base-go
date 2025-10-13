@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/auth/dto"
 	"github.com/labstack/echo/v4"
+	"github.com/rendyfutsuy/base-go.git/modules/auth/dto"
 )
 
 // Usecase represent the auth's usecases

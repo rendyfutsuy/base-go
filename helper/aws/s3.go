@@ -3,11 +3,11 @@ package aws
 import (
 	"fmt"
 
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/rendyfutsuy/base-go.git/utils"
 )
 
 func NewSession() (*session.Session, error) {

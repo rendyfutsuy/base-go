@@ -3,9 +3,9 @@ package auth
 import (
 	// "database/sql"
 
-	models "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/models"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/auth/dto"
 	"github.com/google/uuid"
+	models "github.com/rendyfutsuy/base-go.git/models"
+	"github.com/rendyfutsuy/base-go.git/modules/auth/dto"
 )
 
 // Repository represent the auth's repository contract

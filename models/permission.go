@@ -1,8 +1,8 @@
 package models
 
 import (
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
 	"github.com/google/uuid"
+	"github.com/rendyfutsuy/base-go.git/utils"
 )
 
 // Permission represent the role model

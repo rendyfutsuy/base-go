@@ -6,12 +6,12 @@ import (
 	"os"
 	"time"
 
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/request"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/models"
-	role "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/role"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/role/dto"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
 	"github.com/google/uuid"
+	"github.com/rendyfutsuy/base-go.git/helper/request"
+	"github.com/rendyfutsuy/base-go.git/models"
+	role "github.com/rendyfutsuy/base-go.git/modules/role"
+	"github.com/rendyfutsuy/base-go.git/modules/role/dto"
+	"github.com/rendyfutsuy/base-go.git/utils"
 )
 
 type roleRepository struct {

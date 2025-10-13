@@ -9,14 +9,6 @@
       "password": "postgres",
       "db_name": "blips",
       "sslmode": "disable"
-    },
-    "accfin": {
-      "host": "localhost",
-      "port": 5432,
-      "user": "postgres",
-      "password": "postgres",
-      "db_name": "accfin",
-      "sslmode": "disable"
     }
   },
   "format": {

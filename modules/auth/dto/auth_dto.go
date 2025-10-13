@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
+	"github.com/rendyfutsuy/base-go.git/utils"
 )
 
 type ReqAuthUser struct {

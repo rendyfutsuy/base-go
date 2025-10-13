@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/request"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/models"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/role/dto"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
 	"github.com/google/uuid"
+	"github.com/rendyfutsuy/base-go.git/helper/request"
+	"github.com/rendyfutsuy/base-go.git/models"
+	"github.com/rendyfutsuy/base-go.git/modules/role/dto"
+	"github.com/rendyfutsuy/base-go.git/utils"
 )
 
 func (repo *roleRepository) CreatePermission(permissionReq dto.ToDBCreatePermission) (permissionRes *models.Permission, err error) {

@@ -6,11 +6,11 @@ import (
 	"log"
 	"time"
 
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/database"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/router"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
+	"github.com/rendyfutsuy/base-go.git/database"
+	"github.com/rendyfutsuy/base-go.git/router"
+	"github.com/rendyfutsuy/base-go.git/utils"
 )
 
 var (

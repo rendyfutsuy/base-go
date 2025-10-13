@@ -6,15 +6,15 @@ import (
 	"net/http"
 	"strings"
 
-	_reqContext "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/middleware/request"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/request"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/response"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helpers/middleware"
-	role "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/role"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/role/dto"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	_reqContext "github.com/rendyfutsuy/base-go.git/helper/middleware/request"
+	"github.com/rendyfutsuy/base-go.git/helper/request"
+	"github.com/rendyfutsuy/base-go.git/helper/response"
+	"github.com/rendyfutsuy/base-go.git/helpers/middleware"
+	role "github.com/rendyfutsuy/base-go.git/modules/role"
+	"github.com/rendyfutsuy/base-go.git/modules/role/dto"
 )
 
 type ResponseError struct {

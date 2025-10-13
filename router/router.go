@@ -10,24 +10,24 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	// middleware "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/middleware"
-	_reqContext "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/middleware/request"
-	// "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/validations"
+	// middleware "github.com/rendyfutsuy/base-go.git/helper/middleware"
+	_reqContext "github.com/rendyfutsuy/base-go.git/helper/middleware/request"
+	// "github.com/rendyfutsuy/base-go.git/helper/validations"
 
-	_roleController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/role/delivery/http"
-	_roleRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/role/repository"
-	_roleService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/role/usecase"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils/services"
+	_roleController "github.com/rendyfutsuy/base-go.git/modules/role/delivery/http"
+	_roleRepo "github.com/rendyfutsuy/base-go.git/modules/role/repository"
+	_roleService "github.com/rendyfutsuy/base-go.git/modules/role/usecase"
+	"github.com/rendyfutsuy/base-go.git/utils"
+	"github.com/rendyfutsuy/base-go.git/utils/services"
 
-	_authController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/auth/delivery/http"
-	_authRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/auth/repository"
-	_authService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/auth/usecase"
+	_authController "github.com/rendyfutsuy/base-go.git/modules/auth/delivery/http"
+	_authRepo "github.com/rendyfutsuy/base-go.git/modules/auth/repository"
+	_authService "github.com/rendyfutsuy/base-go.git/modules/auth/usecase"
 
-	authmiddleware "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helpers/middleware"
-	_accountController "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account/delivery/http"
-	_accountRepo "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account/repository"
-	_accountService "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account/usecase"
+	authmiddleware "github.com/rendyfutsuy/base-go.git/helpers/middleware"
+	_accountController "github.com/rendyfutsuy/base-go.git/modules/account/delivery/http"
+	_accountRepo "github.com/rendyfutsuy/base-go.git/modules/account/repository"
+	_accountService "github.com/rendyfutsuy/base-go.git/modules/account/usecase"
 )
 
 func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo {

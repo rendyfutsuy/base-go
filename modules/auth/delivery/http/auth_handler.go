@@ -6,9 +6,9 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helpers/middleware"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/auth"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/auth/dto"
+	"github.com/rendyfutsuy/base-go.git/helpers/middleware"
+	"github.com/rendyfutsuy/base-go.git/modules/auth"
+	"github.com/rendyfutsuy/base-go.git/modules/auth/dto"
 )
 
 // GeneralResponse represent the response error struct

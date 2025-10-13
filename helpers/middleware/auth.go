@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/models"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
+	"github.com/rendyfutsuy/base-go.git/models"
+	"github.com/rendyfutsuy/base-go.git/utils"
 
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/auth"
+	"github.com/rendyfutsuy/base-go.git/modules/auth"
 )
 
 type GeneralResponse struct {

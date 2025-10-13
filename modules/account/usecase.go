@@ -1,11 +1,11 @@
 package account
 
 import (
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/request"
-	models "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/models"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account/dto"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/rendyfutsuy/base-go.git/helper/request"
+	models "github.com/rendyfutsuy/base-go.git/models"
+	"github.com/rendyfutsuy/base-go.git/modules/account/dto"
 )
 
 type Usecase interface {

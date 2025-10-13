@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
+	"github.com/rendyfutsuy/base-go.git/utils"
 )
 
 var counts int64

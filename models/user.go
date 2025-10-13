@@ -3,8 +3,8 @@ package models
 import (
 	"time"
 
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
 	"github.com/google/uuid"
+	"github.com/rendyfutsuy/base-go.git/utils"
 )
 
 // User represent the user model

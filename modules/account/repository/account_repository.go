@@ -6,12 +6,12 @@ import (
 	"os"
 	"time"
 
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/request"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/models"
-	account "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/account/dto"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
 	"github.com/google/uuid"
+	"github.com/rendyfutsuy/base-go.git/helper/request"
+	"github.com/rendyfutsuy/base-go.git/models"
+	account "github.com/rendyfutsuy/base-go.git/modules/account"
+	"github.com/rendyfutsuy/base-go.git/modules/account/dto"
+	"github.com/rendyfutsuy/base-go.git/utils"
 )
 
 type accountRepository struct {

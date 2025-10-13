@@ -3,8 +3,8 @@ package request
 import (
 	"strconv"
 
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/helper/request"
 	"github.com/labstack/echo/v4"
+	"github.com/rendyfutsuy/base-go.git/helper/request"
 )
 
 type ResponseError struct {

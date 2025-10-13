@@ -1,9 +1,9 @@
 package dto
 
 import (
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/models"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
 	"github.com/google/uuid"
+	"github.com/rendyfutsuy/base-go.git/models"
+	"github.com/rendyfutsuy/base-go.git/utils"
 )
 
 type RespAccount struct {

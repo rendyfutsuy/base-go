@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"log"
 
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils/services"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
+	"github.com/rendyfutsuy/base-go.git/utils"
+	"github.com/rendyfutsuy/base-go.git/utils/services"
 )
 
 const (

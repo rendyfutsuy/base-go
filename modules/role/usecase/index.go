@@ -3,7 +3,7 @@ package usecase
 import (
 	"time"
 
-	role "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/role"
+	role "github.com/rendyfutsuy/base-go.git/modules/role"
 )
 
 type roleUsecase struct {

@@ -8,11 +8,11 @@ import (
 	"log"
 	"time"
 
-	models "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/models"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/auth/tasks"
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/utils"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
+	models "github.com/rendyfutsuy/base-go.git/models"
+	"github.com/rendyfutsuy/base-go.git/modules/auth/tasks"
+	"github.com/rendyfutsuy/base-go.git/utils"
 )
 
 // RequestResetPassword generates a random password reset session and sends it to the user's email.

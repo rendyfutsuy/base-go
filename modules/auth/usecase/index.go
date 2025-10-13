@@ -3,8 +3,8 @@ package usecase
 import (
 	"time"
 
-	"git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/auth"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/rendyfutsuy/base-go.git/modules/auth"
 )
 
 type AuthClaims struct {

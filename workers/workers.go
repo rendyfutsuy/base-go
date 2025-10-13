@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	auth "git.roketin.com/tugure/blips/backend/v2/blips-v2-backend/modules/auth/tasks"
+	auth "github.com/rendyfutsuy/base-go.git/modules/auth/tasks"
 )
 
 // workers.go
