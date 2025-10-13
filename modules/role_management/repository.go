@@ -29,8 +29,6 @@ type Repository interface {
 
 	// ------------------------------------------------- role assignment scope - BEGIN -----------------------------------------------------------
 	ReAssignPermissionGroup(id uuid.UUID, permissionGroupReq dto.ToDBUpdatePermissionGroupAssignmentToRole) error
-	ReAssignCob(id uuid.UUID, cobReq []uuid.UUID) error
-	ReAssignCategory(id uuid.UUID, categoryReq []uuid.UUID) error
 	GetTotalUser(id uuid.UUID) (total int, err error)
 	GetPermissionFromRoleId(id uuid.UUID) (permissions []models.Permission, err error)
 	GetPermissionGroupFromRoleId(id uuid.UUID) (permissionGroups []models.PermissionGroup, err error)

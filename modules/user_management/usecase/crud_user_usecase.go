@@ -27,16 +27,6 @@ func (u *userUsecase) CreateUser(c echo.Context, req *dto.ReqCreateUser, authId 
 		return nil, errors.New(constants.UserEmailAlreadyExists)
 	}
 
-	// only check if Api Key inserted
-	if req.ApiKey.Valid == true {
-		// assert api key not duplicated
-		result, err = u.userRepo.ApiKeyIsNotDuplicated(req.ApiKey, uuid.Nil)
-
-		if result == false {
-			return nil, errors.New("API Key already Used..")
-		}
-	}
-
 	count, err := u.userRepo.CountUser()
 	if err != nil {
 		return nil, err
@@ -103,16 +93,6 @@ func (u *userUsecase) UpdateUser(id string, req *dto.ReqUpdateUser, authId strin
 		return nil, errors.New(constants.UserEmailAlreadyExists)
 	}
 
-	// only check if Api Key inserted
-	if req.ApiKey.Valid == true {
-		// assert api key not duplicated
-		result, err = u.userRepo.ApiKeyIsNotDuplicated(req.ApiKey, uId)
-
-		if result == false {
-			return nil, errors.New("API Key already Used..")
-		}
-	}
-
 	// Mapping Input to DB
 	userDb := dto.ToDBUpdateUser{
 		FullName: req.FullName,
@@ -120,7 +100,6 @@ func (u *userUsecase) UpdateUser(id string, req *dto.ReqUpdateUser, authId strin
 		IsActive: req.IsActive,
 		RoleId:   req.RoleId,
 		Gender:   req.Gender,
-		ApiKey:   req.ApiKey,
 	}
 
 	return u.userRepo.UpdateUser(uId, userDb)

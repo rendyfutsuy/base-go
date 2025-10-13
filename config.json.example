@@ -21,6 +21,7 @@
     "smtp_auth_email":"",
     "smtp_password":"",
     "reset_password_url":"http://localhost:3000/reset-password",
+    "validation-scope": "gmail.com|mailinator.com|company.com"
   },
   "redis": {
     "addr": "",

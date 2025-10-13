@@ -64,24 +64,6 @@ func (repo *roleRepository) CreateRole(roleReq dto.ToDBCreateRole) (roleRes *mod
 		return nil, fmt.Errorf("Something Wrong when assigning Permission Group to Role")
 	}
 
-	// sync Cob to Role
-	// Assign Cob
-	err = repo.ReAssignCob(roleRes.ID, roleReq.Cobs)
-
-	// if error occurs, return error
-	if err != nil {
-		return nil, fmt.Errorf("Something Wrong when assigning Cob to Role")
-	}
-
-	// sync Category to Role
-	// Assign Category
-	err = repo.ReAssignCategory(roleRes.ID, roleReq.Categories)
-
-	// if error occurs, return error
-	if err != nil {
-		return nil, fmt.Errorf("Something Wrong when assigning Unit to Role")
-	}
-
 	return roleRes, err
 }
 
@@ -194,15 +176,7 @@ func (repo *roleRepository) GetIndexRole(req request.PageRequest) (roles []model
 		LEFT JOIN
 			permission_groups pg
 		ON
-			pgr.permission_group_id = pg.id
-		LEFT JOIN
-			roles_categories rc
-		ON
-			role.id = rc.role_id
-		LEFT JOIN
-			categories ct
-		ON
-			rc.category_id = ct.id`
+			pgr.permission_group_id = pg.id`
 
 	GroupBy := ` GROUP BY
 			role.id, role.name`
@@ -215,8 +189,7 @@ func (repo *roleRepository) GetIndexRole(req request.PageRequest) (roles []model
 		role.updated_at,
 		role.deleted_at,
 		(SELECT COUNT(*) FROM users WHERE role_id = role.id AND deleted_at IS NULL) AS total_user,
-		ARRAY_AGG(DISTINCT pg.module) AS modules,
-		ARRAY_AGG(DISTINCT ct.name) AS categories
+		ARRAY_AGG(DISTINCT pg.module) AS modules
 	`
 
 	// append select and join query to base query
@@ -230,10 +203,9 @@ func (repo *roleRepository) GetIndexRole(req request.PageRequest) (roles []model
 
 	// assign search query, based on searchable field.
 	if searchQuery != "" {
-		searchCategory := "ct.name ILIKE '%' || $1 || '%'"
 		searchModule := "pg.module ILIKE '%' || $1 || '%'"
 		searchRole := "role.name ILIKE '%' || $1 || '%'"
-		whereClause += " AND (" + searchRole + " OR " + searchCategory + " OR " + searchModule + ")"
+		whereClause += " AND (" + searchRole + " OR " + searchModule + ")"
 	}
 
 	// Initialize Default sorting
@@ -287,7 +259,6 @@ func (repo *roleRepository) GetIndexRole(req request.PageRequest) (roles []model
 			&role.DeletedAt,
 			&role.TotalUser,
 			pq.Array(&role.Modules),
-			pq.Array(&role.CategoryNames),
 		)
 
 		if err != nil {
@@ -402,24 +373,6 @@ func (repo *roleRepository) UpdateRole(id uuid.UUID, roleReq dto.ToDBUpdateRole)
 	// if error occurs, return error
 	if err != nil {
 		return nil, fmt.Errorf("Something Wrong when assigning Permission Group to Role")
-	}
-
-	// sync Cob to Role
-	// Assign Cob
-	err = repo.ReAssignCob(roleRes.ID, roleReq.Cobs)
-
-	// if error occurs, return error
-	if err != nil {
-		return nil, fmt.Errorf("Something Wrong when assigning Cob to Role")
-	}
-
-	// sync Category to Role
-	// Assign Category
-	err = repo.ReAssignCategory(roleRes.ID, roleReq.Categories)
-
-	// if error occurs, return error
-	if err != nil {
-		return nil, fmt.Errorf("Something Wrong when assigning Unit to Role")
 	}
 
 	return roleRes, err

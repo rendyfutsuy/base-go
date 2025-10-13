@@ -5,7 +5,6 @@ import (
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	models "github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
-	"github.com/rendyfutsuy/base-go/utils"
 )
 
 type Repository interface {
@@ -29,7 +28,6 @@ type Repository interface {
 	ActivateUser(id uuid.UUID) (userRes *models.User, err error)
 	DisActivateUser(id uuid.UUID) (userRes *models.User, err error)
 	EmailIsNotDuplicated(email string, excludedId uuid.UUID) (bool, error)
-	ApiKeyIsNotDuplicated(key utils.NullString, excludedId uuid.UUID) (bool, error)
 
 	CountUser() (count *int, err error)
 	// ------------------------------------------------- user scope - END ----------------------------------------------------------

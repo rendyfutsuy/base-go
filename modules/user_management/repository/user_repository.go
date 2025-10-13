@@ -11,7 +11,6 @@ import (
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
-	"github.com/rendyfutsuy/base-go/utils"
 )
 
 // CreateUser creates a new user information entry in the database.
@@ -29,9 +28,9 @@ func (repo *userRepository) CreateUser(userReq dto.ToDBCreateUser) (userRes *mod
 	// assign return value to userRes variable
 	err = repo.Conn.QueryRow(
 		`INSERT INTO users
-			(full_name, email, role_id, is_active, gender, api_key, created_at, updated_at, password, password_expired_at)
+			(full_name, email, role_id, is_active, gender, created_at, updated_at, password, password_expired_at)
 		VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+			($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING 
 			id, full_name, created_at, updated_at, deleted_at`,
 		userReq.FullName,
@@ -39,7 +38,6 @@ func (repo *userRepository) CreateUser(userReq dto.ToDBCreateUser) (userRes *mod
 		userReq.RoleId,
 		userReq.IsActive,
 		userReq.Gender,
-		userReq.ApiKey,
 		createdAtString,
 		createdAtString,
 		"temp",
@@ -79,7 +77,6 @@ func (repo *userRepository) GetUserByID(id uuid.UUID) (user *models.User, err er
 			usr.role_id,
 			usr.is_active,
 			rl.name,
-			usr.api_key,
 			usr.gender,
 			CASE 
 				WHEN usr.is_active THEN 'active'
@@ -108,7 +105,6 @@ func (repo *userRepository) GetUserByID(id uuid.UUID) (user *models.User, err er
 		&user.RoleId,
 		&user.IsActive,
 		&user.RoleName,
-		&user.ApiKey,
 		&user.Gender,
 		&user.ActiveStatus,
 		&user.IsBlocked,
@@ -330,10 +326,9 @@ func (repo *userRepository) UpdateUser(id uuid.UUID, userReq dto.ToDBUpdateUser)
 			full_name = $1,
 			updated_at = $2,
 			email = $4,
-			api_key = $5,
-			gender = $6,
-			is_active = $7,
-			role_id = $8
+			gender = $5,
+			is_active = $6,
+			role_id = $7
 		WHERE 
 			id = $3 AND deleted_at IS NULL
 		RETURNING 
@@ -346,7 +341,6 @@ func (repo *userRepository) UpdateUser(id uuid.UUID, userReq dto.ToDBUpdateUser)
 		updatedAtString,
 		id,
 		userReq.Email,
-		userReq.ApiKey,
 		userReq.Gender,
 		userReq.IsActive,
 		userReq.RoleId,
@@ -580,55 +574,6 @@ func (repo *userRepository) EmailIsNotDuplicated(email string, excludedId uuid.U
 	result := 0
 
 	// assert email is nt duplicated
-	err := repo.Conn.QueryRow(baseQuery, params...).Scan(&result)
-
-	// if have error, return false and error
-	if err != nil {
-		return false, err
-	}
-
-	// if duplicated name, return false
-	if result > 0 {
-		return false, nil
-	}
-
-	// if not duplicated name, return true
-	return true, err
-}
-
-// ApiKeyIsNotDuplicated checks if the provided API key is not duplicated in the users table.
-//
-// Parameters:
-// - apiKey: the API key to check for duplication.
-// - excludedId: the ID to exclude from the check. If set to uuid.Nil, no exclusion is applied.
-//
-// Returns:
-// - bool: true if the API key is not duplicated, false otherwise.
-// - error: an error if the check fails.
-func (repo *userRepository) ApiKeyIsNotDuplicated(apiKey utils.NullString, excludedId uuid.UUID) (bool, error) {
-
-	// if input not valid return true without error
-	if apiKey.String == "" {
-		return true, nil
-	}
-
-	baseQuery := `SELECT 
-			COUNT(*)
-		FROM 
-			users
-		WHERE
-			api_key = $1 AND deleted_at IS NULL`
-
-	params := []interface{}{apiKey}
-
-	if excludedId != uuid.Nil {
-		baseQuery += ` AND id <> $2`
-		params = append(params, excludedId)
-	}
-
-	result := 0
-
-	// assert apiKey is nt duplicated
 	err := repo.Conn.QueryRow(baseQuery, params...).Scan(&result)
 
 	// if have error, return false and error
