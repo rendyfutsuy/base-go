@@ -1,4 +1,0 @@
-{"level":"info","ts":"2025-10-13T12:59:58.464+0700","caller":"utils/zapLogger.go:73","msg":"Logger not connected to new relic"}
-{"level":"info","ts":"2025-10-13T12:59:58.464+0700","caller":"utils/zapLogger.go:76","msg":"Logger initialized with server ID","server_id":"3da3dd8c-af67-4407-a9ae-91d345661016","server_id":"3da3dd8c-af67-4407-a9ae-91d345661016"}
-{"level":"info","ts":"2025-10-13T12:59:58.670+0700","caller":"database/database.go:52","msg":"Connected to Postgres : Blips","server_id":"3da3dd8c-af67-4407-a9ae-91d345661016"}
-{"level":"info","ts":"2025-10-13T12:59:58.670+0700","caller":"base-go/main.go:52","msg":"Start the app","server_id":"3da3dd8c-af67-4407-a9ae-91d345661016"}
