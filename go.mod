@@ -1,4 +1,4 @@
-module github.com/rendyfutsuy/base-go.git
+module github.com/rendyfutsuy/base-go
 
 go 1.22.5
 

@@ -10,9 +10,9 @@ import (
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
-	models "github.com/rendyfutsuy/base-go.git/models"
-	"github.com/rendyfutsuy/base-go.git/modules/auth/tasks"
-	"github.com/rendyfutsuy/base-go.git/utils"
+	models "github.com/rendyfutsuy/base-go/models"
+	"github.com/rendyfutsuy/base-go/modules/auth/tasks"
+	"github.com/rendyfutsuy/base-go/utils"
 )
 
 // RequestResetPassword generates a random password reset session and sends it to the user's email.

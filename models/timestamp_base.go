@@ -2,7 +2,7 @@ package models
 
 import (
 	"github.com/google/uuid"
-	"github.com/rendyfutsuy/base-go.git/utils"
+	"github.com/rendyfutsuy/base-go/utils"
 )
 
 type TimestampBase struct {

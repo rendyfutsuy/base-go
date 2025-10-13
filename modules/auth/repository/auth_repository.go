@@ -10,11 +10,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	_ "github.com/lib/pq"
-	models "github.com/rendyfutsuy/base-go.git/models"
-	"github.com/rendyfutsuy/base-go.git/modules/auth"
-	"github.com/rendyfutsuy/base-go.git/modules/auth/dto"
-	"github.com/rendyfutsuy/base-go.git/utils"
-	"github.com/rendyfutsuy/base-go.git/utils/services"
+	models "github.com/rendyfutsuy/base-go/models"
+	"github.com/rendyfutsuy/base-go/modules/auth"
+	"github.com/rendyfutsuy/base-go/modules/auth/dto"
+	"github.com/rendyfutsuy/base-go/utils"
+	"github.com/rendyfutsuy/base-go/utils/services"
 	"golang.org/x/crypto/bcrypt"
 )
 

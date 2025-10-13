@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rendyfutsuy/base-go.git/helper/request"
-	"github.com/rendyfutsuy/base-go.git/models"
-	role "github.com/rendyfutsuy/base-go.git/modules/role"
-	"github.com/rendyfutsuy/base-go.git/modules/role/dto"
-	"github.com/rendyfutsuy/base-go.git/utils"
+	"github.com/rendyfutsuy/base-go/helper/request"
+	"github.com/rendyfutsuy/base-go/models"
+	role "github.com/rendyfutsuy/base-go/modules/role"
+	"github.com/rendyfutsuy/base-go/modules/role/dto"
+	"github.com/rendyfutsuy/base-go/utils"
 )
 
 type roleRepository struct {

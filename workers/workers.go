@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	auth "github.com/rendyfutsuy/base-go.git/modules/auth/tasks"
+	auth "github.com/rendyfutsuy/base-go/modules/auth/tasks"
 )
 
 // workers.go

@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"strconv"
 
-	"github.com/rendyfutsuy/base-go.git/utils"
+	"github.com/rendyfutsuy/base-go/utils"
 	"gopkg.in/gomail.v2"
 )
 

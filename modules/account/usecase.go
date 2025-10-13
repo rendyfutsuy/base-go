@@ -3,9 +3,9 @@ package account
 import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/rendyfutsuy/base-go.git/helper/request"
-	models "github.com/rendyfutsuy/base-go.git/models"
-	"github.com/rendyfutsuy/base-go.git/modules/account/dto"
+	"github.com/rendyfutsuy/base-go/helper/request"
+	models "github.com/rendyfutsuy/base-go/models"
+	"github.com/rendyfutsuy/base-go/modules/account/dto"
 )
 
 type Usecase interface {

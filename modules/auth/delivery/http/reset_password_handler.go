@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/rendyfutsuy/base-go.git/modules/auth/dto"
+	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 )
 
 func (handler *AuthHandler) ResetPasswordRequest(c echo.Context) error {

@@ -6,9 +6,9 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 
-	"github.com/rendyfutsuy/base-go.git/helpers/middleware"
-	"github.com/rendyfutsuy/base-go.git/modules/auth"
-	"github.com/rendyfutsuy/base-go.git/modules/auth/dto"
+	"github.com/rendyfutsuy/base-go/helpers/middleware"
+	"github.com/rendyfutsuy/base-go/modules/auth"
+	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 )
 
 // GeneralResponse represent the response error struct
@@ -18,6 +18,10 @@ type GeneralResponse struct {
 
 type ResponseAuth struct {
 	AccessToken string `json:"access_token"`
+}
+
+type ResponseError struct {
+	Message string `json:"message"`
 }
 
 // AuthHandler represent the http handler for auth
@@ -73,6 +77,16 @@ func NewAuthHandler(e *echo.Echo, us auth.Usecase, middlewareAuth middleware.IMi
 	)
 }
 
+// @Summary		Authenticate user
+// @Description	Authenticates a user and returns an access token
+// @Tags			Authentication
+// @Accept			json
+// @Produce		json
+// @Param			request	body		dto.ReqAuthUser	true	"User login and password"
+// @Success		200		{object}	ResponseAuth	"Successfully authenticated"
+// @Failure		400		{object}	GeneralResponse	"Invalid request"
+// @Failure		419		{object}	GeneralResponse	"User password expired"
+// @Router			/v1/auth/login [post]
 func (handler *AuthHandler) Authenticate(c echo.Context) error {
 	// Validate input
 	req := new(dto.ReqAuthUser)
@@ -94,6 +108,16 @@ func (handler *AuthHandler) Authenticate(c echo.Context) error {
 	return c.JSON(http.StatusOK, ResponseAuth{AccessToken: token})
 }
 
+// @Summary		Sign out user
+// @Description	Logs out the user by invalidating the session token
+// @Tags			Authentication
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Success		200	{object}	GeneralResponse	"Successfully logged out"
+// @Failure		400	{object}	GeneralResponse	"Logout failed"
+// @Failure		401	{object}	GeneralResponse	"Unauthorized"
+// @Router			/v1/auth/logout [post]
 func (handler *AuthHandler) SignOut(c echo.Context) error {
 
 	// parse token
@@ -110,6 +134,16 @@ func (handler *AuthHandler) SignOut(c echo.Context) error {
 	return c.JSON(http.StatusOK, GeneralResponse{Message: "Successfully Logged Out"})
 }
 
+// @Summary		Get user profile
+// @Description	Retrieves the profile of the authenticated user
+// @Tags			Authentication
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Success		200	{object}	dto.UserProfile	"User profile data"
+// @Failure		400	{object}	GeneralResponse	"Failed to get profile"
+// @Failure		401	{object}	GeneralResponse	"Unauthorized"
+// @Router			/v1/auth/profile [get]
 func (handler *AuthHandler) GetProfile(c echo.Context) error {
 
 	// initiate session destroy
@@ -123,6 +157,17 @@ func (handler *AuthHandler) GetProfile(c echo.Context) error {
 	return c.JSON(http.StatusOK, user)
 }
 
+// @Summary		Update user profile
+// @Description	Updates the profile information of the authenticated user
+// @Tags			Authentication
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			request	body		dto.ReqUpdateProfile	true	"Updated user profile data"
+// @Success		200		{object}	GeneralResponse			"Successfully updated profile"
+// @Failure		400		{object}	GeneralResponse			"Invalid request"
+// @Failure		401		{object}	GeneralResponse			"Unauthorized"
+// @Router			/v1/auth/profile [put]
 func (handler *AuthHandler) UpdateProfile(c echo.Context) error {
 
 	// Validate input
@@ -147,6 +192,17 @@ func (handler *AuthHandler) UpdateProfile(c echo.Context) error {
 	return c.JSON(http.StatusOK, GeneralResponse{Message: "Successfully Updated Profile"})
 }
 
+// @Summary		Update user password
+// @Description	Updates the password of the authenticated user
+// @Tags			Authentication
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			request	body		dto.ReqUpdatePassword	true	"New password data"
+// @Success		200		{object}	GeneralResponse			"Successfully updated password"
+// @Failure		400		{object}	GeneralResponse			"Invalid request"
+// @Failure		401		{object}	GeneralResponse			"Unauthorized"
+// @Router			/v1/auth/password [put]
 func (handler *AuthHandler) UpdateMyPassword(c echo.Context) error {
 	// Validate input
 	req := new(dto.ReqUpdatePassword)

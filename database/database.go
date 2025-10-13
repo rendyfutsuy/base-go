@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/rendyfutsuy/base-go.git/utils"
+	"github.com/rendyfutsuy/base-go/utils"
 )
 
 var counts int64

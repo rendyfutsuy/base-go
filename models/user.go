@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rendyfutsuy/base-go.git/utils"
+	"github.com/rendyfutsuy/base-go/utils"
 )
 
 // User represent the user model

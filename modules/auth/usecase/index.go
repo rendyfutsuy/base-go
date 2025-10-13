@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/rendyfutsuy/base-go.git/modules/auth"
+	"github.com/rendyfutsuy/base-go/modules/auth"
 )
 
 type AuthClaims struct {

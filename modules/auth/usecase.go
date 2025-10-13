@@ -2,7 +2,7 @@ package auth
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/rendyfutsuy/base-go.git/modules/auth/dto"
+	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 )
 
 // Usecase represent the auth's usecases

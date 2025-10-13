@@ -3,7 +3,7 @@ package usecase
 import (
 	"time"
 
-	role "github.com/rendyfutsuy/base-go.git/modules/role"
+	role "github.com/rendyfutsuy/base-go/modules/role"
 )
 
 type roleUsecase struct {

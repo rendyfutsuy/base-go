@@ -10,24 +10,24 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	// middleware "github.com/rendyfutsuy/base-go.git/helper/middleware"
-	_reqContext "github.com/rendyfutsuy/base-go.git/helper/middleware/request"
-	// "github.com/rendyfutsuy/base-go.git/helper/validations"
+	// middleware "github.com/rendyfutsuy/base-go/helper/middleware"
+	_reqContext "github.com/rendyfutsuy/base-go/helper/middleware/request"
+	// "github.com/rendyfutsuy/base-go/helper/validations"
 
-	_roleController "github.com/rendyfutsuy/base-go.git/modules/role/delivery/http"
-	_roleRepo "github.com/rendyfutsuy/base-go.git/modules/role/repository"
-	_roleService "github.com/rendyfutsuy/base-go.git/modules/role/usecase"
-	"github.com/rendyfutsuy/base-go.git/utils"
-	"github.com/rendyfutsuy/base-go.git/utils/services"
+	_roleController "github.com/rendyfutsuy/base-go/modules/role/delivery/http"
+	_roleRepo "github.com/rendyfutsuy/base-go/modules/role/repository"
+	_roleService "github.com/rendyfutsuy/base-go/modules/role/usecase"
+	"github.com/rendyfutsuy/base-go/utils"
+	"github.com/rendyfutsuy/base-go/utils/services"
 
-	_authController "github.com/rendyfutsuy/base-go.git/modules/auth/delivery/http"
-	_authRepo "github.com/rendyfutsuy/base-go.git/modules/auth/repository"
-	_authService "github.com/rendyfutsuy/base-go.git/modules/auth/usecase"
+	_authController "github.com/rendyfutsuy/base-go/modules/auth/delivery/http"
+	_authRepo "github.com/rendyfutsuy/base-go/modules/auth/repository"
+	_authService "github.com/rendyfutsuy/base-go/modules/auth/usecase"
 
-	authmiddleware "github.com/rendyfutsuy/base-go.git/helpers/middleware"
-	_accountController "github.com/rendyfutsuy/base-go.git/modules/account/delivery/http"
-	_accountRepo "github.com/rendyfutsuy/base-go.git/modules/account/repository"
-	_accountService "github.com/rendyfutsuy/base-go.git/modules/account/usecase"
+	authmiddleware "github.com/rendyfutsuy/base-go/helpers/middleware"
+	_accountController "github.com/rendyfutsuy/base-go/modules/account/delivery/http"
+	_accountRepo "github.com/rendyfutsuy/base-go/modules/account/repository"
+	_accountService "github.com/rendyfutsuy/base-go/modules/account/usecase"
 )
 
 func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo {

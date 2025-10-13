@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/rendyfutsuy/base-go.git/utils"
+	"github.com/rendyfutsuy/base-go/utils"
 )
 
 type ReqAuthUser struct {

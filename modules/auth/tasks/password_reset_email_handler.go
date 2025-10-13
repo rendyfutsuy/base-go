@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
-	"github.com/rendyfutsuy/base-go.git/utils"
-	"github.com/rendyfutsuy/base-go.git/utils/services"
+	"github.com/rendyfutsuy/base-go/utils"
+	"github.com/rendyfutsuy/base-go/utils/services"
 )
 
 const (

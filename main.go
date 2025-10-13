@@ -8,9 +8,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
-	"github.com/rendyfutsuy/base-go.git/database"
-	"github.com/rendyfutsuy/base-go.git/router"
-	"github.com/rendyfutsuy/base-go.git/utils"
+	"github.com/rendyfutsuy/base-go/database"
+	"github.com/rendyfutsuy/base-go/router"
+	"github.com/rendyfutsuy/base-go/utils"
 )
 
 var (

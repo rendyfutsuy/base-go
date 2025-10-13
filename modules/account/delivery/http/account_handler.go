@@ -9,12 +9,12 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	_reqContext "github.com/rendyfutsuy/base-go.git/helper/middleware/request"
-	"github.com/rendyfutsuy/base-go.git/helper/request"
-	"github.com/rendyfutsuy/base-go.git/helper/response"
-	"github.com/rendyfutsuy/base-go.git/helpers/middleware"
-	account "github.com/rendyfutsuy/base-go.git/modules/account"
-	"github.com/rendyfutsuy/base-go.git/modules/account/dto"
+	_reqContext "github.com/rendyfutsuy/base-go/helper/middleware/request"
+	"github.com/rendyfutsuy/base-go/helper/request"
+	"github.com/rendyfutsuy/base-go/helper/response"
+	"github.com/rendyfutsuy/base-go/helpers/middleware"
+	account "github.com/rendyfutsuy/base-go/modules/account"
+	"github.com/rendyfutsuy/base-go/modules/account/dto"
 )
 
 type ResponseError struct {

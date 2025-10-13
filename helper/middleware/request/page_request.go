@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
-	"github.com/rendyfutsuy/base-go.git/helper/request"
+	"github.com/rendyfutsuy/base-go/helper/request"
 )
 
 type ResponseError struct {

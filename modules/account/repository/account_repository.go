@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rendyfutsuy/base-go.git/helper/request"
-	"github.com/rendyfutsuy/base-go.git/models"
-	account "github.com/rendyfutsuy/base-go.git/modules/account"
-	"github.com/rendyfutsuy/base-go.git/modules/account/dto"
-	"github.com/rendyfutsuy/base-go.git/utils"
+	"github.com/rendyfutsuy/base-go/helper/request"
+	"github.com/rendyfutsuy/base-go/models"
+	account "github.com/rendyfutsuy/base-go/modules/account"
+	"github.com/rendyfutsuy/base-go/modules/account/dto"
+	"github.com/rendyfutsuy/base-go/utils"
 )
 
 type accountRepository struct {

@@ -3,7 +3,7 @@ package usecase
 import (
 	"time"
 
-	account "github.com/rendyfutsuy/base-go.git/modules/account"
+	account "github.com/rendyfutsuy/base-go/modules/account"
 )
 
 type accountUsecase struct {

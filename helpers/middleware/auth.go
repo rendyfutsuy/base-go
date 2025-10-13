@@ -7,10 +7,10 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
-	"github.com/rendyfutsuy/base-go.git/models"
-	"github.com/rendyfutsuy/base-go.git/utils"
+	"github.com/rendyfutsuy/base-go/models"
+	"github.com/rendyfutsuy/base-go/utils"
 
-	"github.com/rendyfutsuy/base-go.git/modules/auth"
+	"github.com/rendyfutsuy/base-go/modules/auth"
 )
 
 type GeneralResponse struct {
