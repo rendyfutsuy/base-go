@@ -13,6 +13,7 @@ type Usecase interface {
 	GetProfile(c echo.Context) (profile dto.UserProfile, err error)
 	UpdateProfile(c echo.Context, profileChunks dto.ReqUpdateProfile) error
 	UpdateMyPassword(c echo.Context, passwordChunks dto.ReqUpdatePassword) error
+	IsUserPasswordExpired(login string) error
 
 	// for reset password
 	RequestResetPassword(c echo.Context, email string) error

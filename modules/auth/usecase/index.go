@@ -3,12 +3,12 @@ package usecase
 import (
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/rendyfutsuy/base-go/modules/auth"
 )
 
 type AuthClaims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 	UserID string `json:"user_id"`
 }
 

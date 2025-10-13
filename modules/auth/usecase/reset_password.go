@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/labstack/echo/v4"
+	"github.com/rendyfutsuy/base-go/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -25,6 +26,7 @@ func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, toke
 	user, err := u.authRepo.GetUserByResetPasswordToken(token)
 
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
@@ -48,6 +50,7 @@ func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, toke
 	_, err = u.authRepo.UpdatePasswordById(newPassword, user.ID)
 
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
@@ -55,6 +58,7 @@ func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, toke
 	err = u.authRepo.IncreasePasswordExpiredAt(user.ID)
 
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
@@ -62,6 +66,7 @@ func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, toke
 	// hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
@@ -69,6 +74,16 @@ func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, toke
 	err = u.authRepo.AddPasswordHistory(string(hashedPassword), user.ID)
 
 	if err != nil {
+		utils.Logger.Error(err.Error())
+		return err
+	}
+
+	// reset password attempt counter to 0
+	err = u.authRepo.ResetPasswordAttempt(user.ID)
+
+	// if fail to reset return error
+	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
@@ -76,6 +91,7 @@ func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, toke
 	err = u.authRepo.DestroyAllResetPasswordToken(user.ID)
 
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
@@ -83,6 +99,7 @@ func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, toke
 	err = u.authRepo.DestroyAllToken(user.ID)
 
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 

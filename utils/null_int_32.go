@@ -3,6 +3,7 @@ package utils
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"math"
 )
 
 // NullInt32 is a custom nullable int32 type
@@ -20,6 +21,8 @@ func (ni *NullInt32) Scan(value interface{}) error {
 	ni.Valid = true
 	if v, ok := value.(int32); ok {
 		ni.Int32 = v
+	} else if v, ok := value.(int64); ok && v >= math.MinInt32 && v <= math.MaxInt32 {
+		ni.Int32 = int32(v)
 	} else {
 		ni.Valid = false
 	}

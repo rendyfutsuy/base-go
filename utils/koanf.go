@@ -32,3 +32,7 @@ func GetString(key string) string {
 func GetInt(key string) int {
 	return ConfigVars.Int(key)
 }
+
+func GetBool(key string) bool {
+	return ConfigVars.Bool(key)
+}

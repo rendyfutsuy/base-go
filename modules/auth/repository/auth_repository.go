@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	_ "github.com/lib/pq"
+	"github.com/rendyfutsuy/base-go/constants"
 	models "github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
@@ -66,16 +67,16 @@ func (repo *authRepository) FindByEmailOrUsername(login string) (user models.Use
 	// Handle the error.
 	if err != nil {
 		// Print an error message if scanning the row fails.
-		fmt.Println("Error scanning row:", err)
+		fmt.Println(constants.SQLErrorScanRow, err)
 
 		// Handle case where no row is found.
 		if err == sql.ErrNoRows {
 			log.Printf("No user found with email/username: %s", login)
-			return user, errors.New("User Not Found, please check to Customer Services...")
+			return user, errors.New(constants.UserInvalid)
 		}
 
 		// Log other errors for debugging.
-		log.Printf("QueryRow scan error: %v", err)
+		log.Printf(constants.SQLErrorQueryRow, err)
 		return user, err
 	}
 
@@ -108,10 +109,10 @@ func (repo *authRepository) AssertPasswordRight(password string, userId uuid.UUI
 	// if user not active and soft deleted, return error
 	if err != nil {
 		if err == sql.ErrNoRows {
-			fmt.Println("User not found")
-			return false, errors.New("User Not Found, please check to Customer Services...")
+			fmt.Println(constants.UserNotFound)
+			return false, errors.New(constants.UserInvalid)
 		}
-		fmt.Println("Error querying database:", err)
+		fmt.Println(constants.SQLErrorQueryDatabase, err)
 		return false, err
 	}
 
@@ -120,9 +121,9 @@ func (repo *authRepository) AssertPasswordRight(password string, userId uuid.UUI
 
 	if err == bcrypt.ErrMismatchedHashAndPassword {
 		// password do not match, add counter on users table
-		repo.Conn.QueryRow(
+		repo.Conn.Exec(
 			`UPDATE users SET counter = counter + 1, updated_at = $1 WHERE id = $2 RETURNING id`,
-			time.Now(),
+			time.Now().UTC(),
 			userId,
 		)
 
@@ -203,10 +204,10 @@ func (repo *authRepository) AssertPasswordExpiredIsPassed(userId uuid.UUID) (boo
 	// Handle the error, such as not finding the user or database errors
 	if err != nil {
 		if err == sql.ErrNoRows {
-			fmt.Println("User not found")
-			return false, errors.New("User Not Found")
+			fmt.Println(constants.UserNotFound)
+			return false, errors.New(constants.UserNotFound)
 		}
-		fmt.Println("Error querying database:", err)
+		fmt.Println(constants.SQLErrorQueryDatabase, err)
 		return false, err
 	}
 
@@ -237,10 +238,10 @@ func (repo *authRepository) AssertPasswordAttemptPassed(userId uuid.UUID) (bool,
 	// Handle the error, such as not finding the user or database errors
 	if err != nil {
 		if err == sql.ErrNoRows {
-			fmt.Println("User not found")
-			return false, errors.New("User Not Found")
+			fmt.Println(constants.UserNotFound)
+			return false, errors.New(constants.UserNotFound)
 		}
-		fmt.Println("Error querying database:", err)
+		fmt.Println(constants.SQLErrorQueryDatabase, err)
 		return false, err
 	}
 
@@ -251,6 +252,18 @@ func (repo *authRepository) AssertPasswordAttemptPassed(userId uuid.UUID) (bool,
 	}
 
 	return true, nil
+}
+
+func (repo *authRepository) ResetPasswordAttempt(userId uuid.UUID) error {
+
+	// reset attempt to 0
+	repo.Conn.Exec(
+		`UPDATE users SET counter = 0, updated_at = $1 WHERE id = $2 RETURNING id`,
+		time.Now().UTC(),
+		userId,
+	)
+
+	return nil
 }
 
 // AddUserAccessToken inserts a new access token for a user into the database.
@@ -264,7 +277,7 @@ func (repo *authRepository) AssertPasswordAttemptPassed(userId uuid.UUID) (bool,
 func (repo *authRepository) AddUserAccessToken(accessToken string, userId uuid.UUID) error {
 
 	// insert new access token record into database
-	err := repo.Conn.QueryRow(
+	_, err := repo.Conn.Exec(
 		`INSERT INTO jwt_tokens
 			(access_token, user_id, created_at, updated_at) 
 		VALUES 
@@ -272,12 +285,13 @@ func (repo *authRepository) AddUserAccessToken(accessToken string, userId uuid.U
 		RETURNING access_token, user_id`,
 		accessToken,
 		userId,
-		time.Now(),
-		time.Now(),
+		time.Now().UTC(),
+		time.Now().UTC(),
 	)
 
 	if err != nil {
-		return err.Err()
+		utils.Logger.Error(err.Error())
+		return err
 	}
 
 	return nil
@@ -294,7 +308,7 @@ func (repo *authRepository) AddUserAccessToken(accessToken string, userId uuid.U
 func (repo *authRepository) AddPasswordHistory(hashedPassword string, userId uuid.UUID) error {
 
 	// insert new access token record into database
-	err := repo.Conn.QueryRow(
+	_, err := repo.Conn.Exec(
 		`INSERT INTO password_histories
 			(hashed_password, user_id, created_at, updated_at) 
 		VALUES 
@@ -302,12 +316,13 @@ func (repo *authRepository) AddPasswordHistory(hashedPassword string, userId uui
 		RETURNING hashed_password, user_id`,
 		hashedPassword,
 		userId,
-		time.Now(),
-		time.Now(),
+		time.Now().UTC(),
+		time.Now().UTC(),
 	)
 
 	if err != nil {
-		return err.Err()
+		utils.Logger.Error(err.Error())
+		return err
 	}
 
 	return nil
@@ -325,23 +340,31 @@ func (repo *authRepository) GetUserByAccessToken(accessToken string) (user model
 	// SQL query to retrieve the user with the given email.
 	query := `
 		SELECT 
-			usr.id as id, usr.email
+			usr.id as id,
+			usr.full_name as full_name,
+			usr.email,
+			usr.role_id,
+			roles.name
 		FROM 
 			users usr
 		JOIN
 			jwt_tokens jwt
 		on
 			jwt.user_id = usr.id
+		JOIN
+			roles
+		on
+			roles.id = usr.role_id
 		WHERE 
 			jwt.access_token = $1
 	`
 	// Execute the query and scan the result into the user struct.
-	err := repo.Conn.QueryRow(query, accessToken).Scan(&user.ID, &user.Email)
+	err := repo.Conn.QueryRow(query, accessToken).Scan(&user.ID, &user.FullName, &user.Email, &user.RoleId, &user.RoleName)
 
 	// Handle the error.
 	if err != nil {
 		// Print an error message if scanning the row fails.
-		fmt.Println("Error scanning row:", err)
+		fmt.Println(constants.SQLErrorScanRow, err)
 
 		// Handle case where no row is found.
 		if err == sql.ErrNoRows {
@@ -350,7 +373,7 @@ func (repo *authRepository) GetUserByAccessToken(accessToken string) (user model
 		}
 
 		// Log other errors for debugging.
-		log.Printf("QueryRow scan error: %v", err)
+		log.Printf(constants.SQLErrorQueryRow, err)
 		return user, err
 	}
 
@@ -376,7 +399,7 @@ func (repo *authRepository) DestroyToken(accessToken string) error {
 	// Handle the error.
 	if err != nil {
 		// Print an error message if delete row fails.
-		fmt.Println("Error scanning row:", err)
+		fmt.Println(constants.SQLErrorScanRow, err)
 		return err
 	}
 	return nil
@@ -432,16 +455,16 @@ func (repo *authRepository) FindByCurrentSession(accessToken string) (profile dt
 	// Handle the error.
 	if err != nil {
 		// Print an error message if scanning the row fails.
-		fmt.Println("Error scanning row:", err)
+		fmt.Println(constants.SQLErrorScanRow, err)
 
 		// Handle case where no row is found.
 		if err == sql.ErrNoRows {
 			log.Printf("No user found")
-			return profile, errors.New("User Not Found, please check to Customer Services...")
+			return profile, errors.New(constants.UserInvalid)
 		}
 
 		// Log other errors for debugging.
-		log.Printf("QueryRow scan error: %v", err)
+		log.Printf(constants.SQLErrorQueryRow, err)
 		return profile, err
 	}
 	return profile, nil
@@ -466,11 +489,11 @@ func (repo *authRepository) UpdateProfileById(profileChunks dto.ReqUpdateProfile
 	`
 
 	// Execute the query and scan the result into the profile struct.
-	err := repo.Conn.QueryRow(query, userId, profileChunks.Name)
+	_, err := repo.Conn.Exec(query, userId, profileChunks.Name)
 
 	// Handle the error.
 	if err != nil {
-		return false, err.Err()
+		return false, err
 	}
 
 	return true, nil
@@ -527,7 +550,7 @@ func (repo *authRepository) DestroyAllToken(userId uuid.UUID) error {
 	// Handle the error.
 	if err != nil {
 		// Print an error message if delete row fails.
-		fmt.Println("Error scanning row:", err)
+		fmt.Println(constants.SQLErrorScanRow, err)
 		return err
 	}
 	return nil

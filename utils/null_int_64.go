@@ -20,6 +20,8 @@ func (ni *NullInt64) Scan(value interface{}) error {
 	ni.Valid = true
 	if v, ok := value.(int64); ok {
 		ni.Int64 = v
+	} else if v, ok := value.(int32); ok {
+		ni.Int64 = int64(v)
 	} else {
 		ni.Valid = false
 	}

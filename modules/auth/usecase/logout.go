@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/rendyfutsuy/base-go/utils"
 )
 
 func (u *authUsecase) SignOut(c echo.Context, token string) error {
@@ -10,6 +11,7 @@ func (u *authUsecase) SignOut(c echo.Context, token string) error {
 	err := u.authRepo.DestroyToken(token)
 
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 

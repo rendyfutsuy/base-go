@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
+	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/rendyfutsuy/base-go/utils/services"
 )
@@ -22,13 +23,20 @@ type EmailDeliveryPayload struct {
 	Session string
 }
 
+var (
+	app struct {
+		NewRelicApp *newrelic.Application
+	}
+)
+
 // runs the email scheduler for resetting passwords.
 //
 // No parameters.
 // Returns an error if the scheduler encounters any issues.
 func RunResetPasswordEmailScheduler() error {
 	utils.InitConfig("config.json")
-	utils.InitializedLogger()
+	app.NewRelicApp = utils.InitializeNewRelic()
+	utils.InitializedLogger(app.NewRelicApp)
 	log.Println("Starting scheduler")
 
 	// Initialize the Redis client

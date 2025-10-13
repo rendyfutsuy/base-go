@@ -3,11 +3,12 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
+	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/rendyfutsuy/base-go/database"
 	"github.com/rendyfutsuy/base-go/router"
 	"github.com/rendyfutsuy/base-go/utils"
@@ -17,29 +18,45 @@ var (
 	app struct {
 		DatabaseBlips *sql.DB
 		Router        *echo.Echo
+		NewRelicApp   *newrelic.Application
+		Validator     *validator.Validate
 		// QueueClient          *asynq.Client
 	}
 )
 
 func init() {
 	utils.InitConfig("config.json")
-	utils.InitializedLogger()
-	log.Println("Starting service on port", utils.ConfigVars.String("app_port"))
+	if utils.ConfigVars.Exists("newrelic.enable_new_relic_logging") {
+		if utils.ConfigVars.Bool("newrelic.enable_new_relic_logging") {
+			app.NewRelicApp = utils.InitializeNewRelic()
+		}
+	}
 
+	utils.InitializedLogger(app.NewRelicApp)
+
+	if err := app.NewRelicApp.WaitForConnection(5 * time.Second); nil != err {
+		fmt.Println(err)
+	}
 	// Trying to connect to the database
 	app.DatabaseBlips = database.ConnectToDB("Blips")
 	if app.DatabaseBlips == nil {
 		panic("Can't connect to Postgres : Blips!")
 	}
+
+	app.Validator = validator.New()
+	utils.RegisterCustomValidator(app.Validator)
 }
 
 func main() {
+
 	utils.Logger.Info("Start the app")
 
 	// Set a timeout for each endpoint
 	timeoutContext := time.Duration(utils.ConfigVars.Int("context.timeout")) * time.Second
 
-	app.Router = router.InitializedRouter(app.DatabaseBlips, timeoutContext)
+	app.Router = router.InitializedRouter(app.DatabaseBlips, timeoutContext, app.Validator, app.NewRelicApp)
+
+	app.Router.Validator = &utils.CustomValidator{Validator: app.Validator}
 
 	app.Router.Logger.Fatal(app.Router.Start(fmt.Sprintf(":%s", utils.ConfigVars.String("app_port"))))
 

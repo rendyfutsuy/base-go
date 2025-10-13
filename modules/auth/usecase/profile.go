@@ -6,11 +6,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
+	"github.com/rendyfutsuy/base-go/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func (u *authUsecase) GetProfile(c echo.Context) (profile dto.UserProfile, err error) {
 	user, err := u.authRepo.FindByCurrentSession(c.Get("token").(string))
+	if err != nil {
+		return profile, err
+	}
+
 	return user, nil
 }
 
@@ -19,12 +24,14 @@ func (u *authUsecase) UpdateProfile(c echo.Context, profileChunks dto.ReqUpdateP
 	user, err := u.authRepo.FindByCurrentSession(c.Get("token").(string))
 
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
 	// parse user ID to UUID
 	userId, err := uuid.Parse(user.UserId)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
@@ -33,6 +40,7 @@ func (u *authUsecase) UpdateProfile(c echo.Context, profileChunks dto.ReqUpdateP
 	_, err = u.authRepo.UpdateProfileById(profileChunks, userId)
 
 	if err != nil {
+		// utils.Logger.Error(err.Error())
 		return err
 	}
 
@@ -44,12 +52,14 @@ func (u *authUsecase) UpdateMyPassword(c echo.Context, passwordChunks dto.ReqUpd
 	user, err := u.authRepo.FindByCurrentSession(c.Get("token").(string))
 
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
 	// parse user ID to UUID
 	userId, err := uuid.Parse(user.UserId)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
@@ -81,6 +91,7 @@ func (u *authUsecase) UpdateMyPassword(c echo.Context, passwordChunks dto.ReqUpd
 	// hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(passwordChunks.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
@@ -88,6 +99,16 @@ func (u *authUsecase) UpdateMyPassword(c echo.Context, passwordChunks dto.ReqUpd
 	err = u.authRepo.AddPasswordHistory(string(hashedPassword), userId)
 
 	if err != nil {
+		utils.Logger.Error(err.Error())
+		return err
+	}
+
+	// reset password attempt counter to 0
+	err = u.authRepo.ResetPasswordAttempt(userId)
+
+	// if fail to reset return error
+	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
@@ -95,12 +116,14 @@ func (u *authUsecase) UpdateMyPassword(c echo.Context, passwordChunks dto.ReqUpd
 	_, err = u.authRepo.UpdatePasswordById(passwordChunks.NewPassword, userId)
 
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
 	// destroy all token session
 	err = u.authRepo.DestroyAllToken(userId)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 

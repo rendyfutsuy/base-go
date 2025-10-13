@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/rendyfutsuy/base-go/helpers/middleware"
+	_reqContext "github.com/rendyfutsuy/base-go/helpers/middleware/request"
 	"github.com/rendyfutsuy/base-go/modules/auth"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 )
@@ -29,14 +30,16 @@ type AuthHandler struct {
 	AuthUseCase    auth.Usecase
 	validator      *validator.Validate
 	middlewareAuth middleware.IMiddlewareAuth
+	mwPageRequest  _reqContext.IMiddlewarePageRequest
 }
 
 // NewAuthHandler will initialize the auth/ resources endpoint
-func NewAuthHandler(e *echo.Echo, us auth.Usecase, middlewareAuth middleware.IMiddlewareAuth) {
+func NewAuthHandler(e *echo.Echo, us auth.Usecase, middlewareAuth middleware.IMiddlewareAuth, mwP _reqContext.IMiddlewarePageRequest) {
 	handler := &AuthHandler{
 		AuthUseCase:    us,
 		validator:      validator.New(),
 		middlewareAuth: middlewareAuth,
+		mwPageRequest:  mwP,
 	}
 
 	r := e.Group("v1/auth")
@@ -97,6 +100,11 @@ func (handler *AuthHandler) Authenticate(c echo.Context) error {
 	// initiate validation
 	if err := handler.validator.Struct(req); err != nil {
 		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
+	}
+
+	// check if user password already expired
+	if err := handler.AuthUseCase.IsUserPasswordExpired(req.Login); err != nil {
+		return c.JSON(419, GeneralResponse{Message: err.Error()})
 	}
 
 	// Assuming the Authenticate method on AuthUseCase does the actual authentication

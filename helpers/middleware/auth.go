@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/utils"
@@ -44,6 +44,8 @@ func (a *MiddlewareAuth) AuthorizationCheck(next echo.HandlerFunc) echo.HandlerF
 		// if bearer token not set
 		tokenString := strings.Split(authorization, "Bearer ")[1]
 
+		// tokenString = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQzMTUyMDAsInVzZXJfaWQiOiIwMTkwZDlkNi1kNDI3LTc5ZDctYjgyYy1jODAzN2EzYWQ0N2YifQ.e3lE58KU_NLE_hn4FJNLMfmgDkhLQL8xKRLJIxdUjGY"
+
 		if tokenString == "" {
 			return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: "unauthorized"})
 		}
@@ -51,11 +53,11 @@ func (a *MiddlewareAuth) AuthorizationCheck(next echo.HandlerFunc) echo.HandlerF
 		// get user data from token
 		userData, err := a.getUserData(tokenString)
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
+			return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: err.Error()})
 		}
 
 		// Parse and validate the token
-		claims := &jwt.StandardClaims{}
+		claims := &jwt.RegisteredClaims{}
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			// Provide the key for validating the token
 			// This should be the same key used to sign the token
@@ -63,7 +65,7 @@ func (a *MiddlewareAuth) AuthorizationCheck(next echo.HandlerFunc) echo.HandlerF
 		})
 
 		// Check if the token is expired
-		if claims.ExpiresAt < time.Now().Unix() {
+		if claims.ExpiresAt != nil && claims.ExpiresAt.Unix() < time.Now().Unix() {
 			return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: "Token Expired"})
 		}
 
@@ -75,7 +77,6 @@ func (a *MiddlewareAuth) AuthorizationCheck(next echo.HandlerFunc) echo.HandlerF
 		// set token to context
 		c.Set("token", tokenString)
 		c.Set("user", userData)
-		c.Set("authId", userData.ID)
 
 		return next(c)
 	}

@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
+	"github.com/rendyfutsuy/base-go/constants"
 	models "github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth/tasks"
 	"github.com/rendyfutsuy/base-go/utils"
@@ -22,6 +23,7 @@ func (repo *authRepository) RequestResetPassword(email string) error {
 	// get user by email
 	user, err := repo.FindByEmailOrUsername(email)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
@@ -34,17 +36,20 @@ func (repo *authRepository) RequestResetPassword(email string) error {
 	// add token to Database
 	err = repo.AddResetPasswordToken(token, user.ID)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
 	// enqueue task
 	task, err := tasks.NewEmailResetPasswordRequestTask(user.ID, user.Email, session)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
 	_, err = repo.QueueClient.Enqueue(task)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
 
@@ -79,7 +84,7 @@ func (repo *authRepository) GetUserByResetPasswordToken(token string) (user mode
 	// Handle the error.
 	if err != nil {
 		// Print an error message if scanning the row fails.
-		fmt.Println("Error scanning row:", err)
+		fmt.Println(constants.SQLErrorScanRow, err)
 
 		// Handle case where no row is found.
 		if err == sql.ErrNoRows {
@@ -88,7 +93,7 @@ func (repo *authRepository) GetUserByResetPasswordToken(token string) (user mode
 		}
 
 		// Log other errors for debugging.
-		log.Printf("QueryRow scan error: %v", err)
+		log.Printf(constants.SQLErrorQueryRow, err)
 		return user, err
 	}
 
@@ -106,7 +111,7 @@ func (repo *authRepository) GetUserByResetPasswordToken(token string) (user mode
 func (repo *authRepository) AddResetPasswordToken(token string, userId uuid.UUID) error {
 
 	// insert new access token record into database
-	err := repo.Conn.QueryRow(
+	_, err := repo.Conn.Exec(
 		`INSERT INTO reset_password_tokens
 				(access_token, user_id, created_at, updated_at) 
 			VALUES 
@@ -114,12 +119,13 @@ func (repo *authRepository) AddResetPasswordToken(token string, userId uuid.UUID
 			RETURNING access_token, user_id`,
 		token,
 		userId,
-		time.Now(),
-		time.Now(),
+		time.Now().UTC(),
+		time.Now().UTC(),
 	)
 
 	if err != nil {
-		return err.Err()
+		utils.Logger.Error(err.Error())
+		return err
 	}
 
 	return nil
@@ -143,7 +149,7 @@ func (repo *authRepository) DestroyResetPasswordToken(token string) error {
 	// Handle the error.
 	if err != nil {
 		// Print an error message if delete row fails.
-		fmt.Println("Error scanning row:", err)
+		fmt.Println(constants.SQLErrorScanRow, err)
 		return err
 	}
 	return nil
@@ -167,7 +173,7 @@ func (repo *authRepository) DestroyAllResetPasswordToken(userId uuid.UUID) error
 	// Handle the error.
 	if err != nil {
 		// Print an error message if delete row fails.
-		fmt.Println("Error scanning row:", err)
+		fmt.Println(constants.SQLErrorScanRow, err)
 		return err
 	}
 	return nil
@@ -189,7 +195,7 @@ func (repo *authRepository) IncreasePasswordExpiredAt(userId uuid.UUID) error {
 	// Handle the error.
 	if err != nil {
 		// Print an error message if delete row fails.
-		fmt.Println("Error scanning row:", err)
+		fmt.Println(constants.SQLErrorScanRow, err)
 		return err
 	}
 	return nil

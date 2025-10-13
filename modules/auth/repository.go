@@ -24,6 +24,7 @@ type Repository interface {
 	AssertPasswordNeverUsesByUser(newPassword string, userId uuid.UUID) (bool, error)
 	AddPasswordHistory(hashedPassword string, userId uuid.UUID) error
 	AssertPasswordAttemptPassed(userId uuid.UUID) (bool, error)
+	ResetPasswordAttempt(userId uuid.UUID) error
 
 	// for reset password
 	RequestResetPassword(email string) error

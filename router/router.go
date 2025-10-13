@@ -1,3 +1,11 @@
+//	@title			BLIP v2 API Documentation
+//	@version		0.0-beta
+//	@description	Welcome to the API documentation for the BLIP v2 Web Application. This comprehensive guide is designed to help developers seamlessly integrate and interact with our platform's functionalities. Whether you're building new features, enhancing existing ones, or troubleshooting, this documentation provides all the necessary resources and information.
+
+// @securityDefinitions.apikey	BearerAuth
+// @in							header
+// @name						Authorization
+// @description					Enter JWT token (ex: Bearer eyJhbGciOiJIU....)
 package router
 
 import (
@@ -7,30 +15,40 @@ import (
 
 	// "github.com/go-playground/validator/v10"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-
-	// middleware "github.com/rendyfutsuy/base-go/helper/middleware"
-	_reqContext "github.com/rendyfutsuy/base-go/helper/middleware/request"
-	// "github.com/rendyfutsuy/base-go/helper/validations"
-
-	_roleController "github.com/rendyfutsuy/base-go/modules/role/delivery/http"
-	_roleRepo "github.com/rendyfutsuy/base-go/modules/role/repository"
-	_roleService "github.com/rendyfutsuy/base-go/modules/role/usecase"
+	"github.com/newrelic/go-agent/v3/integrations/nrecho-v4"
+	"github.com/newrelic/go-agent/v3/newrelic"
+	_ "github.com/rendyfutsuy/base-go/docs"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/rendyfutsuy/base-go/utils/services"
+	"github.com/rendyfutsuy/base-go/worker"
+	echoSwagger "github.com/swaggo/echo-swagger"
+
+	_homepageController "github.com/rendyfutsuy/base-go/modules/homepage/delivery/http"
+
+	// middleware "github.com/rendyfutsuy/base-go/helpers/middleware"
+	_reqContext "github.com/rendyfutsuy/base-go/helpers/middleware/request"
+	// "github.com/rendyfutsuy/base-go/helpers/validations"
 
 	_authController "github.com/rendyfutsuy/base-go/modules/auth/delivery/http"
 	_authRepo "github.com/rendyfutsuy/base-go/modules/auth/repository"
 	_authService "github.com/rendyfutsuy/base-go/modules/auth/usecase"
 
 	authmiddleware "github.com/rendyfutsuy/base-go/helpers/middleware"
-	_accountController "github.com/rendyfutsuy/base-go/modules/account/delivery/http"
-	_accountRepo "github.com/rendyfutsuy/base-go/modules/account/repository"
-	_accountService "github.com/rendyfutsuy/base-go/modules/account/usecase"
+	roleMiddleware "github.com/rendyfutsuy/base-go/helpers/middleware"
+
+	_userManagementController "github.com/rendyfutsuy/base-go/modules/user_management/delivery/http"
+	_userManagementRepo "github.com/rendyfutsuy/base-go/modules/user_management/repository"
+	_userManagementService "github.com/rendyfutsuy/base-go/modules/user_management/usecase"
+
+	_roleManagementController "github.com/rendyfutsuy/base-go/modules/role_management/delivery/http"
+	_roleManagementRepo "github.com/rendyfutsuy/base-go/modules/role_management/repository"
+	_roleManagementService "github.com/rendyfutsuy/base-go/modules/role_management/usecase"
 )
 
-func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo {
+func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
 	router := echo.New()
 
 	// queries := sqlc.New(db)
@@ -44,7 +62,9 @@ func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
+	router.Use(middleware.Logger())
 	router.Use(middleware.Recover())
+	router.Use(nrecho.Middleware(nrApp))
 
 	// Config Rate Limiter allows 100 requests/sec
 	router.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(100)))
@@ -59,11 +79,9 @@ func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo
 	// Register HTTP Error Handler function
 	// router.HTTPErrorHandler = helper.ErrorHandler
 
-	router.GET("/", func(ec echo.Context) error {
-		return ec.JSON(http.StatusOK, map[string]string{
-			"message": "Default",
-		})
-	})
+	router.GET("/", _homepageController.DefaultHomepage)
+
+	router.GET("/swagger/*", echoSwagger.WrapHandler)
 	// Services  ------------------------------------------------------------------------------------------------------------------------------------------------------
 	emailServices, err := services.NewEmailService()
 	if err != nil {
@@ -71,26 +89,19 @@ func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo
 	}
 
 	// Repositories ------------------------------------------------------------------------------------------------------------------------------------------------------
-	roleRepo := _roleRepo.NewRoleRepository(dbBlips)
 	authRepo := _authRepo.NewAuthRepository(dbBlips, emailServices)
-	accountRepo := _accountRepo.NewAccountRepository(dbBlips)
+	roleManagementRepo := _roleManagementRepo.NewRoleManagementRepository(dbBlips)
+
+	userManagementRepo := _userManagementRepo.NewUserManagementRepository(dbBlips)
 
 	// Middlewares ------------------------------------------------------------------------------------------------------------------------------------------------------
 	middlewareAuth := authmiddleware.NewMiddlewareAuth(authRepo)
-	middlewarePageRequest := _reqContext.NewMiddlewarePageRequest()
+	middlewarePermission := roleMiddleware.NewMiddlewarePermission(
+		authRepo,
+		roleManagementRepo,
+	)
 
-	//Roles
-	roleService := _roleService.NewRoleUsecase(
-		roleRepo,
-		// dbValidations,
-		timeoutContext,
-	)
-	_roleController.NewRoleHandler(
-		router,
-		roleService,
-		middlewarePageRequest,
-		middlewareAuth,
-	)
+	middlewarePageRequest := _reqContext.NewMiddlewarePageRequest()
 
 	// Auth
 	authService := _authService.NewAuthUsecase(
@@ -103,20 +114,45 @@ func InitializedRouter(dbBlips *sql.DB, timeoutContext time.Duration) *echo.Echo
 		router,
 		authService,
 		middlewareAuth,
+		middlewarePageRequest,
 	)
 
-	// account
-	accountService := _accountService.NewAccountUsecase(
-		accountRepo,
+	// role management
+	roleManagementService := _roleManagementService.NewRoleManagementUsecase(
+		roleManagementRepo,
+		authRepo,
 		timeoutContext,
 	)
-	_accountController.NewAccountHandler(
+	_roleManagementController.NewRoleManagementHandler(
 		router,
-		accountService,
+		roleManagementService,
 		middlewarePageRequest,
 		middlewareAuth,
+		middlewarePermission,
 	)
 
-	return router
+	// user management
+	userManagementService := _userManagementService.NewUserManagementUsecase(
+		userManagementRepo,
+		roleManagementRepo,
+		authRepo,
+		timeoutContext,
+	)
+	_userManagementController.NewUserManagementHandler(
+		router,
+		userManagementService,
+		middlewarePageRequest,
+		middlewareAuth,
+		middlewarePermission,
+	)
 
+	usecaseRegistry := worker.UsecaseRegistry{
+		// Add any other usecases that your background jobs might need
+	}
+
+	dispatcher := worker.NewDispatcher(10, usecaseRegistry) // Using 10 workers, for example
+	dispatcher.Run()
+
+	time.Sleep(1000 * time.Millisecond)
+	return router
 }
