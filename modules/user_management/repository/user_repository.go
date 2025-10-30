@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"time"
@@ -16,7 +17,7 @@ import (
 // CreateUser creates a new user information entry in the database.
 //
 // It takes a ToDBCreateUser parameter and returns an User pointer and an error.
-func (repo *userRepository) CreateUser(userReq dto.ToDBCreateUser) (userRes *models.User, err error) {
+func (repo *userRepository) CreateUser(ctx context.Context, userReq dto.ToDBCreateUser) (userRes *models.User, err error) {
 
 	// initialize: user user model, time format to created at string,
 	userRes = new(models.User)
@@ -26,7 +27,7 @@ func (repo *userRepository) CreateUser(userReq dto.ToDBCreateUser) (userRes *mod
 
 	// execute query to insert user user
 	// assign return value to userRes variable
-	err = repo.Conn.QueryRow(
+	err = repo.Conn.QueryRowContext(ctx,
 		`INSERT INTO users
 			(full_name, email, role_id, is_active, gender, created_at, updated_at, password, password_expired_at)
 		VALUES
@@ -60,13 +61,13 @@ func (repo *userRepository) CreateUser(userReq dto.ToDBCreateUser) (userRes *mod
 // GetUserByID retrieves an user information entry by ID from the database.
 //
 // It takes a uuid.UUID parameter representing the ID and returns an User pointer and an error.
-func (repo *userRepository) GetUserByID(id uuid.UUID) (user *models.User, err error) {
+func (repo *userRepository) GetUserByID(ctx context.Context, id uuid.UUID) (user *models.User, err error) {
 	// initialize user variable
 	user = new(models.User)
 
 	// fetch data from database by id that passed
 	// assign return value to user variable
-	err = repo.Conn.QueryRow(
+	err = repo.Conn.QueryRowContext(ctx,
 		`SELECT 
 			usr.id,
 			usr.full_name,
@@ -118,7 +119,7 @@ func (repo *userRepository) GetUserByID(id uuid.UUID) (user *models.User, err er
 // It takes a PageRequest parameter and returns a slice of User, the total number of
 // user information entries, and an error.
 // its can search by user name, user code, user alias_1, user alias_2, user alias_3, user alias_4, user address, user email, user phone_number, type name
-func (repo *userRepository) GetIndexUser(req request.PageRequest, filter dto.ReqUserIndexFilter) (users []models.User, total int, err error) {
+func (repo *userRepository) GetIndexUser(ctx context.Context, req request.PageRequest, filter dto.ReqUserIndexFilter) (users []models.User, total int, err error) {
 	// initialize: pagination page, search query to local variable
 	offSet := (req.Page - 1) * req.PerPage
 	searchQuery := req.Search
@@ -210,9 +211,9 @@ func (repo *userRepository) GetIndexUser(req request.PageRequest, filter dto.Req
 
 	// count total
 	if searchQuery != "" {
-		err = repo.Conn.QueryRow(countQuery+whereClause, append([]interface{}{searchQuery}, params...)...).Scan(&total)
+		err = repo.Conn.QueryRowContext(ctx, countQuery+whereClause, append([]interface{}{searchQuery}, params...)...).Scan(&total)
 	} else {
-		err = repo.Conn.QueryRow(countQuery+whereClause, params...).Scan(&total)
+		err = repo.Conn.QueryRowContext(ctx, countQuery+whereClause, params...).Scan(&total)
 	}
 	if err != nil {
 		return nil, 0, err
@@ -221,9 +222,9 @@ func (repo *userRepository) GetIndexUser(req request.PageRequest, filter dto.Req
 	// retrieve paginated
 	rows := new(sql.Rows)
 	if searchQuery != "" {
-		rows, err = repo.Conn.Query(baseQuery+whereClause+orderClause+limitClause, append([]interface{}{searchQuery}, params...)...)
+		rows, err = repo.Conn.QueryContext(ctx, baseQuery+whereClause+orderClause+limitClause, append([]interface{}{searchQuery}, params...)...)
 	} else {
-		rows, err = repo.Conn.Query(baseQuery+whereClause+orderClause+limitClause, params...)
+		rows, err = repo.Conn.QueryContext(ctx, baseQuery+whereClause+orderClause+limitClause, params...)
 	}
 	if err != nil {
 		return nil, 0, err
@@ -265,8 +266,8 @@ func (repo *userRepository) GetIndexUser(req request.PageRequest, filter dto.Req
 // GetAllUser retrieves all user information entries from the database.
 //
 // Returns a slice of models.User and an error.
-func (repo *userRepository) GetAllUser() ([]models.User, error) {
-	rows, err := repo.Conn.Query(
+func (repo *userRepository) GetAllUser(ctx context.Context) ([]models.User, error) {
+	rows, err := repo.Conn.QueryContext(ctx,
 		`SELECT 
 			id,
 			full_name,
@@ -316,12 +317,12 @@ func (repo *userRepository) GetAllUser() ([]models.User, error) {
 // alias_1, alias_2, alias_3, alias_4, and address fields of the user information.
 // If the user information with the provided ID is not found, it returns an error.
 // If there is an error during the update, it returns the error.
-func (repo *userRepository) UpdateUser(id uuid.UUID, userReq dto.ToDBUpdateUser) (userRes *models.User, err error) {
+func (repo *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, userReq dto.ToDBUpdateUser) (userRes *models.User, err error) {
 	userRes = new(models.User)
 	timeFormat := constants.FormatTimezone
 	updatedAtString := time.Now().UTC().Format(timeFormat)
 
-	err = repo.Conn.QueryRow(
+	err = repo.Conn.QueryRowContext(ctx,
 		`UPDATE users SET 
 			full_name = $1,
 			updated_at = $2,
@@ -367,13 +368,13 @@ func (repo *userRepository) UpdateUser(id uuid.UUID, userReq dto.ToDBUpdateUser)
 //
 // It takes an id of type uuid.UUID and an userReq of type dto.ToDBDeleteUser as parameters.
 // It returns the soft deleted user user entry of type models.User and an error.
-func (repo *userRepository) SoftDeleteUser(id uuid.UUID, userReq dto.ToDBDeleteUser) (userRes *models.User, err error) {
+func (repo *userRepository) SoftDeleteUser(ctx context.Context, id uuid.UUID, userReq dto.ToDBDeleteUser) (userRes *models.User, err error) {
 
 	userRes = new(models.User)
 	timeFormat := constants.FormatTimezone
 	deletedAtString := time.Now().UTC().Format(timeFormat)
 
-	err = repo.Conn.QueryRow(
+	err = repo.Conn.QueryRowContext(ctx,
 		`UPDATE users SET 
 			deleted_at = $1
 		WHERE 
@@ -401,11 +402,11 @@ func (repo *userRepository) SoftDeleteUser(id uuid.UUID, userReq dto.ToDBDeleteU
 	return userRes, err
 }
 
-func (repo *userRepository) BlockUser(id uuid.UUID) (userRes *models.User, err error) {
+func (repo *userRepository) BlockUser(ctx context.Context, id uuid.UUID) (userRes *models.User, err error) {
 
 	userRes = new(models.User)
 
-	err = repo.Conn.QueryRow(
+	err = repo.Conn.QueryRowContext(ctx,
 		`UPDATE users SET 
 			counter = 4
 		WHERE 
@@ -433,11 +434,11 @@ func (repo *userRepository) BlockUser(id uuid.UUID) (userRes *models.User, err e
 	return userRes, err
 }
 
-func (repo *userRepository) UnBlockUser(id uuid.UUID) (userRes *models.User, err error) {
+func (repo *userRepository) UnBlockUser(ctx context.Context, id uuid.UUID) (userRes *models.User, err error) {
 
 	userRes = new(models.User)
 
-	err = repo.Conn.QueryRow(
+	err = repo.Conn.QueryRowContext(ctx,
 		`UPDATE users SET 
 			counter = 0
 		WHERE 
@@ -465,11 +466,11 @@ func (repo *userRepository) UnBlockUser(id uuid.UUID) (userRes *models.User, err
 	return userRes, err
 }
 
-func (repo *userRepository) ActivateUser(id uuid.UUID) (userRes *models.User, err error) {
+func (repo *userRepository) ActivateUser(ctx context.Context, id uuid.UUID) (userRes *models.User, err error) {
 
 	userRes = new(models.User)
 
-	err = repo.Conn.QueryRow(
+	err = repo.Conn.QueryRowContext(ctx,
 		`UPDATE users SET 
 			is_active = true
 		WHERE 
@@ -497,11 +498,11 @@ func (repo *userRepository) ActivateUser(id uuid.UUID) (userRes *models.User, er
 	return userRes, err
 }
 
-func (repo *userRepository) DisActivateUser(id uuid.UUID) (userRes *models.User, err error) {
+func (repo *userRepository) DisActivateUser(ctx context.Context, id uuid.UUID) (userRes *models.User, err error) {
 
 	userRes = new(models.User)
 
-	err = repo.Conn.QueryRow(
+	err = repo.Conn.QueryRowContext(ctx,
 		`UPDATE users SET 
 			is_active = false
 		WHERE 
@@ -532,8 +533,8 @@ func (repo *userRepository) DisActivateUser(id uuid.UUID) (userRes *models.User,
 // CountUser retrieves the count of user information entries from the database.
 //
 // Returns a pointer to an integer and an error.
-func (repo *userRepository) CountUser() (count *int, err error) {
-	err = repo.Conn.QueryRow(
+func (repo *userRepository) CountUser(ctx context.Context) (count *int, err error) {
+	err = repo.Conn.QueryRowContext(ctx,
 		`SELECT 
 			COUNT(*)
 		FROM 
@@ -556,7 +557,7 @@ func (repo *userRepository) CountUser() (count *int, err error) {
 // Returns:
 // - bool: true if the email is not duplicated, false otherwise.
 // - error: an error if the check fails.
-func (repo *userRepository) EmailIsNotDuplicated(email string, excludedId uuid.UUID) (bool, error) {
+func (repo *userRepository) EmailIsNotDuplicated(ctx context.Context, email string, excludedId uuid.UUID) (bool, error) {
 	baseQuery := `SELECT 
 			COUNT(*)
 		FROM 
@@ -574,7 +575,7 @@ func (repo *userRepository) EmailIsNotDuplicated(email string, excludedId uuid.U
 	result := 0
 
 	// assert email is nt duplicated
-	err := repo.Conn.QueryRow(baseQuery, params...).Scan(&result)
+	err := repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(&result)
 
 	// if have error, return false and error
 	if err != nil {
@@ -594,7 +595,7 @@ func (repo *userRepository) EmailIsNotDuplicated(email string, excludedId uuid.U
 //
 // It takes a name string and an excludedId UUID as parameters.
 // It returns a boolean indicating whether the name is not duplicated and an error.
-func (repo *userRepository) UserNameIsNotDuplicated(name string, excludedId uuid.UUID) (bool, error) {
+func (repo *userRepository) UserNameIsNotDuplicated(ctx context.Context, name string, excludedId uuid.UUID) (bool, error) {
 	baseQuery := `SELECT 
 			COUNT(*)
 		FROM 
@@ -612,7 +613,7 @@ func (repo *userRepository) UserNameIsNotDuplicated(name string, excludedId uuid
 	result := 0
 
 	// assert name is nt duplicated
-	err := repo.Conn.QueryRow(baseQuery, params...).Scan(&result)
+	err := repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(&result)
 
 	// if have error, return false and error
 	if err != nil {
@@ -637,7 +638,7 @@ func (repo *userRepository) UserNameIsNotDuplicated(name string, excludedId uuid
 // Returns:
 // - user: a pointer to the retrieved user information.
 // - err: an error if there was a problem retrieving the user information.
-func (repo *userRepository) GetDuplicatedUser(name string, excludedId uuid.UUID) (user *models.User, err error) {
+func (repo *userRepository) GetDuplicatedUser(ctx context.Context, name string, excludedId uuid.UUID) (user *models.User, err error) {
 	baseQuery := `SELECT 
 			id, name, created_at, updated_at
 		FROM 
@@ -656,7 +657,7 @@ func (repo *userRepository) GetDuplicatedUser(name string, excludedId uuid.UUID)
 	user = &models.User{}
 
 	// assert name is not duplicated
-	err = repo.Conn.QueryRow(baseQuery, params...).Scan(
+	err = repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(
 		&user.ID,
 		&user.FullName,
 		&user.CreatedAt,
@@ -675,7 +676,7 @@ func (repo *userRepository) GetDuplicatedUser(name string, excludedId uuid.UUID)
 //
 // It takes a name string and an excludedId UUID as parameters.
 // It returns a boolean indicating whether the name is not duplicated and an error.
-func (repo *userRepository) UserNameIsNotDuplicatedOnSoftDeleted(name string, excludedId uuid.UUID) (bool, error) {
+func (repo *userRepository) UserNameIsNotDuplicatedOnSoftDeleted(ctx context.Context, name string, excludedId uuid.UUID) (bool, error) {
 	baseQuery := `SELECT 
 			COUNT(*)
 		FROM 
@@ -693,7 +694,7 @@ func (repo *userRepository) UserNameIsNotDuplicatedOnSoftDeleted(name string, ex
 	result := 0
 
 	// assert name is nt duplicated
-	err := repo.Conn.QueryRow(baseQuery, params...).Scan(&result)
+	err := repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(&result)
 
 	// if have error, return false and error
 	if err != nil {
@@ -718,7 +719,7 @@ func (repo *userRepository) UserNameIsNotDuplicatedOnSoftDeleted(name string, ex
 // Returns:
 // - user: a pointer to the retrieved user information.
 // - err: an error if there was a problem retrieving the user information.
-func (repo *userRepository) GetDuplicatedUserOnSoftDeleted(name string, excludedId uuid.UUID) (user *models.User, err error) {
+func (repo *userRepository) GetDuplicatedUserOnSoftDeleted(ctx context.Context, name string, excludedId uuid.UUID) (user *models.User, err error) {
 	baseQuery := `SELECT 
 			id, name, created_at, updated_at
 		FROM 
@@ -737,7 +738,7 @@ func (repo *userRepository) GetDuplicatedUserOnSoftDeleted(name string, excluded
 	user = &models.User{}
 
 	// assert name is not duplicated
-	err = repo.Conn.QueryRow(baseQuery, params...).Scan(
+	err = repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(
 		&user.ID,
 		&user.FullName,
 		&user.CreatedAt,

@@ -41,7 +41,7 @@ func (handler *UserManagementHandler) UpdateUserPassword(c echo.Context) error {
 	}
 
 	// get User ID By Passed ID
-	res, err := handler.UserUseCase.GetUserByID(id)
+	res, err := handler.UserUseCase.GetUserByID(c, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -75,7 +75,7 @@ func (handler *UserManagementHandler) ConfirmCurrentUserPassword(c echo.Context)
 	}
 
 	// get User ID By Passed ID
-	res, err := handler.UserUseCase.GetUserByID(authId)
+	res, err := handler.UserUseCase.GetUserByID(c, authId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}

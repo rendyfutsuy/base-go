@@ -68,7 +68,7 @@ func (handler *UserManagementHandler) GetIndexUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
 
-	res, total, err := handler.UserUseCase.GetIndexUser(*pageRequest, *filter)
+	res, total, err := handler.UserUseCase.GetIndexUser(c, *pageRequest, *filter)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
@@ -92,7 +92,7 @@ func (handler *UserManagementHandler) GetIndexUser(c echo.Context) error {
 
 func (handler *UserManagementHandler) GetAllUser(c echo.Context) error {
 
-	res, err := handler.UserUseCase.GetAllUser()
+	res, err := handler.UserUseCase.GetAllUser(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -119,7 +119,7 @@ func (handler *UserManagementHandler) GetUserByID(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.ErrorUUIDNotRecognized})
 	}
 
-	res, err := handler.UserUseCase.GetUserByID(id)
+	res, err := handler.UserUseCase.GetUserByID(c, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -154,7 +154,7 @@ func (handler *UserManagementHandler) UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
 
-	res, err := handler.UserUseCase.UpdateUser(id, req, authId)
+	res, err := handler.UserUseCase.UpdateUser(c, id, req, authId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -186,7 +186,7 @@ func (handler *UserManagementHandler) GetDuplicatedUser(c echo.Context) error {
 		uid = req.ExcludedUserId
 	}
 
-	res, err := handler.UserUseCase.UserNameIsNotDuplicated(req.FullName, uid)
+	res, err := handler.UserUseCase.UserNameIsNotDuplicated(c, req.FullName, uid)
 
 	// if name havent been uses by existing account info, return not found error
 	if res == nil {

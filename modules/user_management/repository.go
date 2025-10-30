@@ -1,6 +1,8 @@
 package user_management
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	models "github.com/rendyfutsuy/base-go/models"
@@ -13,26 +15,26 @@ type Repository interface {
 
 	// ------------------------------------------------- user scope - BEGIN -----------------------------------------------------------
 	// crud
-	CreateUser(userReq dto.ToDBCreateUser) (userRes *models.User, err error)
-	GetUserByID(id uuid.UUID) (user *models.User, err error)
-	GetAllUser() (users []models.User, err error)
-	GetIndexUser(req request.PageRequest, filter dto.ReqUserIndexFilter) (users []models.User, total int, err error)
-	UpdateUser(id uuid.UUID, userReq dto.ToDBUpdateUser) (userRes *models.User, err error)
-	SoftDeleteUser(id uuid.UUID, userReq dto.ToDBDeleteUser) (userRes *models.User, err error)
-	UserNameIsNotDuplicated(name string, excludedId uuid.UUID) (bool, error)
-	GetDuplicatedUser(name string, excludedId uuid.UUID) (user *models.User, err error)
-	UserNameIsNotDuplicatedOnSoftDeleted(name string, excludedId uuid.UUID) (bool, error)
-	GetDuplicatedUserOnSoftDeleted(name string, excludedId uuid.UUID) (user *models.User, err error)
-	BlockUser(id uuid.UUID) (userRes *models.User, err error)
-	UnBlockUser(id uuid.UUID) (userRes *models.User, err error)
-	ActivateUser(id uuid.UUID) (userRes *models.User, err error)
-	DisActivateUser(id uuid.UUID) (userRes *models.User, err error)
-	EmailIsNotDuplicated(email string, excludedId uuid.UUID) (bool, error)
+	CreateUser(ctx context.Context, userReq dto.ToDBCreateUser) (userRes *models.User, err error)
+	GetUserByID(ctx context.Context, id uuid.UUID) (user *models.User, err error)
+	GetAllUser(ctx context.Context) (users []models.User, err error)
+	GetIndexUser(ctx context.Context, req request.PageRequest, filter dto.ReqUserIndexFilter) (users []models.User, total int, err error)
+	UpdateUser(ctx context.Context, id uuid.UUID, userReq dto.ToDBUpdateUser) (userRes *models.User, err error)
+	SoftDeleteUser(ctx context.Context, id uuid.UUID, userReq dto.ToDBDeleteUser) (userRes *models.User, err error)
+	UserNameIsNotDuplicated(ctx context.Context, name string, excludedId uuid.UUID) (bool, error)
+	GetDuplicatedUser(ctx context.Context, name string, excludedId uuid.UUID) (user *models.User, err error)
+	UserNameIsNotDuplicatedOnSoftDeleted(ctx context.Context, name string, excludedId uuid.UUID) (bool, error)
+	GetDuplicatedUserOnSoftDeleted(ctx context.Context, name string, excludedId uuid.UUID) (user *models.User, err error)
+	BlockUser(ctx context.Context, id uuid.UUID) (userRes *models.User, err error)
+	UnBlockUser(ctx context.Context, id uuid.UUID) (userRes *models.User, err error)
+	ActivateUser(ctx context.Context, id uuid.UUID) (userRes *models.User, err error)
+	DisActivateUser(ctx context.Context, id uuid.UUID) (userRes *models.User, err error)
+	EmailIsNotDuplicated(ctx context.Context, email string, excludedId uuid.UUID) (bool, error)
 
-	CountUser() (count *int, err error)
+	CountUser(ctx context.Context) (count *int, err error)
 	// ------------------------------------------------- user scope - END ----------------------------------------------------------
 
 	// ------------------------------------------------- password scope - BEGIN -----------------------------------------------------
-	IsUserPasswordCanUpdated(id uuid.UUID) (bool, error)
+	IsUserPasswordCanUpdated(ctx context.Context, id uuid.UUID) (bool, error)
 	// ------------------------------------------------- password scope - END -------------------------------------------------------
 }

@@ -20,7 +20,7 @@ func (u *userUsecase) UpdateUserPassword(c echo.Context, id string, passwordChun
 	}
 
 	// assert user password can be change
-	_, err = u.userRepo.IsUserPasswordCanUpdated(userId)
+	_, err = u.userRepo.IsUserPasswordCanUpdated(ctx, userId)
 
 	// if error occurs, return error
 	if err != nil {

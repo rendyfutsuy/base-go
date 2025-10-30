@@ -11,12 +11,12 @@ import (
 type Usecase interface {
 	// user scope
 	CreateUser(c echo.Context, req *dto.ReqCreateUser, authId string) (userRes *models.User, err error)
-	GetUserByID(id string) (user *models.User, err error)
-	GetAllUser() (user_infos []models.User, err error)
-	GetIndexUser(req request.PageRequest, filter dto.ReqUserIndexFilter) (user_infos []models.User, total int, err error)
-	UpdateUser(id string, req *dto.ReqUpdateUser, authId string) (userRes *models.User, err error)
-	SoftDeleteUser(id string, authId string) (userRes *models.User, err error)
-	UserNameIsNotDuplicated(name string, id uuid.UUID) (userRes *models.User, err error)
+	GetUserByID(c echo.Context, id string) (user *models.User, err error)
+	GetAllUser(c echo.Context) (user_infos []models.User, err error)
+	GetIndexUser(c echo.Context, req request.PageRequest, filter dto.ReqUserIndexFilter) (user_infos []models.User, total int, err error)
+	UpdateUser(c echo.Context, id string, req *dto.ReqUpdateUser, authId string) (userRes *models.User, err error)
+	SoftDeleteUser(c echo.Context, id string, authId string) (userRes *models.User, err error)
+	UserNameIsNotDuplicated(c echo.Context, name string, id uuid.UUID) (userRes *models.User, err error)
 	BlockUser(c echo.Context, id string, req *dto.ReqBlockUser) (userRes *models.User, err error)
 	ActivateUser(c echo.Context, id string, req *dto.ReqActivateUser) (userRes *models.User, err error)
 
