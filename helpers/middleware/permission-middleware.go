@@ -60,7 +60,7 @@ func (a *MiddlewarePermission) PermissionValidation(args []string) echo.Middlewa
 
 			// fetch permissions based on role user's has
 			// get user data from token
-			permissions, err := a.getUserPermissions(user.RoleId)
+			permissions, err := a.getUserPermissions(ctx, user.RoleId)
 			if err != nil {
 				return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: "Unauthorized: Unable to fetch permissions"})
 			}
@@ -80,9 +80,9 @@ func (a *MiddlewarePermission) getUserData(ctx context.Context, token string) (m
 	return a.authRepository.GetUserByAccessToken(ctx, token)
 }
 
-func (a *MiddlewarePermission) getUserPermissions(roleUid uuid.UUID) ([]string, error) {
+func (a *MiddlewarePermission) getUserPermissions(ctx context.Context, roleUid uuid.UUID) ([]string, error) {
 	// get permissions from user's role
-	role, err := a.roleManagementRepository.GetRoleByID(roleUid)
+	role, err := a.roleManagementRepository.GetRoleByID(ctx, roleUid)
 	if err != nil {
 		return nil, err
 	}

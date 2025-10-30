@@ -7,18 +7,19 @@ import (
 	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
+	"context"
 )
 
 // GetPermissionByID retrieves an permission information entry by ID from the database.
 //
 // It takes a uuid.UUID parameter representing the ID and returns an Permission pointer and an error.
-func (repo *roleRepository) GetPermissionByID(id uuid.UUID) (permission *models.Permission, err error) {
+func (repo *roleRepository) GetPermissionByID(ctx context.Context, id uuid.UUID) (permission *models.Permission, err error) {
 	// initialize permission variable
 	permission = new(models.Permission)
 
 	// fetch data from database by id that passed
 	// assign return value to permission variable
-	err = repo.Conn.QueryRow(
+	err = repo.Conn.QueryRowContext(ctx, 
 		`SELECT 
 			permission.id,
 			permission.name,
@@ -55,7 +56,7 @@ func (repo *roleRepository) GetPermissionByID(id uuid.UUID) (permission *models.
 // It takes a PageRequest parameter and returns a slice of Permission, the total number of
 // permission information entries, and an error.
 // its can search by permission name, permission code, permission alias_1, permission alias_2, permission alias_3, permission alias_4, permission address, permission email, permission phone_number, type name
-func (repo *roleRepository) GetIndexPermission(req request.PageRequest) (permissions []models.Permission, total int, err error) {
+func (repo *roleRepository) GetIndexPermission(ctx context.Context, req request.PageRequest) (permissions []models.Permission, total int, err error) {
 
 	// initialize: pagination page, search query to local variable
 	offSet := (req.Page - 1) * req.PerPage
@@ -103,9 +104,9 @@ func (repo *roleRepository) GetIndexPermission(req request.PageRequest) (permiss
 
 	// count total
 	if searchQuery != "" {
-		err = repo.Conn.QueryRow(countQuery+whereClause, searchQuery).Scan(&total)
+		err = repo.Conn.QueryRowContext(ctx, countQuery+whereClause, searchQuery).Scan(&total)
 	} else {
-		err = repo.Conn.QueryRow(countQuery + whereClause).Scan(&total)
+		err = repo.Conn.QueryRowContext(ctx, countQuery + whereClause).Scan(&total)
 	}
 	if err != nil {
 		return nil, 0, err
@@ -114,9 +115,9 @@ func (repo *roleRepository) GetIndexPermission(req request.PageRequest) (permiss
 	// retrieve paginated
 	rows := new(sql.Rows)
 	if searchQuery != "" {
-		rows, err = repo.Conn.Query(baseQuery+whereClause+orderClause+limitClause, searchQuery)
+		rows, err = repo.Conn.QueryContext(ctx, baseQuery+whereClause+orderClause+limitClause, searchQuery)
 	} else {
-		rows, err = repo.Conn.Query(baseQuery + whereClause + orderClause + limitClause)
+		rows, err = repo.Conn.QueryContext(ctx, baseQuery + whereClause + orderClause + limitClause)
 	}
 	if err != nil {
 		return nil, 0, err
@@ -151,8 +152,8 @@ func (repo *roleRepository) GetIndexPermission(req request.PageRequest) (permiss
 // GetAllPermission retrieves all permission information entries from the database.
 //
 // Returns a slice of models.Permission and an error.
-func (repo *roleRepository) GetAllPermission() (permissions []models.Permission, err error) {
-	rows, err := repo.Conn.Query(
+func (repo *roleRepository) GetAllPermission(ctx context.Context) (permissions []models.Permission, err error) {
+	rows, err := repo.Conn.QueryContext(ctx, 
 		`SELECT 
 			permission.id,
 			permission.name,
@@ -193,8 +194,8 @@ func (repo *roleRepository) GetAllPermission() (permissions []models.Permission,
 // CountPermission retrieves the count of permission information entries from the database.
 //
 // Returns a pointer to an integer and an error.
-func (repo *roleRepository) CountPermission() (count *int, err error) {
-	err = repo.Conn.QueryRow(
+func (repo *roleRepository) CountPermission(ctx context.Context) (count *int, err error) {
+	err = repo.Conn.QueryRowContext(ctx, 
 		`SELECT 
 			COUNT(*)
 		FROM 
@@ -212,7 +213,7 @@ func (repo *roleRepository) CountPermission() (count *int, err error) {
 //
 // It takes a name string and an excludedId UUID as parameters.
 // It returns a boolean indicating whether the name is not duplicated and an error.
-func (repo *roleRepository) PermissionNameIsNotDuplicated(name string, excludedId uuid.UUID) (bool, error) {
+func (repo *roleRepository) PermissionNameIsNotDuplicated(ctx context.Context, name string, excludedId uuid.UUID) (bool, error) {
 	baseQuery := `SELECT 
 			COUNT(*)
 		FROM 
@@ -230,7 +231,7 @@ func (repo *roleRepository) PermissionNameIsNotDuplicated(name string, excludedI
 	result := 0
 
 	// assert name is nt duplicated
-	err := repo.Conn.QueryRow(baseQuery, params...).Scan(&result)
+	err := repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(&result)
 
 	// if have error, return false and error
 	if err != nil {
@@ -255,7 +256,7 @@ func (repo *roleRepository) PermissionNameIsNotDuplicated(name string, excludedI
 // Returns:
 // - permission: a pointer to the retrieved permission information.
 // - err: an error if there was a problem retrieving the permission information.
-func (repo *roleRepository) GetDuplicatedPermission(name string, excludedId uuid.UUID) (permission *models.Permission, err error) {
+func (repo *roleRepository) GetDuplicatedPermission(ctx context.Context, name string, excludedId uuid.UUID) (permission *models.Permission, err error) {
 	baseQuery := `SELECT 
 			id, name, created_at, updated_at
 		FROM 
@@ -274,7 +275,7 @@ func (repo *roleRepository) GetDuplicatedPermission(name string, excludedId uuid
 	permission = &models.Permission{}
 
 	// assert name is not duplicated
-	err = repo.Conn.QueryRow(baseQuery, params...).Scan(
+	err = repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(
 		&permission.ID,
 		&permission.Name,
 		&permission.CreatedAt,

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"context"
+
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/rendyfutsuy/base-go/constants"
@@ -17,7 +19,7 @@ import (
 // CreateRole creates a new role information entry in the database.
 //
 // It takes a ToDBCreateRole parameter and returns an Role pointer and an error.
-func (repo *roleRepository) CreateRole(roleReq dto.ToDBCreateRole) (roleRes *models.Role, err error) {
+func (repo *roleRepository) CreateRole(ctx context.Context, roleReq dto.ToDBCreateRole) (roleRes *models.Role, err error) {
 
 	// initialize: role role model, time format to created at string,
 	roleRes = new(models.Role)
@@ -26,7 +28,7 @@ func (repo *roleRepository) CreateRole(roleReq dto.ToDBCreateRole) (roleRes *mod
 
 	// execute query to insert role role
 	// assign return value to roleRes variable
-	err = repo.Conn.QueryRow(
+	err = repo.Conn.QueryRowContext(ctx,
 		`INSERT INTO roles
 			(name, created_at, updated_at, description, deletable)
 		VALUES
@@ -57,7 +59,7 @@ func (repo *roleRepository) CreateRole(roleReq dto.ToDBCreateRole) (roleRes *mod
 	}
 
 	// assign permission group
-	err = repo.ReAssignPermissionGroup(roleRes.ID, permissionGroupIds)
+	err = repo.ReAssignPermissionGroup(ctx, roleRes.ID, permissionGroupIds)
 
 	// if error occurs, return error
 	if err != nil {
@@ -70,13 +72,13 @@ func (repo *roleRepository) CreateRole(roleReq dto.ToDBCreateRole) (roleRes *mod
 // GetRoleByID retrieves an role information entry by ID from the database.
 //
 // It takes a uuid.UUID parameter representing the ID and returns an Role pointer and an error.
-func (repo *roleRepository) GetRoleByID(id uuid.UUID) (role *models.Role, err error) {
+func (repo *roleRepository) GetRoleByID(ctx context.Context, id uuid.UUID) (role *models.Role, err error) {
 	// initialize role variable
 	role = new(models.Role)
 
 	// fetch data from database by id that passed
 	// assign return value to role variable
-	err = repo.Conn.QueryRow(
+	err = repo.Conn.QueryRowContext(ctx,
 		`SELECT 
 			role.id,
 			role.name,
@@ -120,7 +122,7 @@ func (repo *roleRepository) GetRoleByID(id uuid.UUID) (role *models.Role, err er
 	}
 
 	// Fetch and assign permissions that role has
-	permissions, err := repo.GetPermissionFromRoleId(id)
+	permissions, err := repo.GetPermissionFromRoleId(ctx, id)
 
 	if err != nil {
 		return nil, err
@@ -130,7 +132,7 @@ func (repo *roleRepository) GetRoleByID(id uuid.UUID) (role *models.Role, err er
 	role.Permissions = permissions
 
 	// Fetch and assign permission groups that role has
-	permissionGroups, err := repo.GetPermissionGroupFromRoleId(id)
+	permissionGroups, err := repo.GetPermissionGroupFromRoleId(ctx, id)
 
 	if err != nil {
 		return nil, err
@@ -144,7 +146,7 @@ func (repo *roleRepository) GetRoleByID(id uuid.UUID) (role *models.Role, err er
 		return nil, fmt.Errorf("Something Wrong when fetching permission group..")
 	}
 	// get total user
-	total, err := repo.GetTotalUser(id)
+	total, err := repo.GetTotalUser(ctx, id)
 
 	if err != nil {
 		return nil, fmt.Errorf("Something Wrong when fetching total user")
@@ -161,7 +163,7 @@ func (repo *roleRepository) GetRoleByID(id uuid.UUID) (role *models.Role, err er
 // It takes a PageRequest parameter and returns a slice of Role, the total number of
 // role information entries, and an error.
 // its can search by role name, role code, role alias_1, role alias_2, role alias_3, role alias_4, role address, role email, role phone_number, type name
-func (repo *roleRepository) GetIndexRole(req request.PageRequest) (roles []models.Role, total int, err error) {
+func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRequest) (roles []models.Role, total int, err error) {
 	// initialize: pagination page, search query to local variable
 	offSet := (req.Page - 1) * req.PerPage
 	searchQuery := req.Search
@@ -224,9 +226,9 @@ func (repo *roleRepository) GetIndexRole(req request.PageRequest) (roles []model
 
 	// count total
 	if searchQuery != "" {
-		err = repo.Conn.QueryRow(countQuery+whereClause, searchQuery).Scan(&total)
+		err = repo.Conn.QueryRowContext(ctx, countQuery+whereClause, searchQuery).Scan(&total)
 	} else {
-		err = repo.Conn.QueryRow(countQuery + whereClause).Scan(&total)
+		err = repo.Conn.QueryRowContext(ctx, countQuery+whereClause).Scan(&total)
 	}
 	if err != nil {
 		return nil, 0, err
@@ -235,9 +237,9 @@ func (repo *roleRepository) GetIndexRole(req request.PageRequest) (roles []model
 	// retrieve paginated
 	rows := new(sql.Rows)
 	if searchQuery != "" {
-		rows, err = repo.Conn.Query(baseQuery+whereClause+GroupBy+orderClause+limitClause, searchQuery)
+		rows, err = repo.Conn.QueryContext(ctx, baseQuery+whereClause+GroupBy+orderClause+limitClause, searchQuery)
 	} else {
-		rows, err = repo.Conn.Query(baseQuery + whereClause + GroupBy + orderClause + limitClause)
+		rows, err = repo.Conn.QueryContext(ctx, baseQuery+whereClause+GroupBy+orderClause+limitClause)
 	}
 	if err != nil {
 		return nil, 0, err
@@ -274,8 +276,8 @@ func (repo *roleRepository) GetIndexRole(req request.PageRequest) (roles []model
 // GetAllRole retrieves all role information entries from the database.
 //
 // Returns a slice of models.Role and an error.
-func (repo *roleRepository) GetAllRole() (roles []models.Role, err error) {
-	rows, err := repo.Conn.Query(
+func (repo *roleRepository) GetAllRole(ctx context.Context) (roles []models.Role, err error) {
+	rows, err := repo.Conn.QueryContext(ctx,
 		`SELECT 
 			role.id,
 			role.name,
@@ -323,12 +325,12 @@ func (repo *roleRepository) GetAllRole() (roles []models.Role, err error) {
 // alias_1, alias_2, alias_3, alias_4, and address fields of the role information.
 // If the role information with the provided ID is not found, it returns an error.
 // If there is an error during the update, it returns the error.
-func (repo *roleRepository) UpdateRole(id uuid.UUID, roleReq dto.ToDBUpdateRole) (roleRes *models.Role, err error) {
+func (repo *roleRepository) UpdateRole(ctx context.Context, id uuid.UUID, roleReq dto.ToDBUpdateRole) (roleRes *models.Role, err error) {
 	roleRes = new(models.Role)
 	timeFormat := constants.FormatTimezone
 	updatedAtString := time.Now().UTC().Format(timeFormat)
 
-	err = repo.Conn.QueryRow(
+	err = repo.Conn.QueryRowContext(ctx,
 		`UPDATE roles SET 
 			name = $1,
 			updated_at = $2,
@@ -368,7 +370,7 @@ func (repo *roleRepository) UpdateRole(id uuid.UUID, roleReq dto.ToDBUpdateRole)
 	}
 
 	// assign permission group
-	err = repo.ReAssignPermissionGroup(roleRes.ID, permissionGroupIds)
+	err = repo.ReAssignPermissionGroup(ctx, roleRes.ID, permissionGroupIds)
 
 	// if error occurs, return error
 	if err != nil {
@@ -382,13 +384,13 @@ func (repo *roleRepository) UpdateRole(id uuid.UUID, roleReq dto.ToDBUpdateRole)
 //
 // It takes an id of type uuid.UUID and an roleReq of type dto.ToDBDeleteRole as parameters.
 // It returns the soft deleted role role entry of type models.Role and an error.
-func (repo *roleRepository) SoftDeleteRole(id uuid.UUID, roleReq dto.ToDBDeleteRole) (roleRes *models.Role, err error) {
+func (repo *roleRepository) SoftDeleteRole(ctx context.Context, id uuid.UUID, roleReq dto.ToDBDeleteRole) (roleRes *models.Role, err error) {
 
 	roleRes = new(models.Role)
 	timeFormat := constants.FormatTimezone
 	deletedAtString := time.Now().UTC().Format(timeFormat)
 
-	err = repo.Conn.QueryRow(
+	err = repo.Conn.QueryRowContext(ctx,
 		`UPDATE roles SET 
 			deleted_at = $1
 		WHERE 
@@ -419,8 +421,8 @@ func (repo *roleRepository) SoftDeleteRole(id uuid.UUID, roleReq dto.ToDBDeleteR
 // CountRole retrieves the count of role information entries from the database.
 //
 // Returns a pointer to an integer and an error.
-func (repo *roleRepository) CountRole() (count *int, err error) {
-	err = repo.Conn.QueryRow(
+func (repo *roleRepository) CountRole(ctx context.Context) (count *int, err error) {
+	err = repo.Conn.QueryRowContext(ctx,
 		`SELECT 
 			COUNT(*)
 		FROM 
@@ -438,7 +440,7 @@ func (repo *roleRepository) CountRole() (count *int, err error) {
 //
 // It takes a name string and an excludedId UUID as parameters.
 // It returns a boolean indicating whether the name is not duplicated and an error.
-func (repo *roleRepository) RoleNameIsNotDuplicated(name string, excludedId uuid.UUID) (bool, error) {
+func (repo *roleRepository) RoleNameIsNotDuplicated(ctx context.Context, name string, excludedId uuid.UUID) (bool, error) {
 	baseQuery := `SELECT 
 			COUNT(*)
 		FROM 
@@ -456,7 +458,7 @@ func (repo *roleRepository) RoleNameIsNotDuplicated(name string, excludedId uuid
 	result := 0
 
 	// assert name is nt duplicated
-	err := repo.Conn.QueryRow(baseQuery, params...).Scan(&result)
+	err := repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(&result)
 
 	// if have error, return false and error
 	if err != nil {
@@ -481,7 +483,7 @@ func (repo *roleRepository) RoleNameIsNotDuplicated(name string, excludedId uuid
 // Returns:
 // - role: a pointer to the retrieved role information.
 // - err: an error if there was a problem retrieving the role information.
-func (repo *roleRepository) GetDuplicatedRole(name string, excludedId uuid.UUID) (role *models.Role, err error) {
+func (repo *roleRepository) GetDuplicatedRole(ctx context.Context, name string, excludedId uuid.UUID) (role *models.Role, err error) {
 	baseQuery := `SELECT 
 			id, name, created_at, updated_at
 		FROM 
@@ -500,7 +502,7 @@ func (repo *roleRepository) GetDuplicatedRole(name string, excludedId uuid.UUID)
 	role = &models.Role{}
 
 	// assert name is not duplicated
-	err = repo.Conn.QueryRow(baseQuery, params...).Scan(
+	err = repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(
 		&role.ID,
 		&role.Name,
 		&role.CreatedAt,
@@ -519,7 +521,7 @@ func (repo *roleRepository) GetDuplicatedRole(name string, excludedId uuid.UUID)
 //
 // It takes a name string and an excludedId UUID as parameters.
 // It returns a boolean indicating whether the name is not duplicated and an error.
-func (repo *roleRepository) RoleNameIsNotDuplicatedOnSoftDeleted(name string, excludedId uuid.UUID) (bool, error) {
+func (repo *roleRepository) RoleNameIsNotDuplicatedOnSoftDeleted(ctx context.Context, name string, excludedId uuid.UUID) (bool, error) {
 	baseQuery := `SELECT 
 			COUNT(*)
 		FROM 
@@ -537,7 +539,7 @@ func (repo *roleRepository) RoleNameIsNotDuplicatedOnSoftDeleted(name string, ex
 	result := 0
 
 	// assert name is nt duplicated
-	err := repo.Conn.QueryRow(baseQuery, params...).Scan(&result)
+	err := repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(&result)
 
 	// if have error, return false and error
 	if err != nil {
@@ -562,7 +564,7 @@ func (repo *roleRepository) RoleNameIsNotDuplicatedOnSoftDeleted(name string, ex
 // Returns:
 // - role: a pointer to the retrieved role information.
 // - err: an error if there was a problem retrieving the role information.
-func (repo *roleRepository) GetDuplicatedRoleOnSoftDeleted(name string, excludedId uuid.UUID) (role *models.Role, err error) {
+func (repo *roleRepository) GetDuplicatedRoleOnSoftDeleted(ctx context.Context, name string, excludedId uuid.UUID) (role *models.Role, err error) {
 	baseQuery := `SELECT 
 			id, name, created_at, updated_at
 		FROM 
@@ -581,7 +583,7 @@ func (repo *roleRepository) GetDuplicatedRoleOnSoftDeleted(name string, excluded
 	role = &models.Role{}
 
 	// assert name is not duplicated
-	err = repo.Conn.QueryRow(baseQuery, params...).Scan(
+	err = repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(
 		&role.ID,
 		&role.Name,
 		&role.CreatedAt,

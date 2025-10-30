@@ -34,7 +34,7 @@ func (handler *RoleManagementHandler) ReAssignPermissionByGroup(c echo.Context) 
 	}
 
 	// Re-assign Permission groups to role
-	res, err := handler.RoleUseCase.ReAssignPermissionByGroup(id, req)
+	res, err := handler.RoleUseCase.ReAssignPermissionByGroup(c, id, req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -66,7 +66,7 @@ func (handler *RoleManagementHandler) AssignUsersToRole(c echo.Context) error {
 	}
 
 	// Re-assign Permission groups to role
-	res, err := handler.RoleUseCase.AssignUsersToRole(id, req)
+	res, err := handler.RoleUseCase.AssignUsersToRole(c, id, req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/models"
+	"context"
 	"github.com/rendyfutsuy/base-go/modules/role_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
 )
@@ -20,14 +21,14 @@ import (
 //
 // Returns:
 // - error: An error if there was a problem executing the queries.
-func (repo *roleRepository) ReAssignPermissionGroup(id uuid.UUID, permissionGroupReq dto.ToDBUpdatePermissionGroupAssignmentToRole) error {
+func (repo *roleRepository) ReAssignPermissionGroup(ctx context.Context, id uuid.UUID, permissionGroupReq dto.ToDBUpdatePermissionGroupAssignmentToRole) error {
 	// reset role permissions group assignment
 	query := `
 		DELETE FROM modules_roles
 		WHERE role_id = $1
 	`
 	// Execute the query and delete requested row.
-	_, err := repo.Conn.Exec(query, id)
+	_, err := repo.Conn.ExecContext(ctx, query, id)
 
 	// Handle the error.
 	if err != nil {
@@ -58,7 +59,7 @@ func (repo *roleRepository) ReAssignPermissionGroup(id uuid.UUID, permissionGrou
 			permission_group_id IN (%s)`, strings.Join(placeholders, ", "))
 
 	// Execute the query with all the arguments
-	rows, err := repo.Conn.Query(query, args...)
+	rows, err := repo.Conn.QueryContext(ctx, query, args...)
 	if err != nil {
 		utils.Logger.Error(err.Error())
 		return err
@@ -68,7 +69,7 @@ func (repo *roleRepository) ReAssignPermissionGroup(id uuid.UUID, permissionGrou
 	// assign permission group to role, by create new pivot entry that on modules_roles
 	for _, permissionGroupId := range permissionGroupReq.PermissionGroupIds {
 		// assign permission group to role
-		_, err := repo.Conn.Exec(`INSERT INTO modules_roles
+		_, err := repo.Conn.ExecContext(ctx, `INSERT INTO modules_roles
 				(permission_group_id, role_id)
 			VALUES
 				($1, $2)`,
@@ -93,9 +94,9 @@ func (repo *roleRepository) ReAssignPermissionGroup(id uuid.UUID, permissionGrou
 // Returns:
 // - total: The total number of users associated with the role.
 // - err: An error if there was a problem executing the query.
-func (repo *roleRepository) GetTotalUser(id uuid.UUID) (total int, err error) {
+func (repo *roleRepository) GetTotalUser(ctx context.Context, id uuid.UUID) (total int, err error) {
 	// setup query syntax to get total user
-	err = repo.Conn.QueryRow(
+	err = repo.Conn.QueryRowContext(ctx, 
 		`SELECT 
 			COUNT(*) AS total_user
 		FROM 
@@ -130,7 +131,7 @@ func (repo *roleRepository) GetTotalUser(id uuid.UUID) (total int, err error) {
 // Returns:
 // - permissions: A slice of models.Permission representing the permissions assigned to the role.
 // - err: An error if there was a problem fetching the permissions.
-func (repo *roleRepository) GetPermissionFromRoleId(id uuid.UUID) (permissions []models.Permission, err error) {
+func (repo *roleRepository) GetPermissionFromRoleId(ctx context.Context, id uuid.UUID) (permissions []models.Permission, err error) {
 	// Fetch and assign permissions that role has
 	permissionQuery := `SELECT
 			DISTINCT ps.id,
@@ -150,7 +151,7 @@ func (repo *roleRepository) GetPermissionFromRoleId(id uuid.UUID) (permissions [
 		AND
 			pgr.role_id = $1`
 
-	rows, err := repo.Conn.Query(permissionQuery, id)
+	rows, err := repo.Conn.QueryContext(ctx, permissionQuery, id)
 
 	if err != nil {
 		return nil, fmt.Errorf("Something Wrong when fetching permission group..")
@@ -184,7 +185,7 @@ func (repo *roleRepository) GetPermissionFromRoleId(id uuid.UUID) (permissions [
 // Returns:
 // - permissionGroups: A slice of models.PermissionGroup representing the permission groups assigned to the role.
 // - err: An error if there was a problem fetching the permission groups.
-func (repo *roleRepository) GetPermissionGroupFromRoleId(id uuid.UUID) (permissionGroups []models.PermissionGroup, err error) {
+func (repo *roleRepository) GetPermissionGroupFromRoleId(ctx context.Context, id uuid.UUID) (permissionGroups []models.PermissionGroup, err error) {
 	permissionGroupsQuery := `SELECT
 			pg.id,
 			pg.name,
@@ -198,7 +199,7 @@ func (repo *roleRepository) GetPermissionGroupFromRoleId(id uuid.UUID) (permissi
 		WHERE
 			pgr.role_id = $1`
 
-	groupRows, err := repo.Conn.Query(permissionGroupsQuery, id)
+	groupRows, err := repo.Conn.QueryContext(ctx, permissionGroupsQuery, id)
 
 	if err != nil {
 		return nil, fmt.Errorf("Something Wrong when fetching permission group..")
@@ -230,11 +231,11 @@ func (repo *roleRepository) GetPermissionGroupFromRoleId(id uuid.UUID) (permissi
 //
 // Returns:
 // - error: an error if there was a problem updating the users' role_id in the database.
-func (repo *roleRepository) AssignUsers(roleId uuid.UUID, userReq []uuid.UUID) error {
+func (repo *roleRepository) AssignUsers(ctx context.Context, roleId uuid.UUID, userReq []uuid.UUID) error {
 	// Assign the role to users by updating the role_id in the users table
 	for _, userId := range userReq {
 		// Update the user's role_id in the users table
-		_, err := repo.Conn.Exec(`UPDATE users SET role_id = $1 WHERE id = $2`,
+		_, err := repo.Conn.ExecContext(ctx, `UPDATE users SET role_id = $1 WHERE id = $2`,
 			roleId,
 			userId,
 		)
@@ -251,11 +252,11 @@ func (repo *roleRepository) AssignUsers(roleId uuid.UUID, userReq []uuid.UUID) e
 
 // TOD: This Method only temporarily, after user management module is created. use that instead.
 // this is only to fill the gap of user management module
-func (repo *roleRepository) GetUserByID(id uuid.UUID) (user *models.User, err error) {
+func (repo *roleRepository) GetUserByID(ctx context.Context, id uuid.UUID) (user *models.User, err error) {
 	// Initialize the user variable
 	user = &models.User{}
 
-	err = repo.Conn.QueryRow(
+	err = repo.Conn.QueryRowContext(ctx, 
 		`SELECT 
 			id, full_name
 		FROM 

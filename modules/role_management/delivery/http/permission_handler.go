@@ -20,7 +20,7 @@ import (
 func (handler *RoleManagementHandler) GetIndexPermission(c echo.Context) error {
 	pageRequest := c.Get("page_request").(*request.PageRequest)
 
-	res, total, err := handler.RoleUseCase.GetIndexPermission(*pageRequest)
+	res, total, err := handler.RoleUseCase.GetIndexPermission(c, *pageRequest)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
@@ -44,7 +44,7 @@ func (handler *RoleManagementHandler) GetIndexPermission(c echo.Context) error {
 
 func (handler *RoleManagementHandler) GetAllPermission(c echo.Context) error {
 
-	res, err := handler.RoleUseCase.GetAllPermission()
+	res, err := handler.RoleUseCase.GetAllPermission(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -71,7 +71,7 @@ func (handler *RoleManagementHandler) GetPermissionByID(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.ErrorUUIDNotRecognized})
 	}
 
-	res, err := handler.RoleUseCase.GetPermissionByID(id)
+	res, err := handler.RoleUseCase.GetPermissionByID(c, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -103,7 +103,7 @@ func (handler *RoleManagementHandler) GetDuplicatedPermission(c echo.Context) er
 		uid = req.ExcludedPermissionId
 	}
 
-	res, err := handler.RoleUseCase.PermissionNameIsNotDuplicated(req.Name, uid)
+	res, err := handler.RoleUseCase.PermissionNameIsNotDuplicated(c, req.Name, uid)
 
 	// if name havent been uses by existing account info, return not found error
 	if res == nil {

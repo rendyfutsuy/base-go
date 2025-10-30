@@ -27,7 +27,7 @@ type ModuleFunction struct {
 func (handler *RoleManagementHandler) GetIndexPermissionGroup(c echo.Context) error {
 	pageRequest := c.Get("page_request").(*request.PageRequest)
 
-	res, total, err := handler.RoleUseCase.GetIndexPermissionGroup(*pageRequest)
+	res, total, err := handler.RoleUseCase.GetIndexPermissionGroup(c, *pageRequest)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
@@ -51,7 +51,7 @@ func (handler *RoleManagementHandler) GetIndexPermissionGroup(c echo.Context) er
 
 func (handler *RoleManagementHandler) GetAllPermissionGroup(c echo.Context) error {
 
-	res, err := handler.RoleUseCase.GetAllPermissionGroup()
+	res, err := handler.RoleUseCase.GetAllPermissionGroup(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -78,7 +78,7 @@ func (handler *RoleManagementHandler) GetPermissionGroupByID(c echo.Context) err
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.ErrorUUIDNotRecognized})
 	}
 
-	res, err := handler.RoleUseCase.GetPermissionGroupByID(id)
+	res, err := handler.RoleUseCase.GetPermissionGroupByID(c, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -110,7 +110,7 @@ func (handler *RoleManagementHandler) GetDuplicatedPermissionGroup(c echo.Contex
 		uid = req.ExcludedPermissionGroupId
 	}
 
-	res, err := handler.RoleUseCase.PermissionGroupNameIsNotDuplicated(req.Name, uid)
+	res, err := handler.RoleUseCase.PermissionGroupNameIsNotDuplicated(c, req.Name, uid)
 
 	// if name havent been uses by existing account info, return not found error
 	if res == nil {
@@ -130,7 +130,7 @@ func (handler *RoleManagementHandler) GetDuplicatedPermissionGroup(c echo.Contex
 }
 
 func (handler *RoleManagementHandler) GetAllPermissionGroupByModule(c echo.Context) error {
-	res, err := handler.RoleUseCase.GetAllPermissionGroup()
+	res, err := handler.RoleUseCase.GetAllPermissionGroup(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}

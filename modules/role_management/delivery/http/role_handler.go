@@ -54,7 +54,7 @@ func (handler *RoleManagementHandler) CreateRole(c echo.Context) error {
 func (handler *RoleManagementHandler) GetIndexRole(c echo.Context) error {
 	pageRequest := c.Get("page_request").(*request.PageRequest)
 
-	res, total, err := handler.RoleUseCase.GetIndexRole(*pageRequest)
+	res, total, err := handler.RoleUseCase.GetIndexRole(c, *pageRequest)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
@@ -78,7 +78,7 @@ func (handler *RoleManagementHandler) GetIndexRole(c echo.Context) error {
 
 func (handler *RoleManagementHandler) GetAllRole(c echo.Context) error {
 
-	res, err := handler.RoleUseCase.GetAllRole()
+	res, err := handler.RoleUseCase.GetAllRole(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -105,7 +105,7 @@ func (handler *RoleManagementHandler) GetRoleByID(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.ErrorUUIDNotRecognized})
 	}
 
-	res, err := handler.RoleUseCase.GetRoleByID(id)
+	res, err := handler.RoleUseCase.GetRoleByID(c, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -140,7 +140,7 @@ func (handler *RoleManagementHandler) UpdateRole(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
 
-	res, err := handler.RoleUseCase.UpdateRole(id, req, authId)
+	res, err := handler.RoleUseCase.UpdateRole(c, id, req, authId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -164,7 +164,7 @@ func (handler *RoleManagementHandler) DeleteRole(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.ErrorUUIDNotRecognized})
 	}
 
-	res, err := handler.RoleUseCase.SoftDeleteRole(id, authId)
+	res, err := handler.RoleUseCase.SoftDeleteRole(c, id, authId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -196,7 +196,7 @@ func (handler *RoleManagementHandler) GetDuplicatedRole(c echo.Context) error {
 		uid = req.ExcludedRoleId
 	}
 
-	res, err := handler.RoleUseCase.RoleNameIsNotDuplicated(req.Name, uid)
+	res, err := handler.RoleUseCase.RoleNameIsNotDuplicated(c, req.Name, uid)
 
 	// if name havent been uses by existing account info, return not found error
 	if res == nil {
