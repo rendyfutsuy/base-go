@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -32,6 +33,8 @@ func NewMiddlewarePermission(authRepository auth.Repository, roleManagementRepos
 func (a *MiddlewarePermission) PermissionValidation(args []string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			ctx := c.Request().Context()
+
 			authorization := c.Request().Header.Get("Authorization")
 
 			if authorization == "" {
@@ -49,7 +52,7 @@ func (a *MiddlewarePermission) PermissionValidation(args []string) echo.Middlewa
 			}
 
 			// get user data from token
-			user, err := a.getUserData(tokenString)
+			user, err := a.getUserData(ctx, tokenString)
 
 			if err != nil {
 				return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: "Unauthorized: Token invalid"})
@@ -72,9 +75,9 @@ func (a *MiddlewarePermission) PermissionValidation(args []string) echo.Middlewa
 	}
 }
 
-func (a *MiddlewarePermission) getUserData(token string) (models.User, error) {
+func (a *MiddlewarePermission) getUserData(ctx context.Context, token string) (models.User, error) {
 	// get user data from current token
-	return a.authRepository.GetUserByAccessToken(token)
+	return a.authRepository.GetUserByAccessToken(ctx, token)
 }
 
 func (a *MiddlewarePermission) getUserPermissions(roleUid uuid.UUID) ([]string, error) {

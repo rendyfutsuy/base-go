@@ -138,9 +138,11 @@ func (u *roleUsecase) RoleNameIsNotDuplicated(name string, id uuid.UUID) (roleRe
 	return u.roleRepo.GetDuplicatedRole(name, id)
 }
 
-func (u *roleUsecase) MyPermissionsByUserToken(token string) (role *models.Role, err error) {
+func (u *roleUsecase) MyPermissionsByUserToken(c echo.Context, token string) (role *models.Role, err error) {
+	ctx := c.Request().Context()
+
 	// get user id from token
-	user, err := u.authRepo.GetUserByAccessToken(token)
+	user, err := u.authRepo.GetUserByAccessToken(ctx, token)
 	if err != nil {
 		return nil, errors.New(constants.UserNotFound)
 	}

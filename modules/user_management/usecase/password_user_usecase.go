@@ -3,12 +3,15 @@ package usecase
 import (
 	"errors"
 
+	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (u *userUsecase) UpdateUserPassword(id string, passwordChunks *dto.ReqUpdateUserPassword) error {
+func (u *userUsecase) UpdateUserPassword(c echo.Context, id string, passwordChunks *dto.ReqUpdateUserPassword) error {
+	ctx := c.Request().Context()
+
 	// parsing UUID
 	userId, err := utils.StringToUUID(id)
 	if err != nil {
@@ -26,7 +29,7 @@ func (u *userUsecase) UpdateUserPassword(id string, passwordChunks *dto.ReqUpdat
 	}
 
 	// assert old password given is same with saved password
-	isPasswordRight, err := u.auth.AssertPasswordRight(passwordChunks.OldPassword, userId)
+	isPasswordRight, err := u.auth.AssertPasswordRight(ctx, passwordChunks.OldPassword, userId)
 
 	// if old password fail to match return error
 	if !isPasswordRight {
@@ -34,7 +37,7 @@ func (u *userUsecase) UpdateUserPassword(id string, passwordChunks *dto.ReqUpdat
 	}
 
 	// assert current password not the same with new password
-	isNewPasswordRight, err := u.auth.AssertPasswordRight(passwordChunks.NewPassword, userId)
+	isNewPasswordRight, err := u.auth.AssertPasswordRight(ctx, passwordChunks.NewPassword, userId)
 
 	// if current password same with current password, return error
 	if isNewPasswordRight {
@@ -42,7 +45,7 @@ func (u *userUsecase) UpdateUserPassword(id string, passwordChunks *dto.ReqUpdat
 	}
 
 	// assert new password not the same wit any previous password
-	isCurrentPasswordPassed, err := u.auth.AssertPasswordNeverUsesByUser(passwordChunks.NewPassword, userId)
+	isCurrentPasswordPassed, err := u.auth.AssertPasswordNeverUsesByUser(ctx, passwordChunks.NewPassword, userId)
 
 	// if new password fail to match return error
 	if !isCurrentPasswordPassed {
@@ -58,7 +61,7 @@ func (u *userUsecase) UpdateUserPassword(id string, passwordChunks *dto.ReqUpdat
 	}
 
 	// add new password to password history
-	err = u.auth.AddPasswordHistory(string(hashedPassword), userId)
+	err = u.auth.AddPasswordHistory(ctx, string(hashedPassword), userId)
 
 	if err != nil {
 		utils.Logger.Error(err.Error())
@@ -66,7 +69,7 @@ func (u *userUsecase) UpdateUserPassword(id string, passwordChunks *dto.ReqUpdat
 	}
 
 	// reset password attempt counter to 0
-	err = u.auth.ResetPasswordAttempt(userId)
+	err = u.auth.ResetPasswordAttempt(ctx, userId)
 
 	// if fail to reset return error
 	if err != nil {
@@ -75,7 +78,7 @@ func (u *userUsecase) UpdateUserPassword(id string, passwordChunks *dto.ReqUpdat
 	}
 
 	// update user password bases on new_password
-	_, err = u.auth.UpdatePasswordById(passwordChunks.NewPassword, userId)
+	_, err = u.auth.UpdatePasswordById(ctx, passwordChunks.NewPassword, userId)
 
 	if err != nil {
 		utils.Logger.Error(err.Error())
@@ -83,7 +86,7 @@ func (u *userUsecase) UpdateUserPassword(id string, passwordChunks *dto.ReqUpdat
 	}
 
 	// destroy all token session
-	err = u.auth.DestroyAllToken(userId)
+	err = u.auth.DestroyAllToken(ctx, userId)
 	if err != nil {
 		utils.Logger.Error(err.Error())
 		return err
@@ -92,7 +95,9 @@ func (u *userUsecase) UpdateUserPassword(id string, passwordChunks *dto.ReqUpdat
 	return nil
 }
 
-func (u *userUsecase) AssertCurrentUserPassword(id string, inputtedPassword string) error {
+func (u *userUsecase) AssertCurrentUserPassword(c echo.Context, id string, inputtedPassword string) error {
+	ctx := c.Request().Context()
+
 	// parsing UUID
 	userId, err := utils.StringToUUID(id)
 	if err != nil {
@@ -101,7 +106,7 @@ func (u *userUsecase) AssertCurrentUserPassword(id string, inputtedPassword stri
 	}
 
 	// assert current password given is same with saved password
-	isPasswordRight, err := u.auth.AssertPasswordRight(inputtedPassword, userId)
+	isPasswordRight, err := u.auth.AssertPasswordRight(ctx, inputtedPassword, userId)
 
 	// if old password fail to match return error
 	if !isPasswordRight {

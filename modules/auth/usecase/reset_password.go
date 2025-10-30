@@ -1,16 +1,16 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 
-	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (u *authUsecase) RequestResetPassword(c echo.Context, email string) error {
+func (u *authUsecase) RequestResetPassword(ctx context.Context, email string) error {
 	// get user by email
-	_, err := u.authRepo.FindByEmailOrUsername(email)
+	_, err := u.authRepo.FindByEmailOrUsername(ctx, email)
 
 	// if fail to get user return error
 	if err != nil {
@@ -18,12 +18,12 @@ func (u *authUsecase) RequestResetPassword(c echo.Context, email string) error {
 
 	}
 
-	return u.authRepo.RequestResetPassword(email)
+	return u.authRepo.RequestResetPassword(ctx, email)
 }
 
-func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, token string) error {
+func (u *authUsecase) ResetUserPassword(ctx context.Context, newPassword string, token string) error {
 	// find user by password token
-	user, err := u.authRepo.GetUserByResetPasswordToken(token)
+	user, err := u.authRepo.GetUserByResetPasswordToken(ctx, token)
 
 	if err != nil {
 		utils.Logger.Error(err.Error())
@@ -31,7 +31,7 @@ func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, toke
 	}
 
 	// assert current password not the same with new password
-	isNewPasswordRight, err := u.authRepo.AssertPasswordRight(newPassword, user.ID)
+	isNewPasswordRight, err := u.authRepo.AssertPasswordRight(ctx, newPassword, user.ID)
 
 	// if current password same with current password, return error
 	if isNewPasswordRight {
@@ -39,7 +39,7 @@ func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, toke
 	}
 
 	// assert new password not the same with any previous password
-	isCurrentPasswordPassed, err := u.authRepo.AssertPasswordNeverUsesByUser(newPassword, user.ID)
+	isCurrentPasswordPassed, err := u.authRepo.AssertPasswordNeverUsesByUser(ctx, newPassword, user.ID)
 
 	// if new password failed to passed return error
 	if !isCurrentPasswordPassed {
@@ -47,7 +47,7 @@ func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, toke
 	}
 
 	// update user password bases on new_password
-	_, err = u.authRepo.UpdatePasswordById(newPassword, user.ID)
+	_, err = u.authRepo.UpdatePasswordById(ctx, newPassword, user.ID)
 
 	if err != nil {
 		utils.Logger.Error(err.Error())
@@ -55,7 +55,7 @@ func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, toke
 	}
 
 	// update password expired at to 3 month from now
-	err = u.authRepo.IncreasePasswordExpiredAt(user.ID)
+	err = u.authRepo.IncreasePasswordExpiredAt(ctx, user.ID)
 
 	if err != nil {
 		utils.Logger.Error(err.Error())
@@ -71,7 +71,7 @@ func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, toke
 	}
 
 	// add new password to password history
-	err = u.authRepo.AddPasswordHistory(string(hashedPassword), user.ID)
+	err = u.authRepo.AddPasswordHistory(ctx, string(hashedPassword), user.ID)
 
 	if err != nil {
 		utils.Logger.Error(err.Error())
@@ -79,7 +79,7 @@ func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, toke
 	}
 
 	// reset password attempt counter to 0
-	err = u.authRepo.ResetPasswordAttempt(user.ID)
+	err = u.authRepo.ResetPasswordAttempt(ctx, user.ID)
 
 	// if fail to reset return error
 	if err != nil {
@@ -88,7 +88,7 @@ func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, toke
 	}
 
 	// destroy all reset password token
-	err = u.authRepo.DestroyAllResetPasswordToken(user.ID)
+	err = u.authRepo.DestroyAllResetPasswordToken(ctx, user.ID)
 
 	if err != nil {
 		utils.Logger.Error(err.Error())
@@ -96,7 +96,7 @@ func (u *authUsecase) ResetUserPassword(c echo.Context, newPassword string, toke
 	}
 
 	// destroy all token session
-	err = u.authRepo.DestroyAllToken(user.ID)
+	err = u.authRepo.DestroyAllToken(ctx, user.ID)
 
 	if err != nil {
 		utils.Logger.Error(err.Error())

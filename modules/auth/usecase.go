@@ -1,21 +1,22 @@
 package auth
 
 import (
-	"github.com/labstack/echo/v4"
+	"context"
+
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 )
 
 // Usecase represent the auth's usecases
 type Usecase interface {
 	// every new usecase on ..modules/auth/usecase/, please register it here
-	Authenticate(c echo.Context, login string, password string) (string, error)
-	SignOut(c echo.Context, token string) error
-	GetProfile(c echo.Context) (profile dto.UserProfile, err error)
-	UpdateProfile(c echo.Context, profileChunks dto.ReqUpdateProfile) error
-	UpdateMyPassword(c echo.Context, passwordChunks dto.ReqUpdatePassword) error
-	IsUserPasswordExpired(login string) error
+	Authenticate(ctx context.Context, login string, password string) (string, error)
+	SignOut(ctx context.Context, token string) error
+	GetProfile(ctx context.Context, accessToken string) (profile dto.UserProfile, err error)
+	UpdateProfile(ctx context.Context, profileChunks dto.ReqUpdateProfile, userId string) error
+	UpdateMyPassword(ctx context.Context, passwordChunks dto.ReqUpdatePassword, userId string) error
+	IsUserPasswordExpired(ctx context.Context, login string) error
 
 	// for reset password
-	RequestResetPassword(c echo.Context, email string) error
-	ResetUserPassword(c echo.Context, newPassword string, token string) error
+	RequestResetPassword(ctx context.Context, email string) error
+	ResetUserPassword(ctx context.Context, newPassword string, token string) error
 }

@@ -15,6 +15,8 @@ import (
 )
 
 func (u *userUsecase) CreateUser(c echo.Context, req *dto.ReqCreateUser, authId string) (userRes *models.User, err error) {
+	ctx := c.Request().Context()
+
 	// assert email is not duplicated
 	result, err := u.userRepo.EmailIsNotDuplicated(req.Email, uuid.Nil)
 
@@ -44,7 +46,7 @@ func (u *userUsecase) CreateUser(c echo.Context, req *dto.ReqCreateUser, authId 
 	// Create New Password
 	// update password
 	// update user password bases on new_password
-	_, err = u.auth.UpdatePasswordById(req.Password, userRes.ID)
+	_, err = u.auth.UpdatePasswordById(ctx, req.Password, userRes.ID)
 
 	if err != nil {
 		return userRes, err
@@ -121,7 +123,9 @@ func (u *userUsecase) UserNameIsNotDuplicated(fullName string, id uuid.UUID) (us
 	return u.userRepo.GetDuplicatedUser(fullName, id)
 }
 
-func (u *userUsecase) BlockUser(id string, req *dto.ReqBlockUser) (userRes *models.User, err error) {
+func (u *userUsecase) BlockUser(c echo.Context, id string, req *dto.ReqBlockUser) (userRes *models.User, err error) {
+	ctx := c.Request().Context()
+
 	// parsing UUID
 	uId, err := utils.StringToUUID(id)
 	if err != nil {
@@ -147,12 +151,14 @@ func (u *userUsecase) BlockUser(id string, req *dto.ReqBlockUser) (userRes *mode
 	}
 
 	// revoke user token
-	u.auth.DestroyAllToken(uId)
+	u.auth.DestroyAllToken(ctx, uId)
 
 	return u.userRepo.GetUserByID(uId)
 }
 
-func (u *userUsecase) ActivateUser(id string, req *dto.ReqActivateUser) (userRes *models.User, err error) {
+func (u *userUsecase) ActivateUser(c echo.Context, id string, req *dto.ReqActivateUser) (userRes *models.User, err error) {
+	ctx := c.Request().Context()
+
 	// parsing UUID
 	uId, err := utils.StringToUUID(id)
 	if err != nil {
@@ -178,7 +184,7 @@ func (u *userUsecase) ActivateUser(id string, req *dto.ReqActivateUser) (userRes
 	}
 
 	// revoke user token
-	u.auth.DestroyAllToken(uId)
+	u.auth.DestroyAllToken(ctx, uId)
 
 	return u.userRepo.GetUserByID(uId)
 }

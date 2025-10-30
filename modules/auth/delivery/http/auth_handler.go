@@ -91,6 +91,8 @@ func NewAuthHandler(e *echo.Echo, us auth.Usecase, middlewareAuth middleware.IMi
 // @Failure		419		{object}	GeneralResponse	"User password expired"
 // @Router			/v1/auth/login [post]
 func (handler *AuthHandler) Authenticate(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	// Validate input
 	req := new(dto.ReqAuthUser)
 	if err := c.Bind(req); err != nil {
@@ -103,12 +105,12 @@ func (handler *AuthHandler) Authenticate(c echo.Context) error {
 	}
 
 	// check if user password already expired
-	if err := handler.AuthUseCase.IsUserPasswordExpired(req.Login); err != nil {
+	if err := handler.AuthUseCase.IsUserPasswordExpired(ctx, req.Login); err != nil {
 		return c.JSON(419, GeneralResponse{Message: err.Error()})
 	}
 
 	// Assuming the Authenticate method on AuthUseCase does the actual authentication
-	token, err := handler.AuthUseCase.Authenticate(c, req.Login, req.Password)
+	token, err := handler.AuthUseCase.Authenticate(ctx, req.Login, req.Password)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
 	}
@@ -127,12 +129,13 @@ func (handler *AuthHandler) Authenticate(c echo.Context) error {
 // @Failure		401	{object}	GeneralResponse	"Unauthorized"
 // @Router			/v1/auth/logout [post]
 func (handler *AuthHandler) SignOut(c echo.Context) error {
+	ctx := c.Request().Context()
 
 	// parse token
 	token := c.Get("token").(string)
 
 	// initiate session destroy
-	err := handler.AuthUseCase.SignOut(c, token)
+	err := handler.AuthUseCase.SignOut(ctx, token)
 
 	// return error, if something happen
 	if err != nil {
@@ -153,9 +156,13 @@ func (handler *AuthHandler) SignOut(c echo.Context) error {
 // @Failure		401	{object}	GeneralResponse	"Unauthorized"
 // @Router			/v1/auth/profile [get]
 func (handler *AuthHandler) GetProfile(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	// parse token
+	token := c.Get("token").(string)
 
 	// initiate session destroy
-	user, err := handler.AuthUseCase.GetProfile(c)
+	user, err := handler.AuthUseCase.GetProfile(ctx, token)
 
 	// return error, if something happen
 	if err != nil {
@@ -177,6 +184,7 @@ func (handler *AuthHandler) GetProfile(c echo.Context) error {
 // @Failure		401		{object}	GeneralResponse			"Unauthorized"
 // @Router			/v1/auth/profile [put]
 func (handler *AuthHandler) UpdateProfile(c echo.Context) error {
+	ctx := c.Request().Context()
 
 	// Validate input
 	req := new(dto.ReqUpdateProfile)
@@ -189,8 +197,11 @@ func (handler *AuthHandler) UpdateProfile(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
 	}
 
+	// parse user ID from context
+	userId := c.Get("userId").(string)
+
 	// call update profile function
-	err := handler.AuthUseCase.UpdateProfile(c, *req)
+	err := handler.AuthUseCase.UpdateProfile(ctx, *req, userId)
 
 	// return error, if something happen
 	if err != nil {
@@ -212,6 +223,8 @@ func (handler *AuthHandler) UpdateProfile(c echo.Context) error {
 // @Failure		401		{object}	GeneralResponse			"Unauthorized"
 // @Router			/v1/auth/password [put]
 func (handler *AuthHandler) UpdateMyPassword(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	// Validate input
 	req := new(dto.ReqUpdatePassword)
 	if err := c.Bind(req); err != nil {
@@ -223,8 +236,11 @@ func (handler *AuthHandler) UpdateMyPassword(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
 	}
 
+	// parse user ID from context
+	userId := c.Get("userId").(string)
+
 	// call update profile function
-	err := handler.AuthUseCase.UpdateMyPassword(c, *req)
+	err := handler.AuthUseCase.UpdateMyPassword(ctx, *req, userId)
 
 	// return error, if something happen
 	if err != nil {

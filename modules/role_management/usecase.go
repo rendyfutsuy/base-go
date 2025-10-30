@@ -17,7 +17,7 @@ type Usecase interface {
 	UpdateRole(id string, req *dto.ReqUpdateRole, authId string) (roleRes *models.Role, err error)
 	SoftDeleteRole(id string, authId string) (roleRes *models.Role, err error)
 	RoleNameIsNotDuplicated(name string, id uuid.UUID) (roleRes *models.Role, err error)
-	MyPermissionsByUserToken(token string) (role *models.Role, err error)
+	MyPermissionsByUserToken(c echo.Context, token string) (role *models.Role, err error)
 
 	// role assignment scope
 	ReAssignPermissionByGroup(roleId string, req *dto.ReqUpdatePermissionGroupAssignmentToRole) (roleRes *models.Role, err error)

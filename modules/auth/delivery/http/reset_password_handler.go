@@ -19,6 +19,8 @@ import (
 // @Failure		400		{object}	GeneralResponse{message=string}	"Bad Request"
 // @Router			/auth/reset-password [post]
 func (handler *AuthHandler) ResetPasswordRequest(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	// Validate input
 	req := new(dto.ReqResetPasswordRequest)
 	if err := c.Bind(req); err != nil {
@@ -31,7 +33,7 @@ func (handler *AuthHandler) ResetPasswordRequest(c echo.Context) error {
 	}
 
 	// call update profile function
-	err := handler.AuthUseCase.RequestResetPassword(c, req.Email)
+	err := handler.AuthUseCase.RequestResetPassword(ctx, req.Email)
 
 	// return error, if something happen
 	if err != nil {
@@ -52,6 +54,8 @@ func (handler *AuthHandler) ResetPasswordRequest(c echo.Context) error {
 // @Failure		400		{object}	GeneralResponse{message=string}	"Bad Request"
 // @Router			/auth/reset-password/{token} [post]
 func (handler *AuthHandler) ResetUserPassword(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	// Validate input
 	req := new(dto.ReqResetPassword)
 	if err := c.Bind(req); err != nil {
@@ -73,7 +77,7 @@ func (handler *AuthHandler) ResetUserPassword(c echo.Context) error {
 	}
 
 	//get user through password reset token
-	err = handler.AuthUseCase.ResetUserPassword(c, req.Password, string(decodedToken))
+	err = handler.AuthUseCase.ResetUserPassword(ctx, req.Password, string(decodedToken))
 
 	// return error, if something happen
 	if err != nil {

@@ -226,7 +226,7 @@ func (handler *UserManagementHandler) BlockUser(c echo.Context) error {
 
 	// get Block User
 	// add revoke all user auth token
-	res, err := handler.UserUseCase.BlockUser(id, req)
+	res, err := handler.UserUseCase.BlockUser(c, id, req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -261,7 +261,7 @@ func (handler *UserManagementHandler) ActivateUser(c echo.Context) error {
 
 	// get Active User
 	// add revoke all user auth token
-	res, err := handler.UserUseCase.ActivateUser(id, req)
+	res, err := handler.UserUseCase.ActivateUser(c, id, req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}

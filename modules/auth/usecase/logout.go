@@ -1,14 +1,15 @@
 package usecase
 
 import (
-	"github.com/labstack/echo/v4"
+	"context"
+
 	"github.com/rendyfutsuy/base-go/utils"
 )
 
-func (u *authUsecase) SignOut(c echo.Context, token string) error {
+func (u *authUsecase) SignOut(ctx context.Context, token string) error {
 
 	// destroy requested jwt token
-	err := u.authRepo.DestroyToken(token)
+	err := u.authRepo.DestroyToken(ctx, token)
 
 	if err != nil {
 		utils.Logger.Error(err.Error())

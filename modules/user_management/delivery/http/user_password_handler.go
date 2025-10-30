@@ -35,7 +35,7 @@ func (handler *UserManagementHandler) UpdateUserPassword(c echo.Context) error {
 	}
 
 	// update Update User Password By Passed ID
-	err = handler.UserUseCase.UpdateUserPassword(id, req)
+	err = handler.UserUseCase.UpdateUserPassword(c, id, req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
@@ -69,7 +69,7 @@ func (handler *UserManagementHandler) ConfirmCurrentUserPassword(c echo.Context)
 	}
 
 	// update Update User Password By Passed ID
-	err := handler.UserUseCase.AssertCurrentUserPassword(authId, req.Password)
+	err := handler.UserUseCase.AssertCurrentUserPassword(c, authId, req.Password)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}

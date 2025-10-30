@@ -218,7 +218,7 @@ func (handler *RoleManagementHandler) GetDuplicatedRole(c echo.Context) error {
 func (handler *RoleManagementHandler) GetMyPermissions(c echo.Context) error {
 	token := c.Get("token").(string)
 
-	res, err := handler.RoleUseCase.MyPermissionsByUserToken(token)
+	res, err := handler.RoleUseCase.MyPermissionsByUserToken(c, token)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}

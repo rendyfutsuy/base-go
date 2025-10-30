@@ -17,10 +17,10 @@ type Usecase interface {
 	UpdateUser(id string, req *dto.ReqUpdateUser, authId string) (userRes *models.User, err error)
 	SoftDeleteUser(id string, authId string) (userRes *models.User, err error)
 	UserNameIsNotDuplicated(name string, id uuid.UUID) (userRes *models.User, err error)
-	BlockUser(id string, req *dto.ReqBlockUser) (userRes *models.User, err error)
-	ActivateUser(id string, req *dto.ReqActivateUser) (userRes *models.User, err error)
+	BlockUser(c echo.Context, id string, req *dto.ReqBlockUser) (userRes *models.User, err error)
+	ActivateUser(c echo.Context, id string, req *dto.ReqActivateUser) (userRes *models.User, err error)
 
 	// password management
-	UpdateUserPassword(userId string, passwordChunks *dto.ReqUpdateUserPassword) error
-	AssertCurrentUserPassword(id string, inputtedPassword string) error
+	UpdateUserPassword(c echo.Context, userId string, passwordChunks *dto.ReqUpdateUserPassword) error
+	AssertCurrentUserPassword(c echo.Context, id string, inputtedPassword string) error
 }

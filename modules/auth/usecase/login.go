@@ -1,18 +1,18 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/constants"
 )
 
-func (u *authUsecase) Authenticate(c echo.Context, login string, password string) (string, error) {
+func (u *authUsecase) Authenticate(ctx context.Context, login string, password string) (string, error) {
 	// get user by email
-	user, err := u.authRepo.FindByEmailOrUsername(login)
+	user, err := u.authRepo.FindByEmailOrUsername(ctx, login)
 
 	// if fail to get user return error
 	if err != nil {
@@ -21,7 +21,7 @@ func (u *authUsecase) Authenticate(c echo.Context, login string, password string
 	}
 
 	// assert login attempt is not above 3
-	isAttemptPassed, err := u.authRepo.AssertPasswordAttemptPassed(user.ID)
+	isAttemptPassed, err := u.authRepo.AssertPasswordAttemptPassed(ctx, user.ID)
 	if err != nil {
 		return "", err // Return error from the check itself.
 	}
@@ -32,7 +32,7 @@ func (u *authUsecase) Authenticate(c echo.Context, login string, password string
 	}
 
 	// assert password given is same with saved password
-	isPasswordRight, err := u.authRepo.AssertPasswordRight(password, user.ID)
+	isPasswordRight, err := u.authRepo.AssertPasswordRight(ctx, password, user.ID)
 
 	if err != nil {
 		return "", err // Return error from the check itself.
@@ -43,12 +43,12 @@ func (u *authUsecase) Authenticate(c echo.Context, login string, password string
 	}
 
 	// Reset password attempt counter to 0 since login was successful.
-	if err := u.authRepo.ResetPasswordAttempt(user.ID); err != nil {
+	if err := u.authRepo.ResetPasswordAttempt(ctx, user.ID); err != nil {
 		return "", err // If fail to reset, return error.
 	}
 
 	// assert if password expiration passed
-	isPasswordExpired, err := u.authRepo.AssertPasswordExpiredIsPassed(user.ID)
+	isPasswordExpired, err := u.authRepo.AssertPasswordExpiredIsPassed(ctx, user.ID)
 	if err != nil {
 		return "", err // Return error from the check itself.
 	}
@@ -85,23 +85,23 @@ func (u *authUsecase) Authenticate(c echo.Context, login string, password string
 	}
 
 	// Record access token to the database.
-	if err := u.authRepo.AddUserAccessToken(accessToken, user.ID); err != nil {
+	if err := u.authRepo.AddUserAccessToken(ctx, accessToken, user.ID); err != nil {
 		return "", err // If fail to record, return error.
 	}
 
 	return accessToken, nil
 }
 
-func (u *authUsecase) IsUserPasswordExpired(login string) error {
+func (u *authUsecase) IsUserPasswordExpired(ctx context.Context, login string) error {
 	// get user by email
-	user, err := u.authRepo.FindByEmailOrUsername(login)
+	user, err := u.authRepo.FindByEmailOrUsername(ctx, login)
 
 	if err != nil {
 		return err
 	}
 
 	// assert if password expiration passed
-	isPasswordExpired, err := u.authRepo.AssertPasswordExpiredIsPassed(user.ID)
+	isPasswordExpired, err := u.authRepo.AssertPasswordExpiredIsPassed(ctx, user.ID)
 
 	if err != nil {
 		return err

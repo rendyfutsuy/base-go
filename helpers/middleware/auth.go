@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"time"
@@ -33,6 +34,8 @@ func NewMiddlewareAuth(authRepository auth.Repository) IMiddlewareAuth {
 
 func (a *MiddlewareAuth) AuthorizationCheck(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		ctx := c.Request().Context()
+
 		// get authorization header
 		authorization := c.Request().Header.Get("Authorization")
 
@@ -51,7 +54,7 @@ func (a *MiddlewareAuth) AuthorizationCheck(next echo.HandlerFunc) echo.HandlerF
 		}
 
 		// get user data from token
-		userData, err := a.getUserData(tokenString)
+		userData, err := a.getUserData(ctx, tokenString)
 		if err != nil {
 			return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: err.Error()})
 		}
@@ -74,19 +77,20 @@ func (a *MiddlewareAuth) AuthorizationCheck(next echo.HandlerFunc) echo.HandlerF
 			return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: "unauthorized"})
 		}
 
-		// set token to context
+		// set token and user data to context
 		c.Set("token", tokenString)
 		c.Set("user", userData)
+		c.Set("userId", userData.ID.String())
 
 		return next(c)
 	}
 }
 
-func (a *MiddlewareAuth) getUserData(token string) (user models.User, err error) {
+func (a *MiddlewareAuth) getUserData(ctx context.Context, token string) (user models.User, err error) {
 
 	tokenString := token
 
-	user, err = a.authRepository.GetUserByAccessToken(tokenString)
+	user, err = a.authRepository.GetUserByAccessToken(ctx, tokenString)
 	if err != nil {
 		return user, err
 	}
