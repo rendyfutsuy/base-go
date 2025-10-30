@@ -25,6 +25,7 @@ import (
 	"github.com/rendyfutsuy/base-go/utils/services"
 	"github.com/rendyfutsuy/base-go/worker"
 	echoSwagger "github.com/swaggo/echo-swagger"
+	"gorm.io/gorm"
 
 	_homepageController "github.com/rendyfutsuy/base-go/modules/homepage/delivery/http"
 
@@ -48,7 +49,7 @@ import (
 	_roleManagementService "github.com/rendyfutsuy/base-go/modules/role_management/usecase"
 )
 
-func InitializedRouter(db *sql.DB, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
+func InitializedRouter(db *sql.DB, gormDB *gorm.DB, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
 	router := echo.New()
 
 	// queries := sqlc.New(db)
@@ -89,10 +90,10 @@ func InitializedRouter(db *sql.DB, timeoutContext time.Duration, v *validator.Va
 	}
 
 	// Repositories ------------------------------------------------------------------------------------------------------------------------------------------------------
-	authRepo := _authRepo.NewAuthRepository(db, emailServices)
-	roleManagementRepo := _roleManagementRepo.NewRoleManagementRepository(db)
+	authRepo := _authRepo.NewAuthRepository(gormDB, emailServices)            // Using GORM for auth
+	roleManagementRepo := _roleManagementRepo.NewRoleManagementRepository(db) // Keep SQL for now
 
-	userManagementRepo := _userManagementRepo.NewUserManagementRepository(db)
+	userManagementRepo := _userManagementRepo.NewUserManagementRepository(db) // Keep SQL for now
 
 	// Middlewares ------------------------------------------------------------------------------------------------------------------------------------------------------
 	middlewareAuth := authmiddleware.NewMiddlewareAuth(authRepo)

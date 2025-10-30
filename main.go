@@ -12,11 +12,13 @@ import (
 	"github.com/rendyfutsuy/base-go/database"
 	"github.com/rendyfutsuy/base-go/router"
 	"github.com/rendyfutsuy/base-go/utils"
+	"gorm.io/gorm"
 )
 
 var (
 	app struct {
 		Database    *sql.DB
+		GormDB      *gorm.DB
 		Router      *echo.Echo
 		NewRelicApp *newrelic.Application
 		Validator   *validator.Validate
@@ -37,10 +39,17 @@ func init() {
 	if err := app.NewRelicApp.WaitForConnection(5 * time.Second); nil != err {
 		fmt.Println(err)
 	}
-	// Trying to connect to the database
+
+	// Connect to database with raw SQL (keeping for backward compatibility)
 	app.Database = database.ConnectToDB("Database")
 	if app.Database == nil {
 		panic("Can't connect to Postgres : Database!")
+	}
+
+	// Connect to database with GORM
+	app.GormDB = database.ConnectToGORM("Database")
+	if app.GormDB == nil {
+		panic("Can't connect to Postgres with GORM : Database!")
 	}
 
 	app.Validator = validator.New()
@@ -54,7 +63,7 @@ func main() {
 	// Set a timeout for each endpoint
 	timeoutContext := time.Duration(utils.ConfigVars.Int("context.timeout")) * time.Second
 
-	app.Router = router.InitializedRouter(app.Database, timeoutContext, app.Validator, app.NewRelicApp)
+	app.Router = router.InitializedRouter(app.Database, app.GormDB, timeoutContext, app.Validator, app.NewRelicApp)
 
 	app.Router.Validator = &utils.CustomValidator{Validator: app.Validator}
 
@@ -63,6 +72,12 @@ func main() {
 	defer func() {
 		if app.Database != nil {
 			app.Database.Close()
+		}
+		if app.GormDB != nil {
+			sqlDB, _ := app.GormDB.DB()
+			if sqlDB != nil {
+				sqlDB.Close()
+			}
 		}
 	}()
 }

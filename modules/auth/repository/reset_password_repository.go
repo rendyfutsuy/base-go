@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -10,11 +9,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	_ "github.com/lib/pq"
-	"github.com/rendyfutsuy/base-go/constants"
 	models "github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth/tasks"
 	"github.com/rendyfutsuy/base-go/utils"
+	"gorm.io/gorm"
 )
 
 // RequestResetPassword generates a random password reset session and sends it to the user's email.
@@ -71,35 +69,19 @@ func (repo *authRepository) RequestResetPassword(ctx context.Context, email stri
 // - user: The retrieved user object.
 // - errorMain: An error if the retrieval fails, or if the reset password token is not valid.
 func (repo *authRepository) GetUserByResetPasswordToken(ctx context.Context, token string) (user models.User, errorMain error) {
-	// SQL query to retrieve the user with the given email.
-	query := `
-		SELECT 
-			usr.id as id, usr.email
-		FROM 
-			users usr
-		JOIN
-			reset_password_tokens rst_pwd
-		on
-			rst_pwd.user_id = usr.id
-		WHERE 
-			rst_pwd.access_token = $1
-	`
-	// Execute the query and scan the result into the user struct.
-	err := repo.Conn.QueryRowContext(ctx, query, token).Scan(&user.ID, &user.Email)
+	err := repo.DB.WithContext(ctx).
+		Table("users usr").
+		Select("usr.id as id, usr.email").
+		Joins("JOIN reset_password_tokens rst_pwd ON rst_pwd.user_id = usr.id").
+		Where("rst_pwd.access_token = ?", token).
+		Scan(&user).Error
 
-	// Handle the error.
 	if err != nil {
-		// Print an error message if scanning the row fails.
-		fmt.Println(constants.SQLErrorScanRow, err)
-
-		// Handle case where no row is found.
-		if err == sql.ErrNoRows {
-			log.Printf("No user found with this")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Printf("No user found with this reset token")
 			return user, errors.New("User Not Found, the access token is not valid please restart the process...")
 		}
-
-		// Log other errors for debugging.
-		log.Printf(constants.SQLErrorQueryRow, err)
+		log.Printf("Error querying user: %v", err)
 		return user, err
 	}
 
@@ -116,21 +98,15 @@ func (repo *authRepository) GetUserByResetPasswordToken(ctx context.Context, tok
 // Returns:
 // - error: An error if the insertion fails.
 func (repo *authRepository) AddResetPasswordToken(ctx context.Context, token string, userId uuid.UUID) error {
+	now := time.Now().UTC()
+	resetToken := models.ResetPasswordToken{
+		AccessToken: token,
+		UserId:      userId,
+		CreatedAt:   now,
+		UpdatedAt:   &now,
+	}
 
-	// insert new access token record into database
-	_, err := repo.Conn.ExecContext(
-		ctx,
-		`INSERT INTO reset_password_tokens
-				(access_token, user_id, created_at, updated_at) 
-			VALUES 
-				($1, $2, $3, $4) 
-			RETURNING access_token, user_id`,
-		token,
-		userId,
-		time.Now().UTC(),
-		time.Now().UTC(),
-	)
-
+	err := repo.DB.WithContext(ctx).Create(&resetToken).Error
 	if err != nil {
 		utils.Logger.Error(err.Error())
 		return err
@@ -147,18 +123,12 @@ func (repo *authRepository) AddResetPasswordToken(ctx context.Context, token str
 // Returns:
 // - error: An error if the deletion fails, nil otherwise.
 func (repo *authRepository) DestroyResetPasswordToken(ctx context.Context, token string) error {
-	// SQL query to delete the user with the given access token.
-	query := `
-		DELETE FROM reset_password_tokens
-		WHERE access_token = $1
-	`
-	// Execute the query and delete requested row.
-	_, err := repo.Conn.ExecContext(ctx, query, token)
+	err := repo.DB.WithContext(ctx).
+		Where("access_token = ?", token).
+		Delete(&models.ResetPasswordToken{}).Error
 
-	// Handle the error.
 	if err != nil {
-		// Print an error message if delete row fails.
-		fmt.Println(constants.SQLErrorScanRow, err)
+		fmt.Println("Error deleting reset password token:", err)
 		return err
 	}
 	return nil
@@ -172,18 +142,12 @@ func (repo *authRepository) DestroyResetPasswordToken(ctx context.Context, token
 // Returns:
 // - error: An error if the deletion fails, nil otherwise.
 func (repo *authRepository) DestroyAllResetPasswordToken(ctx context.Context, userId uuid.UUID) error {
-	// SQL query to delete the user with the given access token.
-	query := `
-		DELETE FROM reset_password_tokens
-		WHERE user_id = $1
-	`
-	// Execute the query and delete requested row.
-	_, err := repo.Conn.ExecContext(ctx, query, userId)
+	err := repo.DB.WithContext(ctx).
+		Where("user_id = ?", userId).
+		Delete(&models.ResetPasswordToken{}).Error
 
-	// Handle the error.
 	if err != nil {
-		// Print an error message if delete row fails.
-		fmt.Println(constants.SQLErrorScanRow, err)
+		fmt.Println("Error deleting all reset password tokens:", err)
 		return err
 	}
 	return nil
@@ -193,19 +157,13 @@ func (repo *authRepository) IncreasePasswordExpiredAt(ctx context.Context, userI
 	// Calculate the expiration date to be 3 months from today
 	expiredAt := time.Now().AddDate(0, 3, 0)
 
-	// SQL query to delete the user with the given access token.
-	query := `
-		UPDATE users
-		SET password_expired_at = $2
-		WHERE id = $1
-	`
-	// Execute the query and delete requested row.
-	_, err := repo.Conn.ExecContext(ctx, query, userId, expiredAt)
+	err := repo.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where("id = ?", userId).
+		Update("password_expired_at", expiredAt).Error
 
-	// Handle the error.
 	if err != nil {
-		// Print an error message if delete row fails.
-		fmt.Println(constants.SQLErrorScanRow, err)
+		fmt.Println("Error updating password expiration:", err)
 		return err
 	}
 	return nil
