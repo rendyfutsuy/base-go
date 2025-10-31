@@ -90,8 +90,8 @@ func InitializedRouter(db *sql.DB, gormDB *gorm.DB, timeoutContext time.Duration
 	}
 
 	// Repositories ------------------------------------------------------------------------------------------------------------------------------------------------------
-	authRepo := _authRepo.NewAuthRepository(gormDB, emailServices)            // Using GORM for auth
-	roleManagementRepo := _roleManagementRepo.NewRoleManagementRepository(db) // Keep SQL for now
+	authRepo := _authRepo.NewAuthRepository(gormDB, emailServices)                // Using GORM for auth
+	roleManagementRepo := _roleManagementRepo.NewRoleManagementRepository(gormDB) // Using GORM for role_management
 
 	userManagementRepo := _userManagementRepo.NewUserManagementRepository(gormDB) // Using GORM for user_management
 

@@ -9,34 +9,23 @@ import (
 )
 
 func (repo *roleRepository) ReAssignPermissionsToPermissionGroup(ctx context.Context, id uuid.UUID, permissions []uuid.UUID) error {
-	// reset role permissions group assignment
-	query := `
-		DELETE FROM permissions_modules
-		WHERE permission_group_id = $1
-	`
-	// Execute the query and delete requested row.
-	_, err := repo.Conn.ExecContext(ctx, query, id)
+	// Delete existing assignments using parameter binding
+	err := repo.DB.WithContext(ctx).
+		Exec("DELETE FROM permissions_modules WHERE permission_group_id = ?", id).Error
 
-	// Handle the error.
 	if err != nil {
-		// Print an error message if delete row fails.
 		fmt.Println(constants.SQLErrorScanRow, err)
 		return err
 	}
 
-	// assign permission group to role, by create new pivot entry that on modules_roles
+	// Insert new assignments using parameter binding
 	for _, permissionId := range permissions {
-		// assign permission group to role
-		_, err := repo.Conn.ExecContext(ctx, `INSERT INTO permissions_modules
-				(permission_group_id, permission_id)
-			VALUES
-				($1, $2)`,
-			id,
-			permissionId,
-		)
+		err := repo.DB.WithContext(ctx).
+			Exec("INSERT INTO permissions_modules (permission_group_id, permission_id) VALUES (?, ?)",
+				id, permissionId).Error
 
 		if err != nil {
-			fmt.Println("Error scanning row Permission Group:", err)
+			fmt.Println("Error inserting Permission Group:", err)
 			return err
 		}
 	}

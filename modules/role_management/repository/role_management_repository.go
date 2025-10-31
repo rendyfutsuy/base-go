@@ -1,19 +1,19 @@
 package repository
 
 import (
-	"database/sql"
 	"os"
 
 	role "github.com/rendyfutsuy/base-go/modules/role_management"
 	"github.com/rendyfutsuy/base-go/utils"
+	"gorm.io/gorm"
 )
 
 type roleRepository struct {
-	Conn *sql.DB
+	DB *gorm.DB
 }
 
-func NewRoleManagementRepository(Conn *sql.DB) role.Repository {
-	return &roleRepository{Conn}
+func NewRoleManagementRepository(DB *gorm.DB) role.Repository {
+	return &roleRepository{DB}
 }
 
 func (repo *roleRepository) CreateTable(sqlFilePath string) (err error) {
@@ -24,7 +24,14 @@ func (repo *roleRepository) CreateTable(sqlFilePath string) (err error) {
 		return err
 	}
 
-	_, err = repo.Conn.Exec(string(sqlCommands))
+	// Get underlying SQL DB for raw SQL execution
+	sqlDB, err := repo.DB.DB()
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		return err
+	}
+
+	_, err = sqlDB.Exec(string(sqlCommands))
 	if err != nil {
 		utils.Logger.Error(err.Error())
 		return err
