@@ -190,3 +190,99 @@ func BuildSearchConditionForRawSQL(searchQuery string, searchColumns []string, s
 
 	return whereClause, args
 }
+
+// PaginationConfig holds configuration for pagination
+type PaginationConfig struct {
+	DefaultSortBy    string              // Default sort column (e.g., "usr.created_at")
+	DefaultSortOrder string              // Default sort order (e.g., "DESC")
+	AllowedColumns   []string            // Allowed sort columns for validation (e.g., []string{"id", "name", "created_at"})
+	ColumnPrefix     string              // Table/alias prefix (e.g., "usr.", "role.")
+	MaxPerPage       int                 // Maximum items per page (default: 100)
+	SortMapping      func(string) string // Optional custom sort column mapping function
+}
+
+// ApplyPagination applies pagination, sorting, and count logic to a GORM query.
+// This is a generic function that handles common pagination logic for index/list endpoints.
+//
+// Parameters:
+//   - query: The GORM query builder (with filters already applied, but before count/pagination)
+//   - req: PageRequest containing page, per_page, sort_by, and sort_order
+//   - config: PaginationConfig with default values and validation rules
+//   - result: Pointer to slice where results will be scanned (e.g., &[]models.User)
+//
+// Returns:
+//   - total: Total count of records (before pagination)
+//   - err: Error if pagination fails
+//
+// Example:
+//
+//	config := PaginationConfig{
+//		DefaultSortBy:    "usr.created_at",
+//		DefaultSortOrder: "DESC",
+//		AllowedColumns:   []string{"id", "full_name", "email", "created_at"},
+//		ColumnPrefix:     "usr.",
+//		MaxPerPage:       100,
+//	}
+//	total, err := ApplyPagination(query, req, config, &users)
+func ApplyPagination(query *gorm.DB, req PageRequest, config PaginationConfig, result interface{}) (total int, err error) {
+	// Set defaults
+	if config.MaxPerPage <= 0 {
+		config.MaxPerPage = 100
+	}
+	if config.DefaultSortBy == "" {
+		config.DefaultSortBy = "created_at"
+	}
+	if config.DefaultSortOrder == "" {
+		config.DefaultSortOrder = "DESC"
+	}
+
+	// Validate and sanitize pagination parameters
+	validatedPage, validatedPerPage := ValidatePaginationParams(req.Page, req.PerPage, config.MaxPerPage)
+	offset := (validatedPage - 1) * validatedPerPage
+
+	// Count total (before pagination)
+	countQuery := query
+	var totalCount int64
+	err = countQuery.Count(&totalCount).Error
+	if err != nil {
+		return 0, err
+	}
+	total = int(totalCount)
+
+	// Determine sort column
+	sortBy := config.DefaultSortBy
+	if req.SortBy != "" {
+		if config.SortMapping != nil {
+			// Use custom mapping function if provided
+			mapped := config.SortMapping(req.SortBy)
+			if mapped != "" {
+				sortBy = mapped
+			}
+		} else if len(config.AllowedColumns) > 0 {
+			// Use ValidateAndSanitizeSortColumn if allowedColumns provided
+			validated := ValidateAndSanitizeSortColumn(req.SortBy, config.AllowedColumns, config.ColumnPrefix)
+			if validated != "" {
+				sortBy = validated
+			}
+		}
+	}
+
+	// Determine sort order
+	sortOrder := config.DefaultSortOrder
+	if req.SortOrder != "" {
+		validated := ValidateAndSanitizeSortOrder(req.SortOrder)
+		if validated != "" {
+			sortOrder = validated
+		}
+	}
+
+	// Apply sorting and pagination
+	// Use Scan() as it works for both standard GORM queries and custom SELECT queries with joins
+	err = query.
+		Order(sortBy + " " + sortOrder).
+		Limit(validatedPerPage).
+		Offset(offset).
+		Scan(result).Error
+
+	return total, nil
+}

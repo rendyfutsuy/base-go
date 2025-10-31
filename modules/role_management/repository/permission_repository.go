@@ -35,20 +35,7 @@ func (repo *roleRepository) GetPermissionByID(ctx context.Context, id uuid.UUID)
 
 // GetIndexPermission retrieves a paginated list of permission information from the database.
 func (repo *roleRepository) GetIndexPermission(ctx context.Context, req request.PageRequest) (permissions []models.Permission, total int, err error) {
-	// Validate and sanitize pagination parameters
-	validatedPage, validatedPerPage := request.ValidatePaginationParams(req.Page, req.PerPage, 100)
-	offSet := (validatedPage - 1) * validatedPerPage
 	searchQuery := req.Search
-
-	// Define allowed sort columns (whitelist to prevent SQL injection)
-	allowedSortColumns := []string{"id", "name", "created_at", "updated_at", "deleted_at"}
-
-	// Validate and sanitize sort column and order
-	sortBy := request.ValidateAndSanitizeSortColumn(req.SortBy, allowedSortColumns, "permission.")
-	if sortBy == "" {
-		sortBy = "permission.created_at" // Default if invalid
-	}
-	sortOrder := request.ValidateAndSanitizeSortOrder(req.SortOrder)
 
 	// Build base query
 	query := repo.DB.WithContext(ctx).
@@ -61,22 +48,16 @@ func (repo *roleRepository) GetIndexPermission(ctx context.Context, req request.
 		"permission.name",
 	})
 
-	// Count total (before pagination)
-	countQuery := query
-	var totalCount int64
-	err = countQuery.Count(&totalCount).Error
-	if err != nil {
-		return nil, 0, err
+	// Apply pagination using generic function
+	config := request.PaginationConfig{
+		DefaultSortBy:    "permission.created_at",
+		DefaultSortOrder: "DESC",
+		AllowedColumns:   []string{"id", "name", "created_at", "updated_at", "deleted_at"},
+		ColumnPrefix:     "permission.",
+		MaxPerPage:       100,
 	}
-	total = int(totalCount)
 
-	// Apply pagination and sorting with validated values
-	err = query.
-		Order(sortBy + " " + sortOrder).
-		Limit(validatedPerPage).
-		Offset(offSet).
-		Find(&permissions).Error
-
+	total, err = request.ApplyPagination(query, req, config, &permissions)
 	if err != nil {
 		return nil, 0, err
 	}

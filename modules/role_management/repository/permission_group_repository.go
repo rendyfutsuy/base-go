@@ -82,20 +82,7 @@ func (repo *roleRepository) GetPermissionGroupByID(ctx context.Context, id uuid.
 
 // GetIndexPermissionGroup retrieves a paginated list of permission_group information from the database.
 func (repo *roleRepository) GetIndexPermissionGroup(ctx context.Context, req request.PageRequest) (permissionGroups []models.PermissionGroup, total int, err error) {
-	// Validate and sanitize pagination parameters
-	validatedPage, validatedPerPage := request.ValidatePaginationParams(req.Page, req.PerPage, 100)
-	offSet := (validatedPage - 1) * validatedPerPage
 	searchQuery := req.Search
-
-	// Define allowed sort columns (whitelist to prevent SQL injection)
-	allowedSortColumns := []string{"id", "name", "module", "created_at", "updated_at", "deleted_at"}
-
-	// Validate and sanitize sort column and order
-	sortBy := request.ValidateAndSanitizeSortColumn(req.SortBy, allowedSortColumns, "permission_group.")
-	if sortBy == "" {
-		sortBy = "permission_group.created_at" // Default if invalid
-	}
-	sortOrder := request.ValidateAndSanitizeSortOrder(req.SortOrder)
 
 	// Build base query
 	query := repo.DB.WithContext(ctx).
@@ -108,22 +95,16 @@ func (repo *roleRepository) GetIndexPermissionGroup(ctx context.Context, req req
 		"permission_group.name",
 	})
 
-	// Count total (before pagination)
-	countQuery := query
-	var totalCount int64
-	err = countQuery.Count(&totalCount).Error
-	if err != nil {
-		return nil, 0, err
+	// Apply pagination using generic function
+	config := request.PaginationConfig{
+		DefaultSortBy:    "permission_group.created_at",
+		DefaultSortOrder: "DESC",
+		AllowedColumns:   []string{"id", "name", "module", "created_at", "updated_at", "deleted_at"},
+		ColumnPrefix:     "permission_group.",
+		MaxPerPage:       100,
 	}
-	total = int(totalCount)
 
-	// Apply pagination and sorting with validated values
-	err = query.
-		Order(sortBy + " " + sortOrder).
-		Limit(validatedPerPage).
-		Offset(offSet).
-		Find(&permissionGroups).Error
-
+	total, err = request.ApplyPagination(query, req, config, &permissionGroups)
 	if err != nil {
 		return nil, 0, err
 	}

@@ -106,7 +106,6 @@ func (repo *userRepository) GetUserByID(ctx context.Context, id uuid.UUID) (user
 // user information entries, and an error.
 // its can search by user name, user code, user alias_1, user alias_2, user alias_3, user alias_4, user address, user email, user phone_number, type name
 func (repo *userRepository) GetIndexUser(ctx context.Context, req request.PageRequest, filter dto.ReqUserIndexFilter) (users []models.User, total int, err error) {
-	offSet := (req.Page - 1) * req.PerPage
 	searchQuery := req.Search
 
 	// Build base query with joins
@@ -153,32 +152,15 @@ func (repo *userRepository) GetIndexUser(ctx context.Context, req request.PageRe
 		query = query.Where("rl.name = ?", filter.RoleName)
 	}
 
-	// Count total (before pagination)
-	countQuery := query
-	var totalCount int64
-	err = countQuery.Count(&totalCount).Error
-	if err != nil {
-		return nil, 0, err
-	}
-	total = int(totalCount)
-
-	// Apply sorting
-	sortBy := "usr.created_at"
-	sortOrder := "DESC"
-	if req.SortBy != "" {
-		sortBy = repo.SortColumnMapping(req.SortBy)
-		if req.SortOrder != "" {
-			sortOrder = req.SortOrder
-		}
+	// Apply pagination using generic function
+	config := request.PaginationConfig{
+		DefaultSortBy:    "usr.created_at",
+		DefaultSortOrder: "DESC",
+		MaxPerPage:       100,
+		SortMapping:      repo.SortColumnMapping,
 	}
 
-	// Apply pagination and sorting
-	err = query.
-		Order(sortBy + " " + sortOrder).
-		Limit(req.PerPage).
-		Offset(offSet).
-		Scan(&users).Error
-
+	total, err = request.ApplyPagination(query, req, config, &users)
 	if err != nil {
 		return nil, 0, err
 	}
