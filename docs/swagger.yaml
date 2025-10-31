@@ -311,6 +311,42 @@ paths:
       summary: Update user profile
       tags:
       - Authentication
+  /v1/auth/refresh-token:
+    get:
+      consumes:
+      - application/json
+      description: Generates a new access token based on the provided bearer token.
+        If the token is revoked, returns an error.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully refreshed token
+          schema:
+            $ref: '#/definitions/http.ResponseAuth'
+        "400":
+          description: Token is revoked or invalid request
+          schema:
+            allOf:
+            - $ref: '#/definitions/http.GeneralResponse'
+            - properties:
+                message:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/http.GeneralResponse'
+            - properties:
+                message:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Refresh access token
+      tags:
+      - Authentication
 securityDefinitions:
   BearerAuth:
     description: 'Enter JWT token (ex: Bearer eyJhbGciOiJIU....)'
