@@ -59,3 +59,84 @@ func ApplySearchCondition(query *gorm.DB, searchQuery string, searchColumns []st
 
 	return query.Where(whereClause, args...)
 }
+
+// ValidateAndSanitizeSortOrder validates and sanitizes sort order.
+// Only allows ASC or DESC (case-insensitive). Returns "DESC" as default if invalid.
+//
+// Parameters:
+//   - sortOrder: The sort order string from user input
+//
+// Returns:
+//   - string: Validated sort order (ASC, DESC, or default DESC)
+func ValidateAndSanitizeSortOrder(sortOrder string) string {
+	sortOrderUpper := strings.ToUpper(strings.TrimSpace(sortOrder))
+	if sortOrderUpper == "ASC" || sortOrderUpper == "DESC" {
+		return sortOrderUpper
+	}
+	return "DESC" // Default to DESC if invalid
+}
+
+// ValidateAndSanitizeSortColumn validates sort column against a whitelist to prevent SQL injection.
+// Returns the validated column name or empty string if invalid.
+//
+// Parameters:
+//   - sortBy: The sort column from user input
+//   - allowedColumns: Whitelist of allowed column names (e.g., []string{"id", "name", "created_at"})
+//   - prefix: Optional table/alias prefix (e.g., "role.", "permission.")
+//
+// Returns:
+//   - string: Validated column name with prefix, or empty string if invalid
+//
+// Example:
+//
+//	validated := ValidateAndSanitizeSortColumn("name", []string{"id", "name", "created_at"}, "role.")
+//	// Returns: "role.name"
+//
+//	invalid := ValidateAndSanitizeSortColumn("'; DROP TABLE--", []string{"id", "name"}, "")
+//	// Returns: ""
+func ValidateAndSanitizeSortColumn(sortBy string, allowedColumns []string, prefix string) string {
+	// Remove whitespace and convert to lowercase for comparison
+	sortByClean := strings.TrimSpace(strings.ToLower(sortBy))
+
+	// Check if sortBy is in the whitelist
+	for _, allowed := range allowedColumns {
+		if strings.ToLower(allowed) == sortByClean {
+			return prefix + allowed
+		}
+	}
+
+	// Return empty string if not found in whitelist
+	return ""
+}
+
+// ValidatePaginationParams validates and sanitizes pagination parameters.
+// Ensures PerPage and Page are positive integers within reasonable limits.
+//
+// Parameters:
+//   - page: Page number (1-indexed)
+//   - perPage: Items per page
+//   - maxPerPage: Maximum allowed items per page (default: 100)
+//
+// Returns:
+//   - validatedPage: Validated page number (minimum 1)
+//   - validatedPerPage: Validated per page (minimum 1, maximum maxPerPage)
+//
+// Example:
+//
+//	page, perPage := ValidatePaginationParams(0, 200, 100)
+//	// Returns: page=1, perPage=100
+func ValidatePaginationParams(page, perPage, maxPerPage int) (validatedPage, validatedPerPage int) {
+	if page < 1 {
+		page = 1
+	}
+
+	if perPage < 1 {
+		perPage = 10 // Default to 10 if invalid
+	}
+
+	if maxPerPage > 0 && perPage > maxPerPage {
+		perPage = maxPerPage
+	}
+
+	return page, perPage
+}

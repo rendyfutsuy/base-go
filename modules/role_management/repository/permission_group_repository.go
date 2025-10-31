@@ -2,10 +2,12 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/utils"
@@ -18,39 +20,57 @@ import (
 func (repo *roleRepository) GetPermissionGroupByID(ctx context.Context, id uuid.UUID) (permissionGroup *models.PermissionGroup, err error) {
 	permissionGroup = &models.PermissionGroup{}
 
-	// Use Raw query with parameter binding for ARRAY_AGG
-	err = repo.DB.WithContext(ctx).
-		Raw(`
-			SELECT
-				pg.id AS permission_group_id,
-				pg.name AS permission_group_name,
-				ARRAY_AGG(p.name) AS permissions,
-				pg.created_at,
-				pg.updated_at,
-				pg.deleted_at
-			FROM
-				permission_groups pg
-			LEFT JOIN
-				permissions_modules ppg
-			ON
-				pg.id = ppg.permission_group_id
-			LEFT JOIN
-				permissions p
-			ON
-				ppg.permission_id = p.id
-			WHERE
-				pg.id = ? AND pg.deleted_at IS NULL
-			GROUP BY
-				pg.id, pg.name
-		`, id).
-		Scan(permissionGroup).Error
+	// Get underlying SQL DB for raw query execution
+	sqlDB, err := repo.DB.DB()
+	if err != nil {
+		return nil, fmt.Errorf("permission_group permission_group with id %s not found", id)
+	}
+
+	// Use Raw query with manual scanning for ARRAY_AGG using pq.Array
+	query := `
+		SELECT
+			pg.id AS permission_group_id,
+			pg.name AS permission_group_name,
+			ARRAY_AGG(p.name) AS permissions,
+			pg.created_at,
+			pg.updated_at,
+			pg.deleted_at
+		FROM
+			permission_groups pg
+		LEFT JOIN
+			permissions_modules ppg
+		ON
+			pg.id = ppg.permission_group_id
+		LEFT JOIN
+			permissions p
+		ON
+			ppg.permission_id = p.id
+		WHERE
+			pg.id = $1 AND pg.deleted_at IS NULL
+		GROUP BY
+			pg.id, pg.name
+	`
+
+	var permissionNames []utils.NullString
+
+	err = sqlDB.QueryRowContext(ctx, query, id).Scan(
+		&permissionGroup.ID,
+		&permissionGroup.Name,
+		pq.Array(&permissionNames),
+		&permissionGroup.CreatedAt,
+		&permissionGroup.UpdatedAt,
+		&permissionGroup.DeletedAt,
+	)
 
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("permission_group permission_group with id %s not found", id)
 		}
 		return nil, err
 	}
+
+	// Assign scanned arrays
+	permissionGroup.PermissionNames = permissionNames
 
 	// Handle NULL arrays from LEFT JOIN
 	if permissionGroup.PermissionNames == nil {
@@ -62,8 +82,20 @@ func (repo *roleRepository) GetPermissionGroupByID(ctx context.Context, id uuid.
 
 // GetIndexPermissionGroup retrieves a paginated list of permission_group information from the database.
 func (repo *roleRepository) GetIndexPermissionGroup(ctx context.Context, req request.PageRequest) (permissionGroups []models.PermissionGroup, total int, err error) {
-	offSet := (req.Page - 1) * req.PerPage
+	// Validate and sanitize pagination parameters
+	validatedPage, validatedPerPage := request.ValidatePaginationParams(req.Page, req.PerPage, 100)
+	offSet := (validatedPage - 1) * validatedPerPage
 	searchQuery := req.Search
+
+	// Define allowed sort columns (whitelist to prevent SQL injection)
+	allowedSortColumns := []string{"id", "name", "module", "created_at", "updated_at", "deleted_at"}
+
+	// Validate and sanitize sort column and order
+	sortBy := request.ValidateAndSanitizeSortColumn(req.SortBy, allowedSortColumns, "permission_group.")
+	if sortBy == "" {
+		sortBy = "permission_group.created_at" // Default if invalid
+	}
+	sortOrder := request.ValidateAndSanitizeSortOrder(req.SortOrder)
 
 	// Build base query
 	query := repo.DB.WithContext(ctx).
@@ -85,20 +117,10 @@ func (repo *roleRepository) GetIndexPermissionGroup(ctx context.Context, req req
 	}
 	total = int(totalCount)
 
-	// Apply sorting
-	sortBy := "permission_group.created_at"
-	sortOrder := "DESC"
-	if req.SortBy != "" {
-		sortBy = req.SortBy
-		if req.SortOrder != "" {
-			sortOrder = req.SortOrder
-		}
-	}
-
-	// Apply pagination and sorting
+	// Apply pagination and sorting with validated values
 	err = query.
 		Order(sortBy + " " + sortOrder).
-		Limit(req.PerPage).
+		Limit(validatedPerPage).
 		Offset(offSet).
 		Find(&permissionGroups).Error
 

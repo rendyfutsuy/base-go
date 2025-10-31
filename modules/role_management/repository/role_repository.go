@@ -172,7 +172,9 @@ func (repo *roleRepository) GetRoleByID(ctx context.Context, id uuid.UUID) (role
 
 // GetIndexRole retrieves a paginated list of role information from the database.
 func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRequest) (roles []models.Role, total int, err error) {
-	offSet := (req.Page - 1) * req.PerPage
+	// Validate and sanitize pagination parameters
+	validatedPage, validatedPerPage := request.ValidatePaginationParams(req.Page, req.PerPage, 100)
+	offSet := (validatedPage - 1) * validatedPerPage
 	searchQuery := req.Search
 
 	// Get underlying SQL DB for raw query execution with ARRAY_AGG
@@ -180,6 +182,16 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 	if err != nil {
 		return nil, 0, err
 	}
+
+	// Define allowed sort columns (whitelist to prevent SQL injection)
+	allowedSortColumns := []string{"id", "name", "created_at", "updated_at", "deleted_at", "total_user"}
+
+	// Validate and sanitize sort column and order
+	sortBy := request.ValidateAndSanitizeSortColumn(req.SortBy, allowedSortColumns, "role.")
+	if sortBy == "" {
+		sortBy = "role.created_at" // Default if invalid
+	}
+	sortOrder := request.ValidateAndSanitizeSortOrder(req.SortOrder)
 
 	// Build base query - use raw SQL for ARRAY_AGG as GORM doesn't handle it well
 	baseQuery := `
@@ -210,7 +222,7 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 	args := []interface{}{}
 	argIdx := 1
 
-	// Apply search with parameter binding
+	// Apply search with parameter binding (using numbered parameters for prepared statements)
 	if searchQuery != "" {
 		whereClause += " HAVING (role.name ILIKE $" + fmt.Sprintf("%d", argIdx) + " OR pg.module ILIKE $" + fmt.Sprintf("%d", argIdx) + ")"
 		args = append(args, "%"+searchQuery+"%")
@@ -242,18 +254,10 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 	}
 	total = int(totalCount)
 
-	// Apply sorting
-	sortBy := "role.created_at"
-	sortOrder := "DESC"
-	if req.SortBy != "" {
-		sortBy = req.SortBy
-		if req.SortOrder != "" {
-			sortOrder = req.SortOrder
-		}
-	}
-
-	// Build final query with pagination
-	finalQuery := baseQuery + whereClause + " ORDER BY " + sortBy + " " + sortOrder + fmt.Sprintf(" LIMIT %d OFFSET %d", req.PerPage, offSet)
+	// Build final query with pagination using parameter binding (not string interpolation)
+	// LIMIT and OFFSET are safe as they're validated integers, but we use parameter binding for consistency
+	args = append(args, validatedPerPage, offSet)
+	finalQuery := baseQuery + whereClause + " ORDER BY " + sortBy + " " + sortOrder + fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
 
 	// Initialize roles slice
 	roles = []models.Role{}
