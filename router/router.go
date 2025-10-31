@@ -70,19 +70,12 @@ func InitializedRouter(db *sql.DB, gormDB *gorm.DB, timeoutContext time.Duration
 	// Config Rate Limiter allows 100 requests/sec
 	router.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(100)))
 
-	// Config Validator to Router
-	// router.Validator = &utils.RequestValidator{Validator: validator.New()}
-	// structValidator := validator.New()
-
-	// Register RequestLog to Router Middleware
-	// router.Use(utils.RequestLog)
-
-	// Register HTTP Error Handler function
-	// router.HTTPErrorHandler = helper.ErrorHandler
-
 	router.GET("/", _homepageController.DefaultHomepage)
 
-	router.GET("/swagger/*", echoSwagger.WrapHandler)
+	// Swagger documentation - hanya tersedia di development environment
+	if utils.ConfigVars.String("app_env") == "development" {
+		router.GET("/swagger/*", echoSwagger.WrapHandler)
+	}
 	// Services  ------------------------------------------------------------------------------------------------------------------------------------------------------
 	emailServices, err := services.NewEmailService()
 	if err != nil {
