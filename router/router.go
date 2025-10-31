@@ -93,7 +93,7 @@ func InitializedRouter(db *sql.DB, gormDB *gorm.DB, timeoutContext time.Duration
 	authRepo := _authRepo.NewAuthRepository(gormDB, emailServices)            // Using GORM for auth
 	roleManagementRepo := _roleManagementRepo.NewRoleManagementRepository(db) // Keep SQL for now
 
-	userManagementRepo := _userManagementRepo.NewUserManagementRepository(db) // Keep SQL for now
+	userManagementRepo := _userManagementRepo.NewUserManagementRepository(gormDB) // Using GORM for user_management
 
 	// Middlewares ------------------------------------------------------------------------------------------------------------------------------------------------------
 	middlewareAuth := authmiddleware.NewMiddlewareAuth(authRepo)

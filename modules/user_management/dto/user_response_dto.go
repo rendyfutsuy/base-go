@@ -51,7 +51,6 @@ type RespUserDetail struct {
 	RoleName     string           `json:"role_name"`
 	IsActive     bool             `json:"is_active"`
 	ActiveStatus utils.NullString `json:"active_status"`
-	ApiKey       utils.NullString `json:"api_key"`
 	Gender       string           `json:"gender"`
 }
 
@@ -93,7 +92,6 @@ func ToRespUserDetail(userDb models.User) RespUserDetail {
 		RoleName:     userDb.RoleName,
 		IsActive:     userDb.IsActive,
 		ActiveStatus: userDb.ActiveStatus,
-		ApiKey:       userDb.ApiKey,
 		Gender:       userDb.Gender,
 	}
 }

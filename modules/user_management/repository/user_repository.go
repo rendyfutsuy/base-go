@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -12,63 +12,64 @@ import (
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
+	"github.com/rendyfutsuy/base-go/utils"
+	"gorm.io/gorm"
 )
 
 // CreateUser creates a new user information entry in the database.
 //
 // It takes a ToDBCreateUser parameter and returns an User pointer and an error.
 func (repo *userRepository) CreateUser(ctx context.Context, userReq dto.ToDBCreateUser) (userRes *models.User, err error) {
+	now := time.Now().UTC()
+	expiredAt := now.AddDate(0, 3, 0)
 
-	// initialize: user user model, time format to created at string,
-	userRes = new(models.User)
-	timeFormat := constants.FormatTimezone
-	createdAtString := time.Now().UTC().Format(timeFormat)
-	ExpiredAtString := time.Now().UTC().AddDate(0, 3, 0).Format(timeFormat)
+	// Get password template from config (default to "temp" if not configured)
+	passwordTemplate := "temp"
+	if utils.ConfigVars.Exists("user.default_password_template") {
+		passwordTemplate = utils.ConfigVars.String("user.default_password_template")
+	}
 
-	// execute query to insert user user
-	// assign return value to userRes variable
-	err = repo.Conn.QueryRowContext(ctx,
-		`INSERT INTO users
-			(full_name, email, role_id, is_active, gender, created_at, updated_at, password, password_expired_at)
-		VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		RETURNING 
-			id, full_name, created_at, updated_at, deleted_at`,
-		userReq.FullName,
-		userReq.Email,
-		userReq.RoleId,
-		userReq.IsActive,
-		userReq.Gender,
-		createdAtString,
-		createdAtString,
-		"temp",
-		ExpiredAtString,
-	).Scan(
-		&userRes.ID,
-		&userRes.FullName,
-		&userRes.CreatedAt,
-		&userRes.UpdatedAt,
-		&userRes.DeletedAt,
-	)
-	// if error occurs, return error
+	userRes = &models.User{
+		FullName:          userReq.FullName,
+		Email:             userReq.Email,
+		RoleId:            userReq.RoleId,
+		IsActive:          userReq.IsActive,
+		Gender:            userReq.Gender,
+		Password:          passwordTemplate,
+		CreatedAt:         now,
+		UpdatedAt:         now,
+		PasswordExpiredAt: expiredAt,
+	}
+
+	// Create user - GORM will insert all fields from struct
+	err = repo.DB.WithContext(ctx).Create(userRes).Error
+
 	if err != nil {
 		return nil, err
 	}
 
-	return userRes, err
+	// Reload only the fields we need to return
+	err = repo.DB.WithContext(ctx).
+		Select("id", "full_name", "created_at", "updated_at", "deleted_at").
+		Where("id = ?", userRes.ID).
+		First(userRes).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return userRes, nil
 }
 
 // GetUserByID retrieves an user information entry by ID from the database.
 //
 // It takes a uuid.UUID parameter representing the ID and returns an User pointer and an error.
 func (repo *userRepository) GetUserByID(ctx context.Context, id uuid.UUID) (user *models.User, err error) {
-	// initialize user variable
-	user = new(models.User)
+	user = &models.User{}
 
-	// fetch data from database by id that passed
-	// assign return value to user variable
-	err = repo.Conn.QueryRowContext(ctx,
-		`SELECT 
+	err = repo.DB.WithContext(ctx).
+		Table("users usr").
+		Select(`
 			usr.id,
 			usr.full_name,
 			usr.email,
@@ -77,7 +78,7 @@ func (repo *userRepository) GetUserByID(ctx context.Context, id uuid.UUID) (user
 			usr.deleted_at,
 			usr.role_id,
 			usr.is_active,
-			rl.name,
+			rl.name AS role_name,
 			usr.gender,
 			CASE 
 				WHEN usr.is_active THEN 'active'
@@ -87,31 +88,16 @@ func (repo *userRepository) GetUserByID(ctx context.Context, id uuid.UUID) (user
 				WHEN usr.counter >= 3 THEN true
 				ELSE false
 			END AS is_blocked
-		FROM 
-			users usr
-		JOIN
-			roles rl
-		ON
-			usr.role_id = rl.id
-		WHERE 
-			usr.id = $1 AND usr.deleted_at IS NULL`,
-		id,
-	).Scan(
-		&user.ID,
-		&user.FullName,
-		&user.Email,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-		&user.DeletedAt,
-		&user.RoleId,
-		&user.IsActive,
-		&user.RoleName,
-		&user.Gender,
-		&user.ActiveStatus,
-		&user.IsBlocked,
-	)
+		`).
+		Joins("JOIN roles rl ON rl.id = usr.role_id").
+		Where("usr.id = ? AND usr.deleted_at IS NULL", id).
+		Scan(user).Error
 
-	return user, err
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 // GetIndexUser retrieves a paginated list of user information from the database.
@@ -120,187 +106,101 @@ func (repo *userRepository) GetUserByID(ctx context.Context, id uuid.UUID) (user
 // user information entries, and an error.
 // its can search by user name, user code, user alias_1, user alias_2, user alias_3, user alias_4, user address, user email, user phone_number, type name
 func (repo *userRepository) GetIndexUser(ctx context.Context, req request.PageRequest, filter dto.ReqUserIndexFilter) (users []models.User, total int, err error) {
-	// initialize: pagination page, search query to local variable
 	offSet := (req.Page - 1) * req.PerPage
 	searchQuery := req.Search
 
-	// Construct the SQL query
-	JoinFill := ` JOIN
-		roles rl
-		ON
-			usr.role_id = rl.id
-		`
+	// Build base query with joins
+	query := repo.DB.WithContext(ctx).
+		Table("users usr").
+		Select(`
+			usr.id,
+			usr.full_name,
+			usr.email,
+			usr.gender,
+			usr.is_active,
+			usr.counter,
+			usr.created_at,
+			usr.updated_at,
+			usr.deleted_at,
+			CASE 
+				WHEN usr.is_active THEN 'active'
+				ELSE 'inactive'
+			END AS active_status,
+			CASE 
+				WHEN usr.counter >= 3 THEN true
+				ELSE false
+			END AS is_blocked,
+			rl.name AS role_name
+		`).
+		Joins("JOIN roles rl ON rl.id = usr.role_id").
+		Where("usr.deleted_at IS NULL")
 
-	// construct select fillable
-	selectFill := `
-		usr.id,
-		usr.full_name,
-		usr.email,
-		usr.gender,
-		usr.is_active,
-		usr.counter,
-		usr.created_at,
-		usr.updated_at,
-		usr.deleted_at,
-		CASE 
-			WHEN usr.is_active THEN 'active'
-			ELSE 'inactive'
-		END AS active_status,
-		CASE 
-			WHEN usr.counter >= 3 THEN true
-			ELSE false
-		END AS is_blocked,
-		rl.name AS role_name
-	`
-
-	// append select and join query to base query
-	baseQuery := "SELECT " + selectFill + " FROM users usr" + JoinFill
-
-	// append join query to count query
-	countQuery := "SELECT COUNT(DISTINCT usr.id) FROM users usr" + JoinFill
-
-	// initialize common query for deleted condition
-	whereClause := " WHERE usr.deleted_at IS NULL"
-
-	// assign search query, based on searchable field.
+	// Apply search query with parameter binding
 	if searchQuery != "" {
-		// can search by full_name, gender, email and role_name
-		searchUser := "usr.full_name ILIKE '%' || $1 || '%' OR usr.gender ILIKE '%' || $1 || '%' OR usr.email ILIKE '%' || $1 || '%' OR rl.name ILIKE '%' || $1 || '%'"
-		whereClause += " AND (" + searchUser + ")"
+		query = query.Where(
+			"usr.full_name ILIKE ? OR usr.gender ILIKE ? OR usr.email ILIKE ? OR rl.name ILIKE ?",
+			"%"+searchQuery+"%",
+			"%"+searchQuery+"%",
+			"%"+searchQuery+"%",
+			"%"+searchQuery+"%",
+		)
 	}
 
-	params := []interface{}{}
-	paramIndex := 1
-
-	if searchQuery != "" {
-		paramIndex = 2
-	}
-
-	// multiple input filter - BEGIN
+	// Apply role IDs filter
 	if len(filter.RoleIds) > 0 {
-		whereClause += fmt.Sprintf(" AND rl.id = ANY($%d)", paramIndex)
-		params = append(params, pq.Array(filter.RoleIds))
-		paramIndex++
+		query = query.Where("rl.id = ANY(?)", pq.Array(filter.RoleIds))
 	}
-	// multiple input filter - END
 
-	// Single input filter - BEGIN
+	// Apply role name filter
 	if filter.RoleName != "" {
-		whereClause += fmt.Sprintf(" AND rl.name = $%d", paramIndex)
-		params = append(params, filter.RoleName) // Adding % for partial match
-		paramIndex++
+		query = query.Where("rl.name = ?", filter.RoleName)
 	}
-	// Single input filter - END
 
-	// Initialize Default sorting
+	// Count total (before pagination)
+	countQuery := query
+	var totalCount int64
+	err = countQuery.Count(&totalCount).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	total = int(totalCount)
+
+	// Apply sorting
 	sortBy := "usr.created_at"
-	sortOrder := "DESC" // Sort from newest to oldest
+	sortOrder := "DESC"
 	if req.SortBy != "" {
-		// intercept sort by
 		sortBy = repo.SortColumnMapping(req.SortBy)
-
-		// adjust sort order
 		if req.SortOrder != "" {
 			sortOrder = req.SortOrder
 		}
 	}
 
-	// initialize Default Sorting Query
-	orderClause := " ORDER BY " + sortBy + " " + sortOrder
-	limitClause := fmt.Sprintf(" LIMIT %d OFFSET %d", req.PerPage, offSet)
+	// Apply pagination and sorting
+	err = query.
+		Order(sortBy + " " + sortOrder).
+		Limit(req.PerPage).
+		Offset(offSet).
+		Scan(&users).Error
 
-	// count total
-	if searchQuery != "" {
-		err = repo.Conn.QueryRowContext(ctx, countQuery+whereClause, append([]interface{}{searchQuery}, params...)...).Scan(&total)
-	} else {
-		err = repo.Conn.QueryRowContext(ctx, countQuery+whereClause, params...).Scan(&total)
-	}
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// retrieve paginated
-	rows := new(sql.Rows)
-	if searchQuery != "" {
-		rows, err = repo.Conn.QueryContext(ctx, baseQuery+whereClause+orderClause+limitClause, append([]interface{}{searchQuery}, params...)...)
-	} else {
-		rows, err = repo.Conn.QueryContext(ctx, baseQuery+whereClause+orderClause+limitClause, params...)
-	}
-	if err != nil {
-		return nil, 0, err
-	}
-	defer rows.Close()
-
-	if err = rows.Err(); err != nil {
-		return nil, 0, err
-	}
-
-	// assign pagination as models.User
-	for rows.Next() {
-		var user models.User
-		err = rows.Scan(
-			&user.ID,
-			&user.FullName,
-			&user.Email,
-			&user.Gender,
-			&user.IsActive,
-			&user.Counter,
-			&user.CreatedAt,
-			&user.UpdatedAt,
-			&user.DeletedAt,
-			&user.ActiveStatus,
-			&user.IsBlocked,
-			&user.RoleName,
-		)
-
-		if err != nil {
-			return nil, 0, err
-		}
-
-		users = append(users, user)
-	}
-
-	return users, total, err
+	return users, total, nil
 }
 
 // GetAllUser retrieves all user information entries from the database.
 //
 // Returns a slice of models.User and an error.
 func (repo *userRepository) GetAllUser(ctx context.Context) ([]models.User, error) {
-	rows, err := repo.Conn.QueryContext(ctx,
-		`SELECT 
-			id,
-			full_name,
-			created_at
-		FROM 
-			users
-		WHERE
-			deleted_at IS NULL`,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
 	var users []models.User
 
-	for rows.Next() {
-		var user models.User
-		err = rows.Scan(
-			&user.ID,
-			&user.FullName,
-			&user.CreatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
+	err := repo.DB.WithContext(ctx).
+		Select("id", "full_name", "created_at").
+		Where("deleted_at IS NULL").
+		Find(&users).Error
 
-		users = append(users, user)
-	}
-
-	// Check for any errors encountered during iteration
-	if err = rows.Err(); err != nil {
+	if err != nil {
 		return nil, err
 	}
 
@@ -311,57 +211,32 @@ func (repo *userRepository) GetAllUser(ctx context.Context) ([]models.User, erro
 //
 // It takes an ID of the user information and a ToDBUpdateUser parameter.
 // It returns an User pointer and an error.
-//
-// The function updates the user information in the database with the provided ID.
-// It sets the name, updated_at, updated_by, email, phone_number, user_type_id,
-// alias_1, alias_2, alias_3, alias_4, and address fields of the user information.
-// If the user information with the provided ID is not found, it returns an error.
-// If there is an error during the update, it returns the error.
 func (repo *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, userReq dto.ToDBUpdateUser) (userRes *models.User, err error) {
-	userRes = new(models.User)
-	timeFormat := constants.FormatTimezone
-	updatedAtString := time.Now().UTC().Format(timeFormat)
+	updates := map[string]interface{}{
+		"full_name":  userReq.FullName,
+		"email":      userReq.Email,
+		"gender":     userReq.Gender,
+		"is_active":  userReq.IsActive,
+		"role_id":    userReq.RoleId,
+		"updated_at": time.Now().UTC(),
+	}
 
-	err = repo.Conn.QueryRowContext(ctx,
-		`UPDATE users SET 
-			full_name = $1,
-			updated_at = $2,
-			email = $4,
-			gender = $5,
-			is_active = $6,
-			role_id = $7
-		WHERE 
-			id = $3 AND deleted_at IS NULL
-		RETURNING 
-			id,
-			full_name,
-			created_at,
-			updated_at,
-			deleted_at`,
-		userReq.FullName,
-		updatedAtString,
-		id,
-		userReq.Email,
-		userReq.Gender,
-		userReq.IsActive,
-		userReq.RoleId,
-	).Scan(
-		&userRes.ID,
-		&userRes.FullName,
-		&userRes.CreatedAt,
-		&userRes.UpdatedAt,
-		&userRes.DeletedAt,
-	)
+	userRes = &models.User{}
+	err = repo.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Updates(updates).
+		Select("id", "full_name", "created_at", "updated_at", "deleted_at").
+		First(userRes).Error
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf(constants.UserIDNotFound, id)
 		}
-
 		return nil, err
 	}
 
-	return userRes, err
+	return userRes, nil
 }
 
 // SoftDeleteUser soft deletes an user user entry in the database.
@@ -369,183 +244,130 @@ func (repo *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, userRe
 // It takes an id of type uuid.UUID and an userReq of type dto.ToDBDeleteUser as parameters.
 // It returns the soft deleted user user entry of type models.User and an error.
 func (repo *userRepository) SoftDeleteUser(ctx context.Context, id uuid.UUID, userReq dto.ToDBDeleteUser) (userRes *models.User, err error) {
+	userRes = &models.User{}
 
-	userRes = new(models.User)
-	timeFormat := constants.FormatTimezone
-	deletedAtString := time.Now().UTC().Format(timeFormat)
-
-	err = repo.Conn.QueryRowContext(ctx,
-		`UPDATE users SET 
-			deleted_at = $1
-		WHERE 
-			id = $2 AND deleted_at IS NULL
-		RETURNING 
-			id, name, created_at, updated_at, deleted_at`,
-		deletedAtString,
-		id,
-	).Scan(
-		&userRes.ID,
-		&userRes.FullName,
-		&userRes.CreatedAt,
-		&userRes.UpdatedAt,
-		&userRes.DeletedAt,
-	)
+	// GORM soft delete automatically sets deleted_at
+	err = repo.DB.WithContext(ctx).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Delete(&models.User{}).Error
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf(constants.UserIDNotFound, id)
-		}
-
 		return nil, err
 	}
 
-	return userRes, err
+	// Get the deleted user (with Unscoped to include soft deleted)
+	err = repo.DB.WithContext(ctx).
+		Unscoped().
+		Select("id", "full_name", "created_at", "updated_at", "deleted_at").
+		Where("id = ?", id).
+		First(userRes).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf(constants.UserIDNotFound, id)
+		}
+		return nil, err
+	}
+
+	return userRes, nil
 }
 
 func (repo *userRepository) BlockUser(ctx context.Context, id uuid.UUID) (userRes *models.User, err error) {
+	userRes = &models.User{}
 
-	userRes = new(models.User)
-
-	err = repo.Conn.QueryRowContext(ctx,
-		`UPDATE users SET 
-			counter = 4
-		WHERE 
-			id = $1
-		RETURNING 
-			id, full_name, counter, created_at, updated_at, deleted_at`,
-		id,
-	).Scan(
-		&userRes.ID,
-		&userRes.FullName,
-		&userRes.Counter,
-		&userRes.CreatedAt,
-		&userRes.UpdatedAt,
-		&userRes.DeletedAt,
-	)
+	err = repo.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where("id = ?", id).
+		Update("counter", 4).
+		Select("id", "full_name", "counter", "created_at", "updated_at", "deleted_at").
+		First(userRes).Error
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf(constants.UserIDNotFound, id)
 		}
-
 		return nil, err
 	}
 
-	return userRes, err
+	return userRes, nil
 }
 
 func (repo *userRepository) UnBlockUser(ctx context.Context, id uuid.UUID) (userRes *models.User, err error) {
+	userRes = &models.User{}
 
-	userRes = new(models.User)
-
-	err = repo.Conn.QueryRowContext(ctx,
-		`UPDATE users SET 
-			counter = 0
-		WHERE 
-			id = $1
-		RETURNING 
-			id, full_name, counter, created_at, updated_at, deleted_at`,
-		id,
-	).Scan(
-		&userRes.ID,
-		&userRes.FullName,
-		&userRes.Counter,
-		&userRes.CreatedAt,
-		&userRes.UpdatedAt,
-		&userRes.DeletedAt,
-	)
+	err = repo.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where("id = ?", id).
+		Update("counter", 0).
+		Select("id", "full_name", "counter", "created_at", "updated_at", "deleted_at").
+		First(userRes).Error
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf(constants.UserIDNotFound, id)
 		}
-
 		return nil, err
 	}
 
-	return userRes, err
+	return userRes, nil
 }
 
 func (repo *userRepository) ActivateUser(ctx context.Context, id uuid.UUID) (userRes *models.User, err error) {
+	userRes = &models.User{}
 
-	userRes = new(models.User)
-
-	err = repo.Conn.QueryRowContext(ctx,
-		`UPDATE users SET 
-			is_active = true
-		WHERE 
-			id = $1
-		RETURNING 
-			id, full_name, is_active, created_at, updated_at, deleted_at`,
-		id,
-	).Scan(
-		&userRes.ID,
-		&userRes.FullName,
-		&userRes.IsActive,
-		&userRes.CreatedAt,
-		&userRes.UpdatedAt,
-		&userRes.DeletedAt,
-	)
+	err = repo.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where("id = ?", id).
+		Update("is_active", true).
+		Select("id", "full_name", "is_active", "created_at", "updated_at", "deleted_at").
+		First(userRes).Error
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf(constants.UserIDNotFound, id)
 		}
-
 		return nil, err
 	}
 
-	return userRes, err
+	return userRes, nil
 }
 
 func (repo *userRepository) DisActivateUser(ctx context.Context, id uuid.UUID) (userRes *models.User, err error) {
+	userRes = &models.User{}
 
-	userRes = new(models.User)
-
-	err = repo.Conn.QueryRowContext(ctx,
-		`UPDATE users SET 
-			is_active = false
-		WHERE 
-			id = $1
-		RETURNING 
-			id, full_name, is_active, created_at, updated_at, deleted_at`,
-		id,
-	).Scan(
-		&userRes.ID,
-		&userRes.FullName,
-		&userRes.IsActive,
-		&userRes.CreatedAt,
-		&userRes.UpdatedAt,
-		&userRes.DeletedAt,
-	)
+	err = repo.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where("id = ?", id).
+		Update("is_active", false).
+		Select("id", "full_name", "is_active", "created_at", "updated_at", "deleted_at").
+		First(userRes).Error
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf(constants.UserIDNotFound, id)
 		}
-
 		return nil, err
 	}
 
-	return userRes, err
+	return userRes, nil
 }
 
 // CountUser retrieves the count of user information entries from the database.
 //
 // Returns a pointer to an integer and an error.
 func (repo *userRepository) CountUser(ctx context.Context) (count *int, err error) {
-	err = repo.Conn.QueryRowContext(ctx,
-		`SELECT 
-			COUNT(*)
-		FROM 
-			users`,
-	).Scan(&count)
+	var result int64
+	err = repo.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Count(&result).Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	return count, err
+	resultInt := int(result)
+	count = &resultInt
+	return count, nil
 }
 
 // EmailIsNotDuplicated checks if an email is not duplicated in the users table, excluding a specific ID if provided.
@@ -558,37 +380,21 @@ func (repo *userRepository) CountUser(ctx context.Context) (count *int, err erro
 // - bool: true if the email is not duplicated, false otherwise.
 // - error: an error if the check fails.
 func (repo *userRepository) EmailIsNotDuplicated(ctx context.Context, email string, excludedId uuid.UUID) (bool, error) {
-	baseQuery := `SELECT 
-			COUNT(*)
-		FROM 
-			users
-		WHERE
-			email = $1 AND deleted_at IS NULL`
-
-	params := []interface{}{email}
+	var count int64
+	query := repo.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where("email = ? AND deleted_at IS NULL", email)
 
 	if excludedId != uuid.Nil {
-		baseQuery += ` AND id <> $2`
-		params = append(params, excludedId)
+		query = query.Where("id <> ?", excludedId)
 	}
 
-	result := 0
-
-	// assert email is nt duplicated
-	err := repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(&result)
-
-	// if have error, return false and error
+	err := query.Count(&count).Error
 	if err != nil {
 		return false, err
 	}
 
-	// if duplicated name, return false
-	if result > 0 {
-		return false, nil
-	}
-
-	// if not duplicated name, return true
-	return true, err
+	return count == 0, nil
 }
 
 // UserNameIsNotDuplicated checks if the provided user name is not duplicated in the database.
@@ -596,37 +402,21 @@ func (repo *userRepository) EmailIsNotDuplicated(ctx context.Context, email stri
 // It takes a name string and an excludedId UUID as parameters.
 // It returns a boolean indicating whether the name is not duplicated and an error.
 func (repo *userRepository) UserNameIsNotDuplicated(ctx context.Context, name string, excludedId uuid.UUID) (bool, error) {
-	baseQuery := `SELECT 
-			COUNT(*)
-		FROM 
-			users
-		WHERE
-			full_name = $1 AND deleted_at IS NULL`
-
-	params := []interface{}{name}
+	var count int64
+	query := repo.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where("full_name = ? AND deleted_at IS NULL", name)
 
 	if excludedId != uuid.Nil {
-		baseQuery += ` AND id <> $2`
-		params = append(params, excludedId)
+		query = query.Where("id <> ?", excludedId)
 	}
 
-	result := 0
-
-	// assert name is nt duplicated
-	err := repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(&result)
-
-	// if have error, return false and error
+	err := query.Count(&count).Error
 	if err != nil {
 		return false, err
 	}
 
-	// if duplicated name, return false
-	if result > 0 {
-		return false, nil
-	}
-
-	// if not duplicated name, return true
-	return true, err
+	return count == 0, nil
 }
 
 // GetDuplicatedUser retrieves the user information with the given name and excluded ID from the database.
@@ -639,36 +429,24 @@ func (repo *userRepository) UserNameIsNotDuplicated(ctx context.Context, name st
 // - user: a pointer to the retrieved user information.
 // - err: an error if there was a problem retrieving the user information.
 func (repo *userRepository) GetDuplicatedUser(ctx context.Context, name string, excludedId uuid.UUID) (user *models.User, err error) {
-	baseQuery := `SELECT 
-			id, name, created_at, updated_at
-		FROM 
-			users
-		WHERE
-			full_name = $1 AND deleted_at IS NULL`
-
-	params := []interface{}{name}
-
-	if excludedId != uuid.Nil {
-		baseQuery += ` AND id <> $2`
-		params = append(params, excludedId)
-	}
-
-	// Initialize user
 	user = &models.User{}
 
-	// assert name is not duplicated
-	err = repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(
-		&user.ID,
-		&user.FullName,
-		&user.CreatedAt,
-		&user.UpdatedAt)
+	query := repo.DB.WithContext(ctx).
+		Select("id", "full_name", "created_at", "updated_at").
+		Where("full_name = ? AND deleted_at IS NULL", name)
 
-	// if have error, return nil and error
+	if excludedId != uuid.Nil {
+		query = query.Where("id <> ?", excludedId)
+	}
+
+	err = query.First(user).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
-	// return Duplicated User
 	return user, nil
 }
 
@@ -677,37 +455,22 @@ func (repo *userRepository) GetDuplicatedUser(ctx context.Context, name string, 
 // It takes a name string and an excludedId UUID as parameters.
 // It returns a boolean indicating whether the name is not duplicated and an error.
 func (repo *userRepository) UserNameIsNotDuplicatedOnSoftDeleted(ctx context.Context, name string, excludedId uuid.UUID) (bool, error) {
-	baseQuery := `SELECT 
-			COUNT(*)
-		FROM 
-			users
-		WHERE
-			full_name = $1`
-
-	params := []interface{}{name}
+	var count int64
+	query := repo.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Unscoped().
+		Where("full_name = ?", name)
 
 	if excludedId != uuid.Nil {
-		baseQuery += ` AND id <> $2`
-		params = append(params, excludedId)
+		query = query.Where("id <> ?", excludedId)
 	}
 
-	result := 0
-
-	// assert name is nt duplicated
-	err := repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(&result)
-
-	// if have error, return false and error
+	err := query.Count(&count).Error
 	if err != nil {
 		return false, err
 	}
 
-	// if duplicated name, return false
-	if result > 0 {
-		return false, nil
-	}
-
-	// if not duplicated name, return true
-	return true, err
+	return count == 0, nil
 }
 
 // GetDuplicatedUserOnSoftDeleted retrieves the user information with the given name and excluded ID from the database.
@@ -720,84 +483,73 @@ func (repo *userRepository) UserNameIsNotDuplicatedOnSoftDeleted(ctx context.Con
 // - user: a pointer to the retrieved user information.
 // - err: an error if there was a problem retrieving the user information.
 func (repo *userRepository) GetDuplicatedUserOnSoftDeleted(ctx context.Context, name string, excludedId uuid.UUID) (user *models.User, err error) {
-	baseQuery := `SELECT 
-			id, name, created_at, updated_at
-		FROM 
-			users
-		WHERE
-			full_name = $1`
-
-	params := []interface{}{name}
-
-	if excludedId != uuid.Nil {
-		baseQuery += ` AND id <> $2`
-		params = append(params, excludedId)
-	}
-
-	// Initialize user
 	user = &models.User{}
 
-	// assert name is not duplicated
-	err = repo.Conn.QueryRowContext(ctx, baseQuery, params...).Scan(
-		&user.ID,
-		&user.FullName,
-		&user.CreatedAt,
-		&user.UpdatedAt)
+	query := repo.DB.WithContext(ctx).
+		Unscoped().
+		Select("id", "full_name", "created_at", "updated_at").
+		Where("full_name = ?", name)
 
-	// if have error, return nil and error
+	if excludedId != uuid.Nil {
+		query = query.Where("id <> ?", excludedId)
+	}
+
+	err = query.First(user).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
-	// return Duplicated User
 	return user, nil
 }
 
 func (repo *userRepository) SortColumnMapping(selectedSortLabel string) string {
 	response := ""
 	sortLabels := map[string][]string{
-		"id": []string{
+		"id": {
 			"id",
 		},
-		"full_name": []string{
+		"full_name": {
 			"full_name",
 			"name",
 		},
-		"email": []string{
+		"email": {
 			"email",
 		},
-		"gender": []string{
+		"gender": {
 			"gender",
 		},
-		"is_active": []string{
+		"is_active": {
 			"is_active",
 		},
-		"counter": []string{
+		"counter": {
 			"counter",
 		},
-		"created_at": []string{
+		"created_at": {
 			"created_at",
 		},
-		"updated_at": []string{
+		"updated_at": {
 			"updated_at",
 		},
-		"deleted_at": []string{
+		"deleted_at": {
 			"deleted_at",
 		},
-		"active_status": []string{
+		"active_status": {
 			"active_status",
 		},
-		"is_blocked": []string{
+		"is_blocked": {
 			"is_blocked",
 		},
-		"role_name": []string{
+		"role_name": {
 			"role_name",
 		},
 	}
 
 	// Loop through the map
-	for DBcolumn, sortLabels := range sortLabels {
-		for _, sortLabel := range sortLabels {
+	for DBcolumn, labels := range sortLabels {
+		for _, sortLabel := range labels {
 			// Check if the current sort label matches the selected sort label
 			if sortLabel == selectedSortLabel {
 				response = DBcolumn
