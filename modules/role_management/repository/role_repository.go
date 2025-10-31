@@ -206,7 +206,7 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 	`
 
 	// Build WHERE clause
-	whereClause := " GROUP BY role.id, role.name"
+	whereClause := " GROUP BY role.id, role.name, pg.module"
 	args := []interface{}{}
 	argIdx := 1
 
