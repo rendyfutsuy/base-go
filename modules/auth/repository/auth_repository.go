@@ -9,7 +9,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
+	redis "github.com/redis/go-redis/v9"
 	"github.com/rendyfutsuy/base-go/constants"
+	"github.com/rendyfutsuy/base-go/database"
 	models "github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
@@ -23,6 +25,7 @@ type authRepository struct {
 	DB           *gorm.DB
 	EmailService *services.EmailService
 	QueueClient  *asynq.Client
+	Redis        *redis.Client
 }
 
 func NewAuthRepository(DB *gorm.DB, EmailService *services.EmailService) auth.Repository {
@@ -33,10 +36,14 @@ func NewAuthRepository(DB *gorm.DB, EmailService *services.EmailService) auth.Re
 		DB:       utils.ConfigVars.Int("redis.db"),
 	})
 
+	// Initialize Redis client via central connector
+	redisClient := database.ConnectToRedis()
+
 	return &authRepository{
-		DB,
-		EmailService,
-		QueueClient,
+		DB:           DB,
+		EmailService: EmailService,
+		QueueClient:  QueueClient,
+		Redis:        redisClient,
 	}
 }
 
@@ -238,20 +245,25 @@ func (repo *authRepository) ResetPasswordAttempt(ctx context.Context, userId uui
 // Returns:
 // - error: An error if the insertion fails.
 func (repo *authRepository) AddUserAccessToken(ctx context.Context, accessToken string, userId uuid.UUID) error {
-	now := time.Now().UTC()
-	jwtToken := models.JWTToken{
-		AccessToken: accessToken,
-		UserId:      userId,
-		CreatedAt:   now,
-		UpdatedAt:   &now,
+	// store token in Redis with TTL configurable via config.json
+	ttlSeconds := utils.ConfigVars.Int("auth.access_token_ttl_seconds")
+	if ttlSeconds <= 0 {
+		ttlSeconds = 24 * 60 * 60
 	}
+	defaultTTL := time.Duration(ttlSeconds) * time.Second
+	tokenKey := fmt.Sprintf("auth:token:%s", accessToken)
+	userSetKey := fmt.Sprintf("auth:user_tokens:%s", userId.String())
 
-	err := repo.DB.WithContext(ctx).Create(&jwtToken).Error
-	if err != nil {
+	if err := repo.Redis.Set(ctx, tokenKey, userId.String(), defaultTTL).Err(); err != nil {
 		utils.Logger.Error(err.Error())
 		return err
 	}
-
+	if err := repo.Redis.SAdd(ctx, userSetKey, accessToken).Err(); err != nil {
+		utils.Logger.Error(err.Error())
+		// best effort: clean tokenKey if set add fails
+		_ = repo.Redis.Del(ctx, tokenKey).Err()
+		return err
+	}
 	return nil
 }
 
@@ -292,20 +304,31 @@ func (repo *authRepository) AddPasswordHistory(ctx context.Context, hashedPasswo
 // - user: The retrieved user object.
 // - errorMain: An error if the retrieval fails, or if the access token is not valid.
 func (repo *authRepository) GetUserByAccessToken(ctx context.Context, accessToken string) (user models.User, errorMain error) {
-	err := repo.DB.WithContext(ctx).
+	tokenKey := fmt.Sprintf("auth:token:%s", accessToken)
+	userIdStr, err := repo.Redis.Get(ctx, tokenKey).Result()
+	if err != nil {
+		if err == redis.Nil {
+			log.Printf("No user found with this access token")
+			return user, errors.New("User Not Found, the access token is not valid please re-login")
+		}
+		log.Printf("Error querying redis token: %v", err)
+		return user, err
+	}
+
+	// Query user by ID and join role name
+	err = repo.DB.WithContext(ctx).
 		Table("users usr").
 		Select("usr.id as id, usr.full_name as full_name, usr.email, usr.role_id, roles.name as role_name").
-		Joins("JOIN jwt_tokens jwt ON jwt.user_id = usr.id").
 		Joins("JOIN roles ON roles.id = usr.role_id").
-		Where("jwt.access_token = ?", accessToken).
+		Where("usr.id = ?", userIdStr).
 		Scan(&user).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Printf("No user found with this access token")
-			return user, errors.New("User Not Found, the access token is not valid please re-login")
+			log.Printf("No user found with id from token")
+			return user, errors.New(constants.UserNotFound)
 		}
-		log.Printf("Error querying user: %v", err)
+		log.Printf("Error querying user by id: %v", err)
 		return user, err
 	}
 
@@ -321,13 +344,16 @@ func (repo *authRepository) GetUserByAccessToken(ctx context.Context, accessToke
 // Returns:
 // - error: An error if the deletion fails, nil otherwise.
 func (repo *authRepository) DestroyToken(ctx context.Context, accessToken string) error {
-	err := repo.DB.WithContext(ctx).
-		Where("access_token = ?", accessToken).
-		Delete(&models.JWTToken{}).Error
-
-	if err != nil {
+	tokenKey := fmt.Sprintf("auth:token:%s", accessToken)
+	// get user id to remove from set
+	userIdStr, _ := repo.Redis.Get(ctx, tokenKey).Result()
+	if err := repo.Redis.Del(ctx, tokenKey).Err(); err != nil && err != redis.Nil {
 		fmt.Println("Error deleting token:", err)
 		return err
+	}
+	if userIdStr != "" {
+		userSetKey := fmt.Sprintf("auth:user_tokens:%s", userIdStr)
+		_ = repo.Redis.SRem(ctx, userSetKey, accessToken).Err()
 	}
 	return nil
 }
@@ -342,22 +368,32 @@ func (repo *authRepository) DestroyToken(ctx context.Context, accessToken string
 // - profile: User profile information.
 // - err: An error if the retrieval fails, nil otherwise.
 func (repo *authRepository) FindByCurrentSession(ctx context.Context, accessToken string) (profile dto.UserProfile, err error) {
+	tokenKey := fmt.Sprintf("auth:token:%s", accessToken)
+	userIdStr, rerr := repo.Redis.Get(ctx, tokenKey).Result()
+	if rerr != nil {
+		if rerr == redis.Nil {
+			log.Printf("No session found")
+			return profile, errors.New(constants.UserInvalid)
+		}
+		log.Printf("Error querying redis token: %v", rerr)
+		return profile, rerr
+	}
+
 	err = repo.DB.WithContext(ctx).
 		Table("users usr").
 		Select(`
-			usr.id AS user_id,
-			usr.email,
-			usr.full_name AS name,
-			rls.name AS role,
-			CASE 
-				WHEN usr.is_active THEN 'Active' 
-				ELSE 'In Active' 
-			END AS is_active,
-			usr.gender
-		`).
+            usr.id AS user_id,
+            usr.email,
+            usr.full_name AS name,
+            rls.name AS role,
+            CASE 
+                WHEN usr.is_active THEN 'Active' 
+                ELSE 'In Active' 
+            END AS is_active,
+            usr.gender
+        `).
 		Joins("JOIN roles rls ON rls.id = usr.role_id").
-		Joins("JOIN jwt_tokens jwt ON jwt.user_id = usr.id").
-		Where("jwt.access_token = ? AND usr.deleted_at IS NULL", accessToken).
+		Where("usr.id = ? AND usr.deleted_at IS NULL", userIdStr).
 		Scan(&profile).Error
 
 	if err != nil {
@@ -432,13 +468,24 @@ func (repo *authRepository) UpdatePasswordById(ctx context.Context, newPassword 
 // Returns:
 // - error: An error if the deletion fails, nil otherwise.
 func (repo *authRepository) DestroyAllToken(ctx context.Context, userId uuid.UUID) error {
-	err := repo.DB.WithContext(ctx).
-		Where("user_id = ?", userId).
-		Delete(&models.JWTToken{}).Error
-
-	if err != nil {
-		fmt.Println("Error deleting all tokens:", err)
+	userSetKey := fmt.Sprintf("auth:user_tokens:%s", userId.String())
+	tokens, err := repo.Redis.SMembers(ctx, userSetKey).Result()
+	if err != nil && err != redis.Nil {
+		fmt.Println("Error fetching user tokens:", err)
 		return err
 	}
+	// delete all token keys
+	if len(tokens) > 0 {
+		var keys []string
+		for _, t := range tokens {
+			keys = append(keys, fmt.Sprintf("auth:token:%s", t))
+		}
+		if err := repo.Redis.Del(ctx, keys...).Err(); err != nil {
+			fmt.Println("Error deleting token keys:", err)
+			return err
+		}
+	}
+	// delete the set itself
+	_ = repo.Redis.Del(ctx, userSetKey).Err()
 	return nil
 }

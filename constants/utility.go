@@ -65,4 +65,6 @@ const (
 
 	// Number
 	EPSILON = 1e-9
+
+	ErrMalformedUserContext = "Could not process user data from context"
 )
