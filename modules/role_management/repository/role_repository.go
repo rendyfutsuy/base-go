@@ -2,11 +2,13 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/role_management/dto"
@@ -68,40 +70,70 @@ func (repo *roleRepository) CreateRole(ctx context.Context, roleReq dto.ToDBCrea
 func (repo *roleRepository) GetRoleByID(ctx context.Context, id uuid.UUID) (role *models.Role, err error) {
 	role = &models.Role{}
 
-	// Use Raw query with parameter binding for complex ARRAY_AGG queries
-	err = repo.DB.WithContext(ctx).
-		Raw(`
-			SELECT 
-				role.id,
-				role.name,
-				role.created_at,
-				role.updated_at,
-				role.deleted_at,
-				role.description,
-				ARRAY_AGG(pg.name) AS permission_group_names,
-				ARRAY_AGG(pg.id) AS permission_group_ids,
-				ARRAY_AGG(DISTINCT pg.module) AS modules
-			FROM 
-				roles role
-			LEFT JOIN
-				modules_roles pgr
-			ON
-				role.id = pgr.role_id
-			LEFT JOIN
-				permission_groups pg
-			ON
-				pgr.permission_group_id = pg.id
-			WHERE 
-				role.id = ? AND role.deleted_at IS NULL
-			GROUP BY
-				role.id, role.name
-		`, id).
-		Scan(role).Error
-
+	// Get underlying SQL DB for raw query execution
+	sqlDB, err := repo.DB.DB()
 	if err != nil {
 		utils.Logger.Error(err.Error())
 		return nil, fmt.Errorf("Not Such Role Exist")
 	}
+
+	// Use Raw query with manual scanning for ARRAY_AGG using pq.Array
+	query := `
+		SELECT 
+			role.id,
+			role.name,
+			role.created_at,
+			role.updated_at,
+			role.deleted_at,
+			role.description,
+			ARRAY_AGG(pg.name) AS permission_group_names,
+			ARRAY_AGG(pg.id) AS permission_group_ids,
+			ARRAY_AGG(DISTINCT pg.module) AS modules
+		FROM 
+			roles role
+		LEFT JOIN
+			modules_roles pgr
+		ON
+			role.id = pgr.role_id
+		LEFT JOIN
+			permission_groups pg
+		ON
+			pgr.permission_group_id = pg.id
+		WHERE 
+			role.id = $1 AND role.deleted_at IS NULL
+		GROUP BY
+			role.id, role.name
+	`
+
+	var permissionGroupNames []utils.NullString
+	var permissionGroupIds []uuid.UUID
+	var modules []utils.NullString
+
+	err = sqlDB.QueryRowContext(ctx, query, id).Scan(
+		&role.ID,
+		&role.Name,
+		&role.CreatedAt,
+		&role.UpdatedAt,
+		&role.DeletedAt,
+		&role.Description,
+		pq.Array(&permissionGroupNames),
+		pq.Array(&permissionGroupIds),
+		pq.Array(&modules),
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			utils.Logger.Error(err.Error())
+			return nil, fmt.Errorf("Not Such Role Exist")
+		}
+		utils.Logger.Error(err.Error())
+		return nil, fmt.Errorf("Not Such Role Exist")
+	}
+
+	// Assign scanned arrays
+	role.PermissionGroupNames = permissionGroupNames
+	role.PermissionGroupIds = permissionGroupIds
+	role.Modules = modules
 
 	// Handle NULL arrays from LEFT JOIN
 	if role.PermissionGroupNames == nil {
@@ -143,10 +175,15 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 	offSet := (req.Page - 1) * req.PerPage
 	searchQuery := req.Search
 
-	// Build base query
-	query := repo.DB.WithContext(ctx).
-		Table("roles role").
-		Select(`
+	// Get underlying SQL DB for raw query execution with ARRAY_AGG
+	sqlDB, err := repo.DB.DB()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Build base query - use raw SQL for ARRAY_AGG as GORM doesn't handle it well
+	baseQuery := `
+		SELECT 
 			role.id,
 			role.name,
 			role.created_at,
@@ -154,22 +191,52 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 			role.deleted_at,
 			(SELECT COUNT(*) FROM users WHERE role_id = role.id AND deleted_at IS NULL) AS total_user,
 			ARRAY_AGG(DISTINCT pg.module) AS modules
-		`).
-		Joins("LEFT JOIN modules_roles pgr ON role.id = pgr.role_id").
-		Joins("LEFT JOIN permission_groups pg ON pgr.permission_group_id = pg.id").
-		Where("role.deleted_at IS NULL").
-		Group("role.id, role.name")
+		FROM 
+			roles role
+		LEFT JOIN
+			modules_roles pgr
+		ON
+			role.id = pgr.role_id
+		LEFT JOIN
+			permission_groups pg
+		ON
+			pgr.permission_group_id = pg.id
+		WHERE
+			role.deleted_at IS NULL
+	`
+
+	// Build WHERE clause
+	whereClause := " GROUP BY role.id, role.name"
+	args := []interface{}{}
+	argIdx := 1
 
 	// Apply search with parameter binding
-	query = request.ApplySearchCondition(query, searchQuery, []string{
-		"role.name",
-		"pg.module",
-	})
+	if searchQuery != "" {
+		whereClause += " HAVING (role.name ILIKE $" + fmt.Sprintf("%d", argIdx) + " OR pg.module ILIKE $" + fmt.Sprintf("%d", argIdx) + ")"
+		args = append(args, "%"+searchQuery+"%")
+		argIdx++
+	}
 
-	// Count total (before pagination)
-	countQuery := query
+	// Count total query
+	countQuery := `
+		SELECT COUNT(DISTINCT role.id)
+		FROM roles role
+		LEFT JOIN modules_roles pgr ON role.id = pgr.role_id
+		LEFT JOIN permission_groups pg ON pgr.permission_group_id = pg.id
+		WHERE role.deleted_at IS NULL
+	`
+	countArgs := []interface{}{}
+	if searchQuery != "" {
+		countQuery += " AND (role.name ILIKE $1 OR pg.module ILIKE $1)"
+		countArgs = append(countArgs, "%"+searchQuery+"%")
+	}
+
 	var totalCount int64
-	err = countQuery.Count(&totalCount).Error
+	if len(countArgs) > 0 {
+		err = sqlDB.QueryRowContext(ctx, countQuery, countArgs...).Scan(&totalCount)
+	} else {
+		err = sqlDB.QueryRowContext(ctx, countQuery).Scan(&totalCount)
+	}
 	if err != nil {
 		return nil, 0, err
 	}
@@ -185,22 +252,49 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 		}
 	}
 
-	// Apply pagination and sorting
-	err = query.
-		Order(sortBy + " " + sortOrder).
-		Limit(req.PerPage).
-		Offset(offSet).
-		Scan(&roles).Error
+	// Build final query with pagination
+	finalQuery := baseQuery + whereClause + " ORDER BY " + sortBy + " " + sortOrder + fmt.Sprintf(" LIMIT %d OFFSET %d", req.PerPage, offSet)
 
+	// Initialize roles slice
+	roles = []models.Role{}
+
+	// Execute query with manual scanning for arrays
+	rows, err := sqlDB.QueryContext(ctx, finalQuery, args...)
 	if err != nil {
 		return nil, 0, err
 	}
+	defer rows.Close()
 
-	// Handle NULL arrays
-	for i := range roles {
-		if roles[i].Modules == nil {
-			roles[i].Modules = []utils.NullString{}
+	for rows.Next() {
+		var role models.Role
+		var modules []utils.NullString
+
+		err = rows.Scan(
+			&role.ID,
+			&role.Name,
+			&role.CreatedAt,
+			&role.UpdatedAt,
+			&role.DeletedAt,
+			&role.TotalUser,
+			pq.Array(&modules),
+		)
+
+		if err != nil {
+			return nil, 0, err
 		}
+
+		// Handle NULL arrays
+		if modules == nil {
+			role.Modules = []utils.NullString{}
+		} else {
+			role.Modules = modules
+		}
+
+		roles = append(roles, role)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, 0, err
 	}
 
 	return roles, total, nil

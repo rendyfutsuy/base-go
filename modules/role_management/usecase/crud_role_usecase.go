@@ -118,7 +118,6 @@ func (u *roleUsecase) UpdateRole(c echo.Context, id string, req *dto.ReqUpdateRo
 		Description:      req.Description,
 		Cobs:             req.Cobs,
 		PermissionGroups: req.PermissionGroups,
-		Categories:       req.Categories,
 	}
 
 	return u.roleRepo.UpdateRole(ctx, uId, roleDb)

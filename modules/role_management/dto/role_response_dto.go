@@ -14,13 +14,12 @@ type RespRole struct {
 }
 
 type RespRoleIndex struct {
-	ID         uuid.UUID          `json:"id"`
-	Name       string             `json:"name"`
-	TotalUser  int                `json:"total_user"`
-	CreatedAt  time.Time          `json:"created_at"`
-	UpdatedAt  utils.NullTime     `json:"updated_at"`
-	Modules    []utils.NullString `json:"modules"`
-	Categories []utils.NullString `json:"units"`
+	ID        uuid.UUID          `json:"id"`
+	Name      string             `json:"name"`
+	TotalUser int                `json:"total_user"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt utils.NullTime     `json:"updated_at"`
+	Modules   []utils.NullString `json:"modules"`
 }
 
 type RespPermissionGroupRoleDetail struct {
@@ -73,13 +72,12 @@ func ToRespRoleIndex(roleDb models.Role) RespRoleIndex {
 	}
 
 	return RespRoleIndex{
-		ID:         roleDb.ID,
-		Name:       roleDb.Name,
-		TotalUser:  roleDb.TotalUser,
-		Categories: Categories,
-		CreatedAt:  roleDb.CreatedAt,
-		UpdatedAt:  roleDb.UpdatedAt,
-		Modules:    Modules,
+		ID:        roleDb.ID,
+		Name:      roleDb.Name,
+		TotalUser: roleDb.TotalUser,
+		CreatedAt: roleDb.CreatedAt,
+		UpdatedAt: roleDb.UpdatedAt,
+		Modules:   Modules,
 	}
 
 }

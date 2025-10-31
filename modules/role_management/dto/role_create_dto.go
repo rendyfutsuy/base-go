@@ -13,8 +13,6 @@ type ReqCreateRole struct {
 	Name             string      `json:"name" validate:"required,max=80"`
 	Description      string      `json:"description"`
 	PermissionGroups []uuid.UUID `json:"permission_groups" validate:"required,min=1"`
-	Cobs             []uuid.UUID `json:"cobs" validate:"required,min=1"`
-	Categories       []uuid.UUID `json:"units" validate:"required,min=1"`
 }
 
 func (r *ReqCreateRole) ToDBCreateRole(code, authId string) ToDBCreateRole {
@@ -22,8 +20,6 @@ func (r *ReqCreateRole) ToDBCreateRole(code, authId string) ToDBCreateRole {
 		Name:             r.Name,
 		Description:      r.Description,
 		PermissionGroups: r.PermissionGroups,
-		Cobs:             r.Cobs,
-		Categories:       r.Categories,
 	}
 }
 
