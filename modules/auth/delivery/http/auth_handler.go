@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/middleware"
 	_reqContext "github.com/rendyfutsuy/base-go/helpers/middleware/request"
 	"github.com/rendyfutsuy/base-go/modules/auth"
@@ -271,15 +272,15 @@ func (handler *AuthHandler) RefreshToken(c echo.Context) error {
 	// parse token from context (set by middleware)
 	token, ok := c.Get("token").(string)
 	if !ok || token == "" {
-		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: "token is revoked please re-login from login form again.."})
+		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: constants.TokenRevokedMessage})
 	}
 
 	// initiate refresh token
 	newToken, err := handler.AuthUseCase.RefreshToken(ctx, token)
 	if err != nil {
 		// Check if error is about revoked token
-		if err.Error() == "token is revoked please re-login from login form again.." {
-			return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
+		if err == constants.ErrTokenRevoked {
+			return c.JSON(http.StatusBadRequest, GeneralResponse{Message: constants.TokenRevokedMessage})
 		}
 		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
 	}

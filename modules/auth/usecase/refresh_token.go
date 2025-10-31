@@ -2,12 +2,12 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	redis "github.com/redis/go-redis/v9"
+	"github.com/rendyfutsuy/base-go/constants"
 )
 
 // RefreshToken generates a new access token based on the provided access token.
@@ -25,14 +25,14 @@ func (u *authUsecase) RefreshToken(ctx context.Context, accessToken string) (str
 	user, err := u.authRepo.GetUserByAccessToken(ctx, accessToken)
 	if err != nil {
 		if err == redis.Nil {
-			return "", errors.New("token is revoked please re-login from login form again..")
+			return "", constants.ErrTokenRevoked
 		}
-		return "", errors.New("token is revoked please re-login from login form again..")
+		return "", constants.ErrTokenRevoked
 	}
 
 	// If user not found, token is revoked
 	if user.ID == uuid.Nil {
-		return "", errors.New("token is revoked please re-login from login form again..")
+		return "", constants.ErrTokenRevoked
 	}
 
 	// Destroy old token
