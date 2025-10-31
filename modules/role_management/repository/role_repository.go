@@ -193,7 +193,29 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 	}
 	sortOrder := request.ValidateAndSanitizeSortOrder(req.SortOrder)
 
-	// Build base query - use raw SQL for ARRAY_AGG as GORM doesn't handle it well
+	// Build count query using GORM to leverage ApplySearchCondition
+	countQuery := repo.DB.WithContext(ctx).
+		Table("roles role").
+		Select("DISTINCT role.id").
+		Joins("LEFT JOIN modules_roles pgr ON role.id = pgr.role_id").
+		Joins("LEFT JOIN permission_groups pg ON pgr.permission_group_id = pg.id").
+		Where("role.deleted_at IS NULL")
+
+	// Apply search using ApplySearchCondition helper
+	countQuery = request.ApplySearchCondition(countQuery, searchQuery, []string{
+		"role.name",
+		"pg.module",
+	})
+
+	// Get total count
+	var totalCount int64
+	err = countQuery.Count(&totalCount).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	total = int(totalCount)
+
+	// Build base query for data retrieval - use raw SQL for ARRAY_AGG as GORM doesn't handle it well
 	baseQuery := `
 		SELECT 
 			role.id,
@@ -217,47 +239,30 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 			role.deleted_at IS NULL
 	`
 
-	// Build WHERE clause
+	// Build WHERE clause for GROUP BY and HAVING
 	whereClause := " GROUP BY role.id, role.name, pg.module"
 	args := []interface{}{}
 	argIdx := 1
 
-	// Apply search with parameter binding (using numbered parameters for prepared statements)
-	if searchQuery != "" {
-		whereClause += " HAVING (role.name ILIKE $" + fmt.Sprintf("%d", argIdx) + " OR pg.module ILIKE $" + fmt.Sprintf("%d", argIdx) + ")"
-		args = append(args, "%"+searchQuery+"%")
-		argIdx++
+	// Apply search using BuildSearchConditionForRawSQL helper
+	// Note: We use BuildSearchConditionForRawSQL instead of ApplySearchCondition because:
+	// - This query uses raw SQL with sqlDB.QueryContext() to handle ARRAY_AGG with manual scanning via pq.Array()
+	// - GORM cannot properly scan ARRAY_AGG results into []utils.NullString, so we need raw SQL
+	// - ApplySearchCondition() requires *gorm.DB and returns *gorm.DB, which doesn't work with raw SQL strings
+	// - BuildSearchConditionForRawSQL returns SQL clause string and args that can be used directly in raw SQL queries
+	// - This maintains the same search logic as ApplySearchCondition() but for raw SQL context
+	searchClause, searchArgs := request.BuildSearchConditionForRawSQL(searchQuery, []string{"role.name", "pg.module"}, argIdx, "HAVING")
+	if searchClause != "" {
+		whereClause += searchClause
+		args = append(args, searchArgs...)
+		argIdx += len(searchArgs)
 	}
 
-	// Count total query
-	countQuery := `
-		SELECT COUNT(DISTINCT role.id)
-		FROM roles role
-		LEFT JOIN modules_roles pgr ON role.id = pgr.role_id
-		LEFT JOIN permission_groups pg ON pgr.permission_group_id = pg.id
-		WHERE role.deleted_at IS NULL
-	`
-	countArgs := []interface{}{}
-	if searchQuery != "" {
-		countQuery += " AND (role.name ILIKE $1 OR pg.module ILIKE $1)"
-		countArgs = append(countArgs, "%"+searchQuery+"%")
-	}
-
-	var totalCount int64
-	if len(countArgs) > 0 {
-		err = sqlDB.QueryRowContext(ctx, countQuery, countArgs...).Scan(&totalCount)
-	} else {
-		err = sqlDB.QueryRowContext(ctx, countQuery).Scan(&totalCount)
-	}
-	if err != nil {
-		return nil, 0, err
-	}
-	total = int(totalCount)
-
-	// Build final query with pagination using parameter binding (not string interpolation)
-	// LIMIT and OFFSET are safe as they're validated integers, but we use parameter binding for consistency
+	// Build final query with pagination using parameter binding
+	limitArgIdx := argIdx
+	offsetArgIdx := argIdx + 1
 	args = append(args, validatedPerPage, offSet)
-	finalQuery := baseQuery + whereClause + " ORDER BY " + sortBy + " " + sortOrder + fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
+	finalQuery := baseQuery + whereClause + " ORDER BY " + sortBy + " " + sortOrder + fmt.Sprintf(" LIMIT $%d OFFSET $%d", limitArgIdx, offsetArgIdx)
 
 	// Initialize roles slice
 	roles = []models.Role{}

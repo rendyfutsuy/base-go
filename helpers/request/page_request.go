@@ -1,6 +1,7 @@
 package request
 
 import (
+	"fmt"
 	"strings"
 
 	"gorm.io/gorm"
@@ -139,4 +140,53 @@ func ValidatePaginationParams(page, perPage, maxPerPage int) (validatedPage, val
 	}
 
 	return page, perPage
+}
+
+// BuildSearchConditionForRawSQL builds a search condition clause and arguments for raw SQL queries.
+// This is useful when you need to use ARRAY_AGG or other complex SQL features that require raw queries.
+// Uses the same logic as ApplySearchCondition but returns SQL clause string for raw queries.
+//
+// Parameters:
+//   - searchQuery: The search string to match against
+//   - searchColumns: List of column names to search in (e.g., []string{"role.name", "pg.module"})
+//   - startArgIndex: Starting index for PostgreSQL parameter placeholders (default: 1)
+//   - clauseType: Type of clause - "WHERE" or "HAVING" (default: "HAVING" for GROUP BY queries)
+//
+// Returns:
+//   - clause: SQL clause string (e.g., " HAVING (role.name ILIKE $1 OR pg.module ILIKE $2)")
+//   - args: Arguments for parameter binding (one per column)
+//
+// Example:
+//
+//	clause, args := BuildSearchConditionForRawSQL("john", []string{"role.name", "pg.module"}, 1, "HAVING")
+//	// Returns: clause=" HAVING (role.name ILIKE $1 OR pg.module ILIKE $2)", args=["%john%", "%john%"]
+func BuildSearchConditionForRawSQL(searchQuery string, searchColumns []string, startArgIndex int, clauseType string) (clause string, args []interface{}) {
+	if searchQuery == "" || len(searchColumns) == 0 {
+		return "", []interface{}{}
+	}
+
+	if clauseType == "" {
+		clauseType = "HAVING" // Default for GROUP BY queries
+	}
+
+	if startArgIndex < 1 {
+		startArgIndex = 1
+	}
+
+	// Build OR conditions for each column using PostgreSQL numbered parameters
+	// Each column gets its own parameter index (matching ApplySearchCondition behavior)
+	conditions := make([]string, len(searchColumns))
+	searchPattern := "%" + searchQuery + "%"
+	currentArgIndex := startArgIndex
+
+	for i, column := range searchColumns {
+		conditions[i] = column + " ILIKE $" + fmt.Sprintf("%d", currentArgIndex)
+		args = append(args, searchPattern)
+		currentArgIndex++
+	}
+
+	// Combine with OR
+	whereClause := " " + clauseType + " (" + strings.Join(conditions, " OR ") + ")"
+
+	return whereClause, args
 }
