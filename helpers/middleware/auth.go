@@ -2,11 +2,13 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/utils"
@@ -93,6 +95,10 @@ func (a *MiddlewareAuth) getUserData(ctx context.Context, token string) (user mo
 	user, err = a.authRepository.GetUserByAccessToken(ctx, tokenString)
 	if err != nil {
 		return user, err
+	}
+
+	if user.ID == uuid.Nil {
+		return user, errors.New("user session is unauthorized")
 	}
 
 	return user, err
