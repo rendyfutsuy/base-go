@@ -161,13 +161,10 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 		Group("role.id, role.name")
 
 	// Apply search with parameter binding
-	if searchQuery != "" {
-		query = query.Where(
-			"role.name ILIKE ? OR pg.module ILIKE ?",
-			"%"+searchQuery+"%",
-			"%"+searchQuery+"%",
-		)
-	}
+	query = request.ApplySearchCondition(query, searchQuery, []string{
+		"role.name",
+		"pg.module",
+	})
 
 	// Count total (before pagination)
 	countQuery := query

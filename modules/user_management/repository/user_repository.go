@@ -136,15 +136,12 @@ func (repo *userRepository) GetIndexUser(ctx context.Context, req request.PageRe
 		Where("usr.deleted_at IS NULL")
 
 	// Apply search query with parameter binding
-	if searchQuery != "" {
-		query = query.Where(
-			"usr.full_name ILIKE ? OR usr.gender ILIKE ? OR usr.email ILIKE ? OR rl.name ILIKE ?",
-			"%"+searchQuery+"%",
-			"%"+searchQuery+"%",
-			"%"+searchQuery+"%",
-			"%"+searchQuery+"%",
-		)
-	}
+	query = request.ApplySearchCondition(query, searchQuery, []string{
+		"usr.full_name",
+		"usr.gender",
+		"usr.email",
+		"rl.name",
+	})
 
 	// Apply role IDs filter
 	if len(filter.RoleIds) > 0 {

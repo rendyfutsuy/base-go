@@ -45,9 +45,9 @@ func (repo *roleRepository) GetIndexPermission(ctx context.Context, req request.
 		Where("permission.deleted_at IS NULL")
 
 	// Apply search with parameter binding
-	if searchQuery != "" {
-		query = query.Where("permission.name ILIKE ?", "%"+searchQuery+"%")
-	}
+	query = request.ApplySearchCondition(query, searchQuery, []string{
+		"permission.name",
+	})
 
 	// Count total (before pagination)
 	countQuery := query
