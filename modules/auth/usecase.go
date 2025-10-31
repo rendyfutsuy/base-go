@@ -19,4 +19,7 @@ type Usecase interface {
 	// for reset password
 	RequestResetPassword(ctx context.Context, email string) error
 	ResetUserPassword(ctx context.Context, newPassword string, token string) error
+
+	// for refresh token
+	RefreshToken(ctx context.Context, accessToken string) (string, error)
 }

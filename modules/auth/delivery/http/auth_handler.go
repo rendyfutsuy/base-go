@@ -78,6 +78,11 @@ func NewAuthHandler(e *echo.Echo, us auth.Usecase, middlewareAuth middleware.IMi
 		handler.UpdateMyPassword,
 		handler.middlewareAuth.AuthorizationCheck,
 	)
+
+	r.GET("/refresh-token",
+		handler.RefreshToken,
+		handler.middlewareAuth.AuthorizationCheck,
+	)
 }
 
 // @Summary		Authenticate user
@@ -248,4 +253,36 @@ func (handler *AuthHandler) UpdateMyPassword(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, GeneralResponse{Message: "Successfully Updated My Password"})
+}
+
+// @Summary		Refresh access token
+// @Description	Generates a new access token based on the provided bearer token. If the token is revoked, returns an error.
+// @Tags			Authentication
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Success		200	{object}	ResponseAuth					"Successfully refreshed token"
+// @Failure		400	{object}	GeneralResponse{message=string}	"Token is revoked or invalid request"
+// @Failure		401	{object}	GeneralResponse{message=string}	"Unauthorized"
+// @Router			/v1/auth/refresh-token [get]
+func (handler *AuthHandler) RefreshToken(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	// parse token from context (set by middleware)
+	token, ok := c.Get("token").(string)
+	if !ok || token == "" {
+		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: "token is revoked please re-login from login form again.."})
+	}
+
+	// initiate refresh token
+	newToken, err := handler.AuthUseCase.RefreshToken(ctx, token)
+	if err != nil {
+		// Check if error is about revoked token
+		if err.Error() == "token is revoked please re-login from login form again.." {
+			return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
+		}
+		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, ResponseAuth{AccessToken: newToken})
 }
