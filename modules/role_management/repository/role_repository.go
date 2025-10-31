@@ -174,27 +174,11 @@ func (repo *roleRepository) GetRoleByID(ctx context.Context, id uuid.UUID) (role
 func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRequest) (roles []models.Role, total int, err error) {
 	searchQuery := req.Search
 
-	// Build count query using GORM to leverage ApplySearchCondition
-	countQuery := repo.DB.WithContext(ctx).
-		Table("roles role").
-		Select("DISTINCT role.id").
-		Joins("LEFT JOIN modules_roles pgr ON role.id = pgr.role_id").
-		Joins("LEFT JOIN permission_groups pg ON pgr.permission_group_id = pg.id").
-		Where("role.deleted_at IS NULL")
-
-	// Apply search using ApplySearchCondition helper
-	countQuery = request.ApplySearchCondition(countQuery, searchQuery, []string{
-		"role.name",
-		"pg.module",
-	})
-
-	// Get total count
-	var totalCount int64
-	err = countQuery.Count(&totalCount).Error
+	// Get underlying SQL DB for raw query execution
+	sqlDB, err := repo.DB.DB()
 	if err != nil {
 		return nil, 0, err
 	}
-	total = int(totalCount)
 
 	// Prepare pagination config for sorting
 	config := request.PaginationConfig{
@@ -227,22 +211,9 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 		}
 	}
 
-	// Get underlying SQL DB for raw query execution with ARRAY_AGG
-	sqlDB, err := repo.DB.DB()
-	if err != nil {
-		return nil, 0, err
-	}
-
-	// Build base query for data retrieval - use raw SQL for ARRAY_AGG as GORM doesn't handle it well
-	baseQuery := `
-		SELECT 
-			role.id,
-			role.name,
-			role.created_at,
-			role.updated_at,
-			role.deleted_at,
-			(SELECT COUNT(*) FROM users WHERE role_id = role.id AND deleted_at IS NULL) AS total_user,
-			ARRAY_AGG(DISTINCT pg.module) AS modules
+	// Build base query that is shared between count and data queries
+	// This ensures both queries have the same structure and filtering logic
+	baseQueryFrom := `
 		FROM 
 			roles role
 		LEFT JOIN
@@ -257,8 +228,8 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 			role.deleted_at IS NULL
 	`
 
-	// Build WHERE clause for GROUP BY and HAVING
-	whereClause := " GROUP BY role.id, role.name, pg.module"
+	// Build GROUP BY and HAVING clause (shared between count and data queries)
+	groupByClause := " GROUP BY role.id, role.name"
 	args := []interface{}{}
 	argIdx := 1
 
@@ -269,24 +240,50 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 	// - ApplySearchCondition() requires *gorm.DB and returns *gorm.DB, which doesn't work with raw SQL strings
 	// - BuildSearchConditionForRawSQL returns SQL clause string and args that can be used directly in raw SQL queries
 	// - This maintains the same search logic as ApplySearchCondition() but for raw SQL context
-	searchClause, searchArgs := request.BuildSearchConditionForRawSQL(searchQuery, []string{"role.name", "pg.module"}, argIdx, "HAVING")
+	searchClause, searchArgs := request.BuildSearchConditionForRawSQL(searchQuery, []string{"role.name"}, argIdx, "HAVING")
 	if searchClause != "" {
-		whereClause += searchClause
+		groupByClause += searchClause
 		args = append(args, searchArgs...)
 		argIdx += len(searchArgs)
 	}
 
-	// Build final query with pagination using parameter binding
+	// Build count query using the same base structure as data query
+	// This ensures count matches the actual number of rows returned
+	countQuery := "SELECT COUNT(*) FROM (" +
+		"SELECT role.id " + baseQueryFrom + groupByClause +
+		") AS grouped_roles"
+
+	// Execute count query
+	var totalCount int64
+	err = sqlDB.QueryRowContext(ctx, countQuery, args...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
+	total = int(totalCount)
+
+	// Build data query using the same base structure as count query
+	dataQuery := `
+		SELECT 
+			role.id,
+			role.name,
+			role.created_at,
+			role.updated_at,
+			role.deleted_at,
+			(SELECT COUNT(*) FROM users WHERE role_id = role.id AND deleted_at IS NULL) AS total_user,
+			ARRAY_AGG(DISTINCT pg.module) AS modules
+	` + baseQueryFrom + groupByClause + " ORDER BY " + sortBy + " " + sortOrder
+
+	// Add pagination parameters
 	limitArgIdx := argIdx
 	offsetArgIdx := argIdx + 1
 	args = append(args, validatedPerPage, offset)
-	finalQuery := baseQuery + whereClause + " ORDER BY " + sortBy + " " + sortOrder + fmt.Sprintf(" LIMIT $%d OFFSET $%d", limitArgIdx, offsetArgIdx)
+	dataQuery += fmt.Sprintf(" LIMIT $%d OFFSET $%d", limitArgIdx, offsetArgIdx)
 
 	// Initialize roles slice
 	roles = []models.Role{}
 
 	// Execute query with manual scanning for arrays
-	rows, err := sqlDB.QueryContext(ctx, finalQuery, args...)
+	rows, err := sqlDB.QueryContext(ctx, dataQuery, args...)
 	if err != nil {
 		return nil, 0, err
 	}
