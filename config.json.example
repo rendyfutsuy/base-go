@@ -32,4 +32,7 @@
     "db": "db0",
     "concurrency": 10
   },
+  "auth": {
+    "access_token_ttl_seconds": 86400 // 24 jam
+  }
 }
