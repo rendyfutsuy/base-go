@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/xuri/excelize/v2"
@@ -195,15 +196,15 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 
 		// Check duplicates using batch validation results
 		if duplicatedEmails[parsedRow.Email] {
-			allErrors = append(allErrors, "Email sudah terdaftar di database")
+			allErrors = append(allErrors, constants.UserEmailAlreadyExistsID)
 		}
 
 		if duplicatedUsernames[parsedRow.Username] {
-			allErrors = append(allErrors, "Username sudah terdaftar di database")
+			allErrors = append(allErrors, constants.UserUsernameAlreadyExistsID)
 		}
 
 		if duplicatedNiks[parsedRow.Nik] {
-			allErrors = append(allErrors, "NIK sudah terdaftar di database")
+			allErrors = append(allErrors, constants.UserNikAlreadyExistsID)
 		}
 
 		// Check role
