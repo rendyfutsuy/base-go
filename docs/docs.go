@@ -439,6 +439,73 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/user-management/user/import": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Import multiple users from an Excel file (.xlsx or .xls). The Excel file must have columns: email, full_name, username, nik, role_name. Validates for duplicate email, username, and NIK.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Import users from Excel file",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Excel file (.xlsx or .xls) with columns: email, full_name, username, nik, role_name",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully imported users",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.NonPaginationResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ResImportUsers"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid file or validation error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -515,6 +582,55 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ResImportUserExcel": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "error_message": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "nik": {
+                    "type": "string"
+                },
+                "role_name": {
+                    "type": "string"
+                },
+                "row": {
+                    "type": "integer"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ResImportUsers": {
+            "type": "object",
+            "properties": {
+                "failed_count": {
+                    "type": "integer"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ResImportUserExcel"
+                    }
+                },
+                "success_count": {
+                    "type": "integer"
+                },
+                "total_rows": {
+                    "type": "integer"
+                }
+            }
+        },
         "dto.UserProfile": {
             "type": "object",
             "properties": {
@@ -538,6 +654,14 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "http.GeneralResponse": {
             "type": "object",
             "properties": {
@@ -552,6 +676,12 @@ const docTemplate = `{
                 "access_token": {
                     "type": "string"
                 }
+            }
+        },
+        "response.NonPaginationResponse": {
+            "type": "object",
+            "properties": {
+                "data": {}
             }
         },
         "utils.NullString": {

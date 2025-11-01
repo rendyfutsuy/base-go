@@ -12,6 +12,19 @@ import (
 	"github.com/rendyfutsuy/base-go/helpers/response"
 )
 
+// ImportUsersFromExcel godoc
+// @Summary		Import users from Excel file
+// @Description	Import multiple users from an Excel file (.xlsx or .xls). The Excel file must have columns: email, full_name, username, nik, role_name. Validates for duplicate email, username, and NIK.
+// @Tags			User Management
+// @Accept			multipart/form-data
+// @Produce		json
+// @Security		BearerAuth
+// @Param			file	formData	file	true	"Excel file (.xlsx or .xls) with columns: email, full_name, username, nik, role_name"
+// @Success		200		{object}	response.NonPaginationResponse{data=dto.ResImportUsers}	"Successfully imported users"
+// @Failure		400		{object}	ResponseError	"Bad request - invalid file or validation error"
+// @Failure		401		{object}	ResponseError	"Unauthorized"
+// @Failure		500		{object}	ResponseError	"Internal server error"
+// @Router			/v1/user-management/user/import [post]
 func (handler *UserManagementHandler) ImportUsersFromExcel(c echo.Context) error {
 	// Get uploaded file
 	file, err := c.FormFile("file")

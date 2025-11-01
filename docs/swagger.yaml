@@ -48,6 +48,38 @@ definitions:
     required:
     - name
     type: object
+  dto.ResImportUserExcel:
+    properties:
+      email:
+        type: string
+      error_message:
+        type: string
+      full_name:
+        type: string
+      nik:
+        type: string
+      role_name:
+        type: string
+      row:
+        type: integer
+      success:
+        type: boolean
+      username:
+        type: string
+    type: object
+  dto.ResImportUsers:
+    properties:
+      failed_count:
+        type: integer
+      results:
+        items:
+          $ref: '#/definitions/dto.ResImportUserExcel'
+        type: array
+      success_count:
+        type: integer
+      total_rows:
+        type: integer
+    type: object
   dto.UserProfile:
     properties:
       email:
@@ -63,6 +95,11 @@ definitions:
       user_id:
         type: string
     type: object
+  github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError:
+    properties:
+      message:
+        type: string
+    type: object
   http.GeneralResponse:
     properties:
       message:
@@ -72,6 +109,10 @@ definitions:
     properties:
       access_token:
         type: string
+    type: object
+  response.NonPaginationResponse:
+    properties:
+      data: {}
     type: object
   utils.NullString:
     properties:
@@ -347,6 +388,49 @@ paths:
       summary: Refresh access token
       tags:
       - Authentication
+  /v1/user-management/user/import:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 'Import multiple users from an Excel file (.xlsx or .xls). The
+        Excel file must have columns: email, full_name, username, nik, role_name.
+        Validates for duplicate email, username, and NIK.'
+      parameters:
+      - description: 'Excel file (.xlsx or .xls) with columns: email, full_name, username,
+          nik, role_name'
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully imported users
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ResImportUsers'
+              type: object
+        "400":
+          description: Bad request - invalid file or validation error
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Import users from Excel file
+      tags:
+      - User Management
 securityDefinitions:
   BearerAuth:
     description: 'Enter JWT token (ex: Bearer eyJhbGciOiJIU....)'
