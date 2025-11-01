@@ -467,6 +467,27 @@ func (repo *roleRepository) GetDuplicatedRole(ctx context.Context, name string, 
 	return role, nil
 }
 
+// GetRoleByName retrieves a role by name from the database.
+//
+// It takes a name string parameter and returns an Role pointer and an error.
+func (repo *roleRepository) GetRoleByName(ctx context.Context, name string) (role *models.Role, err error) {
+	role = &models.Role{}
+
+	err = repo.DB.WithContext(ctx).
+		Select("id", "name", "created_at", "updated_at", "deleted_at").
+		Where("name = ? AND deleted_at IS NULL", name).
+		First(role).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("Role with name %s not found", name)
+		}
+		return nil, err
+	}
+
+	return role, nil
+}
+
 // RoleNameIsNotDuplicatedOnSoftDeleted checks if the provided role name is not duplicated in the database.
 func (repo *roleRepository) RoleNameIsNotDuplicatedOnSoftDeleted(ctx context.Context, name string, excludedId uuid.UUID) (bool, error) {
 	var count int64

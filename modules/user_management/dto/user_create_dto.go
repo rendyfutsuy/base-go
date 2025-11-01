@@ -37,6 +37,7 @@ type ToDBCreateUser struct {
 	Username string    `json:"username"`
 	RoleId   uuid.UUID `json:"role_id"`
 	Email    string    `json:"email"`
+	Nik      string    `json:"nik"`
 	IsActive bool      `json:"is_active"`
 	Gender   string    `json:"gender"`
 	Password string    `json:"password"`

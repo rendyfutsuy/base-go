@@ -34,6 +34,7 @@ func (repo *userRepository) CreateUser(ctx context.Context, userReq dto.ToDBCrea
 		Username:          userReq.Username,
 		Email:             userReq.Email,
 		RoleId:            userReq.RoleId,
+		Nik:               userReq.Nik,
 		IsActive:          userReq.IsActive,
 		Gender:            userReq.Gender,
 		Password:          passwordTemplate,
@@ -483,6 +484,60 @@ func (repo *userRepository) GetDuplicatedUserOnSoftDeleted(ctx context.Context, 
 	}
 
 	return user, nil
+}
+
+// UsernameIsNotDuplicated checks if a username is not duplicated in the users table, excluding a specific ID if provided.
+//
+// Parameters:
+// - username: the username to check for duplication.
+// - excludedId: the ID to exclude from the check. If set to uuid.Nil, no exclusion is applied.
+//
+// Returns:
+// - bool: true if the username is not duplicated, false otherwise.
+// - error: an error if the check fails.
+func (repo *userRepository) UsernameIsNotDuplicated(ctx context.Context, username string, excludedId uuid.UUID) (bool, error) {
+	var count int64
+	query := repo.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where("username = ? AND deleted_at IS NULL", username)
+
+	if excludedId != uuid.Nil {
+		query = query.Where("id <> ?", excludedId)
+	}
+
+	err := query.Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+
+	return count == 0, nil
+}
+
+// NikIsNotDuplicated checks if a NIK is not duplicated in the users table, excluding a specific ID if provided.
+//
+// Parameters:
+// - nik: the NIK to check for duplication.
+// - excludedId: the ID to exclude from the check. If set to uuid.Nil, no exclusion is applied.
+//
+// Returns:
+// - bool: true if the NIK is not duplicated, false otherwise.
+// - error: an error if the check fails.
+func (repo *userRepository) NikIsNotDuplicated(ctx context.Context, nik string, excludedId uuid.UUID) (bool, error) {
+	var count int64
+	query := repo.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where("nik = ? AND deleted_at IS NULL", nik)
+
+	if excludedId != uuid.Nil {
+		query = query.Where("id <> ?", excludedId)
+	}
+
+	err := query.Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+
+	return count == 0, nil
 }
 
 func (repo *userRepository) SortColumnMapping(selectedSortLabel string) string {

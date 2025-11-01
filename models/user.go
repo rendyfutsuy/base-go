@@ -16,6 +16,7 @@ type User struct {
 	Username          string         `gorm:"column:username;type:varchar(100)" json:"username" validate:"required"`
 	Email             string         `gorm:"column:email;type:varchar(255);not null;uniqueIndex" json:"email" validate:"required,email"`
 	Password          string         `gorm:"column:password;type:varchar(255);not null" json:"password" validate:"required"`
+	Nik               string         `gorm:"column:nik;type:varchar(80)" json:"nik"`
 	IsActive          bool           `gorm:"column:is_active;default:true" json:"is_active"`
 	CreatedAt         time.Time      `gorm:"column:created_at;not null" json:"created_at"`
 	UpdatedAt         time.Time      `gorm:"column:updated_at;not null" json:"updated_at"`

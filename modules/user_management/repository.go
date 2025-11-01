@@ -30,6 +30,8 @@ type Repository interface {
 	ActivateUser(ctx context.Context, id uuid.UUID) (userRes *models.User, err error)
 	DisActivateUser(ctx context.Context, id uuid.UUID) (userRes *models.User, err error)
 	EmailIsNotDuplicated(ctx context.Context, email string, excludedId uuid.UUID) (bool, error)
+	UsernameIsNotDuplicated(ctx context.Context, username string, excludedId uuid.UUID) (bool, error)
+	NikIsNotDuplicated(ctx context.Context, nik string, excludedId uuid.UUID) (bool, error)
 
 	CountUser(ctx context.Context) (count *int, err error)
 	// ------------------------------------------------- user scope - END ----------------------------------------------------------

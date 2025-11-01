@@ -17,6 +17,7 @@ type Repository interface {
 	// crud
 	CreateRole(ctx context.Context, roleReq dto.ToDBCreateRole) (roleRes *models.Role, err error)
 	GetRoleByID(ctx context.Context, id uuid.UUID) (role *models.Role, err error)
+	GetRoleByName(ctx context.Context, name string) (role *models.Role, err error)
 	GetAllRole(ctx context.Context) (roles []models.Role, err error)
 	GetIndexRole(ctx context.Context, req request.PageRequest) (roles []models.Role, total int, err error)
 	UpdateRole(ctx context.Context, id uuid.UUID, roleReq dto.ToDBUpdateRole) (roleRes *models.Role, err error)
