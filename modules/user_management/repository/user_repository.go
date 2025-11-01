@@ -540,6 +540,115 @@ func (repo *userRepository) NikIsNotDuplicated(ctx context.Context, nik string, 
 	return count == 0, nil
 }
 
+// CheckBatchDuplication checks for duplicates in email, username, and NIK in batch
+// Returns maps with keys as values (email/username/nik) and values as bool (true if duplicated)
+func (repo *userRepository) CheckBatchDuplication(ctx context.Context, emails, usernames, niks []string) (duplicatedEmails, duplicatedUsernames, duplicatedNiks map[string]bool, err error) {
+	duplicatedEmails = make(map[string]bool)
+	duplicatedUsernames = make(map[string]bool)
+	duplicatedNiks = make(map[string]bool)
+
+	// Check duplicated emails
+	if len(emails) > 0 {
+		var emailResults []struct {
+			Email string `gorm:"column:email"`
+		}
+		err = repo.DB.WithContext(ctx).
+			Model(&models.User{}).
+			Select("email").
+			Where("email IN ? AND deleted_at IS NULL", emails).
+			Group("email").
+			Scan(&emailResults).Error
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		for _, result := range emailResults {
+			duplicatedEmails[result.Email] = true
+		}
+	}
+
+	// Check duplicated usernames
+	if len(usernames) > 0 {
+		var usernameResults []struct {
+			Username string `gorm:"column:username"`
+		}
+		err = repo.DB.WithContext(ctx).
+			Model(&models.User{}).
+			Select("username").
+			Where("username IN ? AND deleted_at IS NULL", usernames).
+			Group("username").
+			Scan(&usernameResults).Error
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		for _, result := range usernameResults {
+			duplicatedUsernames[result.Username] = true
+		}
+	}
+
+	// Check duplicated NIKs
+	if len(niks) > 0 {
+		var nikResults []struct {
+			Nik string `gorm:"column:nik"`
+		}
+		err = repo.DB.WithContext(ctx).
+			Model(&models.User{}).
+			Select("nik").
+			Where("nik IN ? AND deleted_at IS NULL", niks).
+			Group("nik").
+			Scan(&nikResults).Error
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		for _, result := range nikResults {
+			duplicatedNiks[result.Nik] = true
+		}
+	}
+
+	return duplicatedEmails, duplicatedUsernames, duplicatedNiks, nil
+}
+
+// BulkCreateUsers creates multiple users in a single database transaction
+func (repo *userRepository) BulkCreateUsers(ctx context.Context, usersReq []dto.ToDBCreateUser) (err error) {
+	if len(usersReq) == 0 {
+		return nil
+	}
+
+	now := time.Now().UTC()
+	expiredAt := now.AddDate(0, 3, 0)
+
+	// Get password template from config
+	passwordTemplate := "temp"
+	if utils.ConfigVars.Exists("user.default_password_template") {
+		passwordTemplate = utils.ConfigVars.String("user.default_password_template")
+	}
+
+	// Convert to User models
+	users := make([]models.User, len(usersReq))
+	for i, userReq := range usersReq {
+		users[i] = models.User{
+			FullName:          userReq.FullName,
+			Username:          userReq.Username,
+			Email:             userReq.Email,
+			RoleId:            userReq.RoleId,
+			Nik:               userReq.Nik,
+			IsActive:          userReq.IsActive,
+			Gender:            userReq.Gender,
+			Password:          passwordTemplate,
+			CreatedAt:         now,
+			UpdatedAt:         now,
+			PasswordExpiredAt: expiredAt,
+		}
+	}
+
+	// Batch insert using GORM CreateInBatches (batch size 100)
+	err = repo.DB.WithContext(ctx).CreateInBatches(users, 100).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (repo *userRepository) SortColumnMapping(selectedSortLabel string) string {
 	response := ""
 	sortLabels := map[string][]string{

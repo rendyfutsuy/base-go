@@ -32,6 +32,8 @@ type Repository interface {
 	EmailIsNotDuplicated(ctx context.Context, email string, excludedId uuid.UUID) (bool, error)
 	UsernameIsNotDuplicated(ctx context.Context, username string, excludedId uuid.UUID) (bool, error)
 	NikIsNotDuplicated(ctx context.Context, nik string, excludedId uuid.UUID) (bool, error)
+	CheckBatchDuplication(ctx context.Context, emails, usernames, niks []string) (duplicatedEmails, duplicatedUsernames, duplicatedNiks map[string]bool, err error)
+	BulkCreateUsers(ctx context.Context, usersReq []dto.ToDBCreateUser) (err error)
 
 	CountUser(ctx context.Context) (count *int, err error)
 	// ------------------------------------------------- user scope - END ----------------------------------------------------------

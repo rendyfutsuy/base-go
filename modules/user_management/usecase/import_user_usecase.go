@@ -45,190 +45,234 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 		passwordTemplate = utils.ConfigVars.String("user.default_password_template")
 	}
 
-	// Process data rows (skip header row at index 0)
-	var results []dto.ResImportUserExcel
-	successCount := 0
-	failedCount := 0
+	totalRows := len(rows) - 1 // Exclude header
 
+	// Phase 1: Parse all rows and collect data for batch validation
+	type parsedRowData struct {
+		RowNum   int
+		Email    string
+		FullName string
+		Username string
+		Nik      string
+		RoleName string
+		Result   dto.ResImportUserExcel
+	}
+
+	parsedRows := make([]parsedRowData, 0, totalRows)
+
+	// Parse all rows first
 	for i := 1; i < len(rows); i++ {
 		row := rows[i]
 		rowNum := i + 1 // Excel row number (1-indexed)
 
-		result := dto.ResImportUserExcel{
-			Row: rowNum,
+		parsedRow := parsedRowData{
+			RowNum: rowNum,
+			Result: dto.ResImportUserExcel{
+				Row: rowNum,
+			},
 		}
 
 		// Parse row data (try to parse even if incomplete)
-		email := ""
-		fullName := ""
-		username := ""
-		nik := ""
-		roleName := ""
-
 		if len(row) > 0 {
-			email = strings.TrimSpace(row[0])
+			parsedRow.Email = strings.TrimSpace(row[0])
 		}
 		if len(row) > 1 {
-			fullName = strings.TrimSpace(row[1])
+			parsedRow.FullName = strings.TrimSpace(row[1])
 		}
 		if len(row) > 2 {
-			username = strings.TrimSpace(row[2])
+			parsedRow.Username = strings.TrimSpace(row[2])
 		}
 		if len(row) > 3 {
-			nik = strings.TrimSpace(row[3])
+			parsedRow.Nik = strings.TrimSpace(row[3])
 		}
 		if len(row) > 4 {
-			roleName = strings.TrimSpace(row[4])
+			parsedRow.RoleName = strings.TrimSpace(row[4])
 		}
 
-		result.Username = username
+		parsedRow.Result.Username = parsedRow.Username
+		parsedRows = append(parsedRows, parsedRow)
+	}
 
-		// Check if row has enough columns
-		if len(row) < 5 {
-			result.Success = false
-			result.Status = "failed"
-			result.ErrorMessage = "Row tidak memiliki cukup kolom (minimal 5 kolom: email, full_name, username, nik, role_name)"
-			results = append(results, result)
-			failedCount++
+	// Phase 2: Collect all emails, usernames, niks, and role names for batch validation
+	emails := make([]string, 0, totalRows)
+	usernames := make([]string, 0, totalRows)
+	niks := make([]string, 0, totalRows)
+	roleNamesMap := make(map[string]bool) // Set untuk unique role names
+
+	for i := range parsedRows {
+		parsedRow := &parsedRows[i]
+
+		// Basic validation first
+		// Note: parsedRow.RowNum is 1-indexed Excel row number, but rows array is 0-indexed
+		rowIndex := parsedRow.RowNum - 1
+		if rowIndex >= 0 && rowIndex < len(rows) && len(rows[rowIndex]) < 5 {
+			parsedRow.Result.Success = false
+			parsedRow.Result.Status = "failed"
+			parsedRow.Result.ErrorMessage = "Row tidak memiliki cukup kolom (minimal 5 kolom: email, full_name, username, nik, role_name)"
 			continue
 		}
 
 		// Validate required fields
 		var validationErrors []string
-		if email == "" {
+		if parsedRow.Email == "" {
 			validationErrors = append(validationErrors, "email tidak boleh kosong")
 		}
-		if fullName == "" {
+		if parsedRow.FullName == "" {
 			validationErrors = append(validationErrors, "full_name tidak boleh kosong")
 		}
-		if username == "" {
+		if parsedRow.Username == "" {
 			validationErrors = append(validationErrors, "username tidak boleh kosong")
 		}
-		if nik == "" {
+		if parsedRow.Nik == "" {
 			validationErrors = append(validationErrors, "nik tidak boleh kosong")
 		}
-		if roleName == "" {
+		if parsedRow.RoleName == "" {
 			validationErrors = append(validationErrors, "role_name tidak boleh kosong")
 		}
 
 		if len(validationErrors) > 0 {
-			result.Success = false
-			result.Status = "failed"
-			result.ErrorMessage = strings.Join(validationErrors, "; ")
-			results = append(results, result)
-			failedCount++
+			parsedRow.Result.Success = false
+			parsedRow.Result.Status = "failed"
+			parsedRow.Result.ErrorMessage = strings.Join(validationErrors, "; ")
 			continue
 		}
 
 		// Validate email format (basic check)
-		if !strings.Contains(email, "@") {
-			result.Success = false
-			result.Status = "failed"
-			result.ErrorMessage = "Format email tidak valid"
-			results = append(results, result)
-			failedCount++
+		if !strings.Contains(parsedRow.Email, "@") {
+			parsedRow.Result.Success = false
+			parsedRow.Result.Status = "failed"
+			parsedRow.Result.ErrorMessage = "Format email tidak valid"
 			continue
 		}
 
-		// Check if email already exists
-		emailNotDuplicated, err := u.userRepo.EmailIsNotDuplicated(ctx, email, uuid.Nil)
+		// Collect for batch validation (only if passed basic validation)
+		emails = append(emails, parsedRow.Email)
+		usernames = append(usernames, parsedRow.Username)
+		niks = append(niks, parsedRow.Nik)
+		roleNamesMap[parsedRow.RoleName] = true
+	}
+
+	// Phase 3: Batch validation - check for duplicates (single query for all)
+	duplicatedEmails, duplicatedUsernames, duplicatedNiks, err := u.userRepo.CheckBatchDuplication(ctx, emails, usernames, niks)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check batch duplication: %v", err)
+	}
+
+	// Phase 4: Batch fetch roles (cache roles to avoid duplicate queries)
+	roleNames := make([]string, 0, len(roleNamesMap))
+	for roleName := range roleNamesMap {
+		roleNames = append(roleNames, roleName)
+	}
+
+	roleMap := make(map[string]uuid.UUID)
+
+	for _, roleName := range roleNames {
+		role, err := u.roleManagement.GetRoleByName(ctx, roleName)
 		if err != nil {
-			result.Success = false
-			result.Status = "failed"
-			result.ErrorMessage = fmt.Sprintf("Error checking email: %v", err)
-			results = append(results, result)
-			failedCount++
+			// Role tidak ditemukan, akan ditangani per row nanti
 			continue
 		}
-		if !emailNotDuplicated {
+		roleMap[roleName] = role.ID
+	}
+
+	// Phase 5: Process each row with batch-validated data and prepare for batch insert
+	var results []dto.ResImportUserExcel
+	var validUsers []dto.ToDBCreateUser
+	var validUserRowIndices []int // Track which rows correspond to valid users
+
+	for i := range parsedRows {
+		parsedRow := &parsedRows[i]
+		result := &parsedRow.Result
+
+		// Skip if already marked as failed in Phase 2
+		if result.Status == "failed" {
+			results = append(results, *result)
+			continue
+		}
+
+		// Check duplicates using batch validation results
+		if duplicatedEmails[parsedRow.Email] {
 			result.Success = false
 			result.Status = "failed"
 			result.ErrorMessage = "Email sudah terdaftar di database"
-			results = append(results, result)
-			failedCount++
+			results = append(results, *result)
 			continue
 		}
 
-		// Check if username already exists
-		usernameNotDuplicated, err := u.userRepo.UsernameIsNotDuplicated(ctx, username, uuid.Nil)
-		if err != nil {
-			result.Success = false
-			result.Status = "failed"
-			result.ErrorMessage = fmt.Sprintf("Error checking username: %v", err)
-			results = append(results, result)
-			failedCount++
-			continue
-		}
-		if !usernameNotDuplicated {
+		if duplicatedUsernames[parsedRow.Username] {
 			result.Success = false
 			result.Status = "failed"
 			result.ErrorMessage = "Username sudah terdaftar di database"
-			results = append(results, result)
-			failedCount++
+			results = append(results, *result)
 			continue
 		}
 
-		// Check if NIK already exists
-		nikNotDuplicated, err := u.userRepo.NikIsNotDuplicated(ctx, nik, uuid.Nil)
-		if err != nil {
-			result.Success = false
-			result.Status = "failed"
-			result.ErrorMessage = fmt.Sprintf("Error checking NIK: %v", err)
-			results = append(results, result)
-			failedCount++
-			continue
-		}
-		if !nikNotDuplicated {
+		if duplicatedNiks[parsedRow.Nik] {
 			result.Success = false
 			result.Status = "failed"
 			result.ErrorMessage = "NIK sudah terdaftar di database"
-			results = append(results, result)
-			failedCount++
+			results = append(results, *result)
 			continue
 		}
 
-		// Get role by name
-		role, err := u.roleManagement.GetRoleByName(ctx, roleName)
-		if err != nil {
+		// Check role
+		roleId, exists := roleMap[parsedRow.RoleName]
+		if !exists {
 			result.Success = false
 			result.Status = "failed"
-			result.ErrorMessage = fmt.Sprintf("Role dengan nama '%s' tidak ditemukan", roleName)
-			results = append(results, result)
-			failedCount++
+			result.ErrorMessage = fmt.Sprintf("Role dengan nama '%s' tidak ditemukan", parsedRow.RoleName)
+			results = append(results, *result)
 			continue
 		}
 
-		// Create user
+		// Add to valid users for batch insert
 		userDb := dto.ToDBCreateUser{
-			FullName: fullName,
-			Username: username,
-			RoleId:   role.ID,
-			Email:    email,
-			Nik:      nik,
+			FullName: parsedRow.FullName,
+			Username: parsedRow.Username,
+			RoleId:   roleId,
+			Email:    parsedRow.Email,
+			Nik:      parsedRow.Nik,
 			IsActive: true,
-			Gender:   "", // Default empty, bisa ditambahkan di Excel jika diperlukan
+			Gender:   "",
 			Password: passwordTemplate,
 		}
+		validUsers = append(validUsers, userDb)
+		validUserRowIndices = append(validUserRowIndices, len(results))
 
-		_, err = u.userRepo.CreateUser(ctx, userDb)
-		if err != nil {
-			result.Success = false
-			result.Status = "failed"
-			result.ErrorMessage = fmt.Sprintf("Error creating user: %v", err)
-			results = append(results, result)
-			failedCount++
-			continue
-		}
-
-		// Success
+		// Mark as success (will be validated after batch insert)
 		result.Success = true
 		result.Status = "success"
-		results = append(results, result)
-		successCount++
+		results = append(results, *result)
+	}
+
+	// Phase 6: Batch insert valid users (single transaction)
+	if len(validUsers) > 0 {
+		err = u.userRepo.BulkCreateUsers(ctx, validUsers)
+		if err != nil {
+			// If batch insert fails, mark all pending users as failed
+			for _, idx := range validUserRowIndices {
+				if idx < len(results) {
+					results[idx].Success = false
+					results[idx].Status = "failed"
+					results[idx].ErrorMessage = fmt.Sprintf("Error creating user in batch: %v", err)
+				}
+			}
+		}
+	}
+
+	// Calculate final counts
+	successCount := 0
+	failedCount := 0
+	for _, result := range results {
+		if result.Status == "success" {
+			successCount++
+		} else {
+			failedCount++
+		}
 	}
 
 	return &dto.ResImportUsers{
-		TotalRows:    len(rows) - 1, // Exclude header
+		TotalRows:    totalRows,
 		SuccessCount: successCount,
 		FailedCount:  failedCount,
 		Results:      results,

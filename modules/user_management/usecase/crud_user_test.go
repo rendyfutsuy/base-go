@@ -145,6 +145,19 @@ func (m *MockUserRepository) NikIsNotDuplicated(ctx context.Context, nik string,
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockUserRepository) CheckBatchDuplication(ctx context.Context, emails, usernames, niks []string) (duplicatedEmails, duplicatedUsernames, duplicatedNiks map[string]bool, err error) {
+	args := m.Called(ctx, emails, usernames, niks)
+	if args.Get(0) == nil {
+		return nil, nil, nil, args.Error(3)
+	}
+	return args.Get(0).(map[string]bool), args.Get(1).(map[string]bool), args.Get(2).(map[string]bool), args.Error(3)
+}
+
+func (m *MockUserRepository) BulkCreateUsers(ctx context.Context, usersReq []userDto.ToDBCreateUser) (err error) {
+	args := m.Called(ctx, usersReq)
+	return args.Error(0)
+}
+
 func (m *MockUserRepository) CountUser(ctx context.Context) (count *int, err error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
