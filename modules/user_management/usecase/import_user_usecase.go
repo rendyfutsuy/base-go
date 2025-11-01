@@ -58,27 +58,40 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 			Row: rowNum,
 		}
 
+		// Parse row data (try to parse even if incomplete)
+		email := ""
+		fullName := ""
+		username := ""
+		nik := ""
+		roleName := ""
+
+		if len(row) > 0 {
+			email = strings.TrimSpace(row[0])
+		}
+		if len(row) > 1 {
+			fullName = strings.TrimSpace(row[1])
+		}
+		if len(row) > 2 {
+			username = strings.TrimSpace(row[2])
+		}
+		if len(row) > 3 {
+			nik = strings.TrimSpace(row[3])
+		}
+		if len(row) > 4 {
+			roleName = strings.TrimSpace(row[4])
+		}
+
+		result.Username = username
+
 		// Check if row has enough columns
 		if len(row) < 5 {
 			result.Success = false
+			result.Status = "failed"
 			result.ErrorMessage = "Row tidak memiliki cukup kolom (minimal 5 kolom: email, full_name, username, nik, role_name)"
 			results = append(results, result)
 			failedCount++
 			continue
 		}
-
-		// Parse row data
-		email := strings.TrimSpace(row[0])
-		fullName := strings.TrimSpace(row[1])
-		username := strings.TrimSpace(row[2])
-		nik := strings.TrimSpace(row[3])
-		roleName := strings.TrimSpace(row[4])
-
-		result.Email = email
-		result.FullName = fullName
-		result.Username = username
-		result.Nik = nik
-		result.RoleName = roleName
 
 		// Validate required fields
 		var validationErrors []string
@@ -100,6 +113,7 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 
 		if len(validationErrors) > 0 {
 			result.Success = false
+			result.Status = "failed"
 			result.ErrorMessage = strings.Join(validationErrors, "; ")
 			results = append(results, result)
 			failedCount++
@@ -109,6 +123,7 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 		// Validate email format (basic check)
 		if !strings.Contains(email, "@") {
 			result.Success = false
+			result.Status = "failed"
 			result.ErrorMessage = "Format email tidak valid"
 			results = append(results, result)
 			failedCount++
@@ -119,6 +134,7 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 		emailNotDuplicated, err := u.userRepo.EmailIsNotDuplicated(ctx, email, uuid.Nil)
 		if err != nil {
 			result.Success = false
+			result.Status = "failed"
 			result.ErrorMessage = fmt.Sprintf("Error checking email: %v", err)
 			results = append(results, result)
 			failedCount++
@@ -126,6 +142,7 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 		}
 		if !emailNotDuplicated {
 			result.Success = false
+			result.Status = "failed"
 			result.ErrorMessage = "Email sudah terdaftar di database"
 			results = append(results, result)
 			failedCount++
@@ -136,6 +153,7 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 		usernameNotDuplicated, err := u.userRepo.UsernameIsNotDuplicated(ctx, username, uuid.Nil)
 		if err != nil {
 			result.Success = false
+			result.Status = "failed"
 			result.ErrorMessage = fmt.Sprintf("Error checking username: %v", err)
 			results = append(results, result)
 			failedCount++
@@ -143,6 +161,7 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 		}
 		if !usernameNotDuplicated {
 			result.Success = false
+			result.Status = "failed"
 			result.ErrorMessage = "Username sudah terdaftar di database"
 			results = append(results, result)
 			failedCount++
@@ -153,6 +172,7 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 		nikNotDuplicated, err := u.userRepo.NikIsNotDuplicated(ctx, nik, uuid.Nil)
 		if err != nil {
 			result.Success = false
+			result.Status = "failed"
 			result.ErrorMessage = fmt.Sprintf("Error checking NIK: %v", err)
 			results = append(results, result)
 			failedCount++
@@ -160,6 +180,7 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 		}
 		if !nikNotDuplicated {
 			result.Success = false
+			result.Status = "failed"
 			result.ErrorMessage = "NIK sudah terdaftar di database"
 			results = append(results, result)
 			failedCount++
@@ -170,6 +191,7 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 		role, err := u.roleManagement.GetRoleByName(ctx, roleName)
 		if err != nil {
 			result.Success = false
+			result.Status = "failed"
 			result.ErrorMessage = fmt.Sprintf("Role dengan nama '%s' tidak ditemukan", roleName)
 			results = append(results, result)
 			failedCount++
@@ -191,6 +213,7 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 		_, err = u.userRepo.CreateUser(ctx, userDb)
 		if err != nil {
 			result.Success = false
+			result.Status = "failed"
 			result.ErrorMessage = fmt.Sprintf("Error creating user: %v", err)
 			results = append(results, result)
 			failedCount++
@@ -199,6 +222,7 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 
 		// Success
 		result.Success = true
+		result.Status = "success"
 		results = append(results, result)
 		successCount++
 	}
@@ -210,4 +234,3 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 		Results:      results,
 	}, nil
 }
-

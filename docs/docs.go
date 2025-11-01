@@ -1215,7 +1215,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Import multiple users from an Excel file (.xlsx or .xls). The Excel file must have columns: email, full_name, username, nik, role_name. Validates for duplicate email, username, and NIK.",
+                "description": "Import multiple users from an Excel file (.xlsx or .xls). The Excel file must have columns: email, full_name, username, nik, role_name. Validates for duplicate email, username, and NIK. Returns HTTP 400 if any row fails with detailed error information per row.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -1237,7 +1237,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully imported users",
+                        "description": "Successfully imported all users",
                         "schema": {
                             "allOf": [
                                 {
@@ -1255,9 +1255,21 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad request - invalid file or validation error",
+                        "description": "Bad request - one or more rows failed validation. Response contains details for each row including row number, username, status, and error message",
                         "schema": {
-                            "$ref": "#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.NonPaginationResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ResImportUsers"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "401": {
@@ -2033,28 +2045,20 @@ const docTemplate = `{
         "dto.ResImportUserExcel": {
             "type": "object",
             "properties": {
-                "email": {
-                    "type": "string"
-                },
                 "error_message": {
-                    "type": "string"
-                },
-                "full_name": {
-                    "type": "string"
-                },
-                "nik": {
-                    "type": "string"
-                },
-                "role_name": {
+                    "description": "Message error jika status failed",
                     "type": "string"
                 },
                 "row": {
+                    "description": "Nomor baris di Excel",
                     "type": "integer"
                 },
-                "success": {
-                    "type": "boolean"
+                "status": {
+                    "description": "Status row: \"success\" atau \"failed\"",
+                    "type": "string"
                 },
                 "username": {
+                    "description": "Username user",
                     "type": "string"
                 }
             }

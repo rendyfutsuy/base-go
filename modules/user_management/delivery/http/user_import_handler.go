@@ -15,14 +15,14 @@ import (
 
 // ImportUsersFromExcel godoc
 // @Summary		Import users from Excel file
-// @Description	Import multiple users from an Excel file (.xlsx or .xls). The Excel file must have columns: email, full_name, username, nik, role_name. Validates for duplicate email, username, and NIK.
+// @Description	Import multiple users from an Excel file (.xlsx or .xls). The Excel file must have columns: email, full_name, username, nik, role_name. Validates for duplicate email, username, and NIK. Returns HTTP 400 if any row fails with detailed error information per row.
 // @Tags			User Management
 // @Accept			multipart/form-data
 // @Produce		json
 // @Security		BearerAuth
 // @Param			file	formData	file	true	"Excel file (.xlsx or .xls) with columns: email, full_name, username, nik, role_name"
-// @Success		200		{object}	response.NonPaginationResponse{data=dto.ResImportUsers}	"Successfully imported users"
-// @Failure		400		{object}	ResponseError	"Bad request - invalid file or validation error"
+// @Success		200		{object}	response.NonPaginationResponse{data=dto.ResImportUsers}	"Successfully imported all users"
+// @Failure		400		{object}	response.NonPaginationResponse{data=dto.ResImportUsers}	"Bad request - one or more rows failed validation. Response contains details for each row including row number, username, status, and error message"
 // @Failure		401		{object}	ResponseError	"Unauthorized"
 // @Failure		500		{object}	ResponseError	"Internal server error"
 // @Router			/v1/user-management/user/import [post]
@@ -71,10 +71,16 @@ func (handler *UserManagementHandler) ImportUsersFromExcel(c echo.Context) error
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 	}
 
-	// Return response
+	// If there are failed rows, return HTTP 400 with error details
+	if res.FailedCount > 0 {
+		resp := response.NonPaginationResponse{}
+		resp, _ = resp.SetResponse(res)
+		return c.JSON(http.StatusBadRequest, resp)
+	}
+
+	// Return success response if all rows processed successfully
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(res)
-
 	return c.JSON(http.StatusOK, resp)
 }
 
