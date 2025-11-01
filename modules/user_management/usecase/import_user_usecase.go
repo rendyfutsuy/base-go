@@ -190,37 +190,33 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 			continue
 		}
 
+		// Collect all validation errors (akumulatif)
+		var allErrors []string
+
 		// Check duplicates using batch validation results
 		if duplicatedEmails[parsedRow.Email] {
-			result.Success = false
-			result.Status = "failed"
-			result.ErrorMessage = "Email sudah terdaftar di database"
-			results = append(results, *result)
-			continue
+			allErrors = append(allErrors, "Email sudah terdaftar di database")
 		}
 
 		if duplicatedUsernames[parsedRow.Username] {
-			result.Success = false
-			result.Status = "failed"
-			result.ErrorMessage = "Username sudah terdaftar di database"
-			results = append(results, *result)
-			continue
+			allErrors = append(allErrors, "Username sudah terdaftar di database")
 		}
 
 		if duplicatedNiks[parsedRow.Nik] {
-			result.Success = false
-			result.Status = "failed"
-			result.ErrorMessage = "NIK sudah terdaftar di database"
-			results = append(results, *result)
-			continue
+			allErrors = append(allErrors, "NIK sudah terdaftar di database")
 		}
 
 		// Check role
 		roleId, exists := roleMap[parsedRow.RoleName]
 		if !exists {
+			allErrors = append(allErrors, fmt.Sprintf("Role dengan nama '%s' tidak ditemukan", parsedRow.RoleName))
+		}
+
+		// If there are any errors, mark as failed with all error messages
+		if len(allErrors) > 0 {
 			result.Success = false
 			result.Status = "failed"
-			result.ErrorMessage = fmt.Sprintf("Role dengan nama '%s' tidak ditemukan", parsedRow.RoleName)
+			result.ErrorMessage = strings.Join(allErrors, "; ")
 			results = append(results, *result)
 			continue
 		}
