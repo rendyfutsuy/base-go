@@ -21,6 +21,18 @@ import (
 // get index role
 // get all role
 
+// CreateRole godoc
+// @Summary		Create a new role
+// @Description	Create a new role with provided information
+// @Tags			Role Management
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			request	body		dto.ReqCreateRole	true	"Role creation data"
+// @Success		200		{object}	response.NonPaginationResponse{data=dto.RespRole}	"Successfully created role"
+// @Failure		400		{object}	ResponseError	"Bad request - validation error"
+// @Failure		401		{object}	ResponseError	"Unauthorized"
+// @Router			/v1/role-management/role [post]
 func (handler *RoleManagementHandler) CreateRole(c echo.Context) error {
 
 	// get auth ID
@@ -51,6 +63,22 @@ func (handler *RoleManagementHandler) CreateRole(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// GetIndexRole godoc
+// @Summary		Get paginated list of roles
+// @Description	Retrieve a paginated list of roles with optional filtering
+// @Tags			Role Management
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			page		query		int		false	"Page number"	default(1)
+// @Param			per_page	query		int		false	"Items per page"	default(10)
+// @Param			sort_by		query		string	false	"Sort column"
+// @Param			sort_order	query		string	false	"Sort order (asc/desc)"
+// @Param			search		query		string	false	"Search query"
+// @Success		200		{object}	response.PaginationResponse{data=[]dto.RespRoleIndex}	"Successfully retrieved roles"
+// @Failure		400		{object}	ResponseError	"Bad request"
+// @Failure		401		{object}	ResponseError	"Unauthorized"
+// @Router			/v1/role-management/role [get]
 func (handler *RoleManagementHandler) GetIndexRole(c echo.Context) error {
 	pageRequest := c.Get("page_request").(*request.PageRequest)
 
@@ -76,6 +104,17 @@ func (handler *RoleManagementHandler) GetIndexRole(c echo.Context) error {
 	return c.JSON(http.StatusOK, respPag)
 }
 
+// GetAllRole godoc
+// @Summary		Get all roles
+// @Description	Retrieve all roles without pagination
+// @Tags			Role Management
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Success		200		{object}	response.NonPaginationResponse{data=[]dto.RespRole}	"Successfully retrieved all roles"
+// @Failure		400		{object}	ResponseError	"Bad request"
+// @Failure		401		{object}	ResponseError	"Unauthorized"
+// @Router			/v1/role-management/role/all [get]
 func (handler *RoleManagementHandler) GetAllRole(c echo.Context) error {
 
 	res, err := handler.RoleUseCase.GetAllRole(c)
@@ -95,6 +134,19 @@ func (handler *RoleManagementHandler) GetAllRole(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// GetRoleByID godoc
+// @Summary		Get role by ID
+// @Description	Retrieve a specific role by its ID
+// @Tags			Role Management
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			id	path		string	true	"Role UUID"
+// @Success		200	{object}	response.NonPaginationResponse{data=dto.RespRoleDetail}	"Successfully retrieved role"
+// @Failure		400	{object}	ResponseError	"Bad request - invalid UUID"
+// @Failure		401	{object}	ResponseError	"Unauthorized"
+// @Failure		404	{object}	ResponseError	"Role not found"
+// @Router			/v1/role-management/role/{id} [get]
 func (handler *RoleManagementHandler) GetRoleByID(c echo.Context) error {
 
 	id := c.Param("id")
@@ -117,6 +169,20 @@ func (handler *RoleManagementHandler) GetRoleByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// UpdateRole godoc
+// @Summary		Update role
+// @Description	Update an existing role's information
+// @Tags			Role Management
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			id		path	string				true	"Role UUID"
+// @Param			request	body	dto.ReqUpdateRole	true	"Updated role data"
+// @Success		200		{object}	response.NonPaginationResponse{data=dto.RespRole}	"Successfully updated role"
+// @Failure		400		{object}	ResponseError	"Bad request - validation error"
+// @Failure		401		{object}	ResponseError	"Unauthorized"
+// @Failure		404		{object}	ResponseError	"Role not found"
+// @Router			/v1/role-management/role/{id} [put]
 func (handler *RoleManagementHandler) UpdateRole(c echo.Context) error {
 
 	// get auth ID
@@ -152,6 +218,19 @@ func (handler *RoleManagementHandler) UpdateRole(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// DeleteRole godoc
+// @Summary		Delete role (soft delete)
+// @Description	Soft delete a role by its ID
+// @Tags			Role Management
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			id	path	string	true	"Role UUID"
+// @Success		200	{object}	response.NonPaginationResponse{data=dto.RespRole}	"Successfully deleted role"
+// @Failure		400	{object}	ResponseError	"Bad request - invalid UUID"
+// @Failure		401	{object}	ResponseError	"Unauthorized"
+// @Failure		404	{object}	ResponseError	"Role not found"
+// @Router			/v1/role-management/role/{id} [delete]
 func (handler *RoleManagementHandler) DeleteRole(c echo.Context) error {
 	// get auth ID
 	user := c.Get("user")
@@ -176,6 +255,19 @@ func (handler *RoleManagementHandler) DeleteRole(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// GetDuplicatedRole godoc
+// @Summary		Check if role name is duplicated
+// @Description	Check if a role name already exists in the database
+// @Tags			Role Management
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			request	body	dto.ReqCheckDuplicatedRole	true	"Check duplicated role request"
+// @Success		200		{object}	response.NonPaginationResponse{data=dto.RespRole}	"Role with such name exists"
+// @Failure		400		{object}	ResponseError	"Bad request"
+// @Failure		401		{object}	ResponseError	"Unauthorized"
+// @Failure		404		{object}	ResponseError	"Role with such name is not found"
+// @Router			/v1/role-management/role/check-name [get]
 func (handler *RoleManagementHandler) GetDuplicatedRole(c echo.Context) error {
 	req := new(dto.ReqCheckDuplicatedRole)
 	if err := c.Bind(req); err != nil {

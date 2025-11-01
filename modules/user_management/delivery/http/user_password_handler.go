@@ -14,6 +14,21 @@ import (
 // user_password scope
 // Update user Password
 // Verify User Password
+
+// UpdateUserPassword godoc
+// @Summary		Update user password
+// @Description	Update a user's password by their ID
+// @Tags			User Management
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			id		path	string					true	"User UUID"
+// @Param			request	body	dto.ReqUpdateUserPassword	true	"Password update data"
+// @Success		200		{object}	response.NonPaginationResponse{data=dto.RespUser}	"Successfully updated password"
+// @Failure		400		{object}	ResponseError	"Bad request - validation error"
+// @Failure		401		{object}	ResponseError	"Unauthorized"
+// @Failure		404		{object}	ResponseError	"User not found"
+// @Router			/v1/user-management/user/{id}/password [patch]
 func (handler *UserManagementHandler) UpdateUserPassword(c echo.Context) error {
 	// get params ID
 	id := c.Param("id")
@@ -53,6 +68,18 @@ func (handler *UserManagementHandler) UpdateUserPassword(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// ConfirmCurrentUserPassword godoc
+// @Summary		Confirm current user password
+// @Description	Verify the current authenticated user's password
+// @Tags			User Management
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			request	body	dto.ReqConfirmationUserPassword	true	"Password confirmation data"
+// @Success		200		{object}	response.NonPaginationResponse{data=dto.RespUser}	"Password confirmed successfully"
+// @Failure		400		{object}	ResponseError	"Bad request - invalid password"
+// @Failure		401		{object}	ResponseError	"Unauthorized"
+// @Router			/v1/user-management/user/password-confirmation [post]
 func (handler *UserManagementHandler) ConfirmCurrentUserPassword(c echo.Context) error {
 	// get auth ID
 	user := c.Get("user")

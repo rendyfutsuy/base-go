@@ -1,4 +1,9 @@
 definitions:
+  dto.ReqActivateUser:
+    properties:
+      is_active:
+        type: boolean
+    type: object
   dto.ReqAuthUser:
     properties:
       login:
@@ -8,6 +13,83 @@ definitions:
     required:
     - login
     - password
+    type: object
+  dto.ReqBlockUser:
+    properties:
+      is_block:
+        type: boolean
+    type: object
+  dto.ReqCheckDuplicatedRole:
+    properties:
+      excluded_role_info_id:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  dto.ReqCheckDuplicatedUser:
+    properties:
+      excluded_user_id:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  dto.ReqConfirmationUserPassword:
+    properties:
+      password:
+        type: string
+    required:
+    - password
+    type: object
+  dto.ReqCreateRole:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 80
+        type: string
+      permission_groups:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - name
+    - permission_groups
+    type: object
+  dto.ReqCreateUser:
+    properties:
+      email:
+        type: string
+      gender:
+        enum:
+        - male
+        - female
+        type: string
+      is_active:
+        type: boolean
+      name:
+        maxLength: 80
+        type: string
+      password:
+        type: string
+      password_confirmation:
+        type: string
+      role_id:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - gender
+    - name
+    - password
+    - password_confirmation
+    - role_id
+    - username
     type: object
   dto.ReqResetPassword:
     properties:
@@ -48,6 +130,63 @@ definitions:
     required:
     - name
     type: object
+  dto.ReqUpdateRole:
+    properties:
+      cobs:
+        items:
+          type: string
+        minItems: 1
+        type: array
+      description:
+        type: string
+      name:
+        maxLength: 80
+        type: string
+      permission_groups:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - cobs
+    - name
+    - permission_groups
+    type: object
+  dto.ReqUpdateUser:
+    properties:
+      email:
+        type: string
+      gender:
+        enum:
+        - male
+        - female
+        type: string
+      is_active:
+        type: boolean
+      name:
+        maxLength: 80
+        type: string
+      role_id:
+        type: string
+    required:
+    - email
+    - gender
+    - name
+    - role_id
+    type: object
+  dto.ReqUpdateUserPassword:
+    properties:
+      new_password:
+        type: string
+      old_password:
+        type: string
+      password_confirmation:
+        type: string
+    required:
+    - new_password
+    - old_password
+    - password_confirmation
+    type: object
   dto.ResImportUserExcel:
     properties:
       email:
@@ -80,6 +219,109 @@ definitions:
       total_rows:
         type: integer
     type: object
+  dto.RespPermissionGroupRoleDetail:
+    properties:
+      id:
+        type: string
+      module:
+        type: string
+      name:
+        type: string
+    type: object
+  dto.RespRole:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  dto.RespRoleDetail:
+    properties:
+      created_at:
+        type: string
+      description:
+        $ref: '#/definitions/utils.NullString'
+      id:
+        type: string
+      modules:
+        items:
+          $ref: '#/definitions/utils.NullString'
+        type: array
+      name:
+        type: string
+      permission_groups:
+        items:
+          $ref: '#/definitions/dto.RespPermissionGroupRoleDetail'
+        type: array
+      total_user:
+        type: integer
+      updated_at:
+        $ref: '#/definitions/utils.NullTime'
+    type: object
+  dto.RespRoleIndex:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      modules:
+        items:
+          $ref: '#/definitions/utils.NullString'
+        type: array
+      name:
+        type: string
+      total_user:
+        type: integer
+      updated_at:
+        $ref: '#/definitions/utils.NullTime'
+    type: object
+  dto.RespUser:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  dto.RespUserDetail:
+    properties:
+      active_status:
+        $ref: '#/definitions/utils.NullString'
+      email:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      is_blocked:
+        type: boolean
+      name:
+        type: string
+      role_id:
+        type: string
+      role_name:
+        type: string
+    type: object
+  dto.RespUserIndex:
+    properties:
+      active_status:
+        $ref: '#/definitions/utils.NullString'
+      email:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      is_blocked:
+        type: boolean
+      name:
+        type: string
+      role_name:
+        type: string
+    type: object
   dto.UserProfile:
     properties:
       email:
@@ -93,6 +335,11 @@ definitions:
       status:
         type: string
       user_id:
+        type: string
+    type: object
+  github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError:
+    properties:
+      message:
         type: string
     type: object
   github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError:
@@ -114,12 +361,41 @@ definitions:
     properties:
       data: {}
     type: object
+  response.PaginationMeta:
+    properties:
+      current_page:
+        type: integer
+      from:
+        type: integer
+      last_page:
+        type: integer
+      per_page:
+        type: integer
+      to:
+        type: integer
+      total:
+        type: integer
+    type: object
+  response.PaginationResponse:
+    properties:
+      data: {}
+      meta:
+        $ref: '#/definitions/response.PaginationMeta'
+    type: object
   utils.NullString:
     properties:
       string:
         type: string
       valid:
         description: Valid is true if String is not NULL
+        type: boolean
+    type: object
+  utils.NullTime:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
         type: boolean
     type: object
 info:
@@ -132,83 +408,6 @@ info:
   title: Base Template API Documentation
   version: 0.0-beta
 paths:
-  /auth/reset-password:
-    post:
-      consumes:
-      - application/json
-      description: Sends a password reset email to the provided email address
-      parameters:
-      - description: Reset Password Request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.ReqResetPasswordRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Send Reset Email Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/http.GeneralResponse'
-            - properties:
-                message:
-                  type: string
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/http.GeneralResponse'
-            - properties:
-                message:
-                  type: string
-              type: object
-      summary: Request a password reset email
-      tags:
-      - Authentication
-  /auth/reset-password/{token}:
-    post:
-      consumes:
-      - application/json
-      description: Resets the user password using a valid token
-      parameters:
-      - description: Password Reset Token
-        in: path
-        name: token
-        required: true
-        type: string
-      - description: Reset User Password
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.ReqResetPassword'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Reset Password
-          schema:
-            allOf:
-            - $ref: '#/definitions/http.GeneralResponse'
-            - properties:
-                message:
-                  type: string
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/http.GeneralResponse'
-            - properties:
-                message:
-                  type: string
-              type: object
-      summary: Reset user password
-      tags:
-      - Authentication
   /v1/auth/login:
     post:
       consumes:
@@ -388,6 +587,767 @@ paths:
       summary: Refresh access token
       tags:
       - Authentication
+  /v1/auth/reset-password/request:
+    post:
+      consumes:
+      - application/json
+      description: Sends a password reset email to the provided email address
+      parameters:
+      - description: Reset Password Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Send Reset Email Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/http.GeneralResponse'
+            - properties:
+                message:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/http.GeneralResponse'
+            - properties:
+                message:
+                  type: string
+              type: object
+      summary: Request a password reset email
+      tags:
+      - Authentication
+  /v1/auth/reset-password/request/{token}:
+    post:
+      consumes:
+      - application/json
+      description: Resets the user password using a valid token
+      parameters:
+      - description: Password Reset Token
+        in: path
+        name: token
+        required: true
+        type: string
+      - description: Reset User Password
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqResetPassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Reset Password
+          schema:
+            allOf:
+            - $ref: '#/definitions/http.GeneralResponse'
+            - properties:
+                message:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/http.GeneralResponse'
+            - properties:
+                message:
+                  type: string
+              type: object
+      summary: Reset user password
+      tags:
+      - Authentication
+  /v1/role-management/role:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of roles with optional filtering
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      - description: Sort column
+        in: query
+        name: sort_by
+        type: string
+      - description: Sort order (asc/desc)
+        in: query
+        name: sort_order
+        type: string
+      - description: Search query
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved roles
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.PaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespRoleIndex'
+                  type: array
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Get paginated list of roles
+      tags:
+      - Role Management
+    post:
+      consumes:
+      - application/json
+      description: Create a new role with provided information
+      parameters:
+      - description: Role creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCreateRole'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created role
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespRole'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Create a new role
+      tags:
+      - Role Management
+  /v1/role-management/role/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete a role by its ID
+      parameters:
+      - description: Role UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted role
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespRole'
+              type: object
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+        "404":
+          description: Role not found
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Delete role (soft delete)
+      tags:
+      - Role Management
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific role by its ID
+      parameters:
+      - description: Role UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved role
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespRoleDetail'
+              type: object
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+        "404":
+          description: Role not found
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Get role by ID
+      tags:
+      - Role Management
+    put:
+      consumes:
+      - application/json
+      description: Update an existing role's information
+      parameters:
+      - description: Role UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated role data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqUpdateRole'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated role
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespRole'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+        "404":
+          description: Role not found
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Update role
+      tags:
+      - Role Management
+  /v1/role-management/role/all:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all roles without pagination
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved all roles
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespRole'
+                  type: array
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Get all roles
+      tags:
+      - Role Management
+  /v1/role-management/role/check-name:
+    get:
+      consumes:
+      - application/json
+      description: Check if a role name already exists in the database
+      parameters:
+      - description: Check duplicated role request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCheckDuplicatedRole'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Role with such name exists
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespRole'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+        "404":
+          description: Role with such name is not found
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Check if role name is duplicated
+      tags:
+      - Role Management
+  /v1/user-management/user:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of users with optional filtering
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      - description: Sort column
+        in: query
+        name: sort_by
+        type: string
+      - description: Sort order (asc/desc)
+        in: query
+        name: sort_order
+        type: string
+      - description: Search query
+        in: query
+        name: search
+        type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          type: string
+        name: roleIds
+        type: array
+      - in: query
+        name: roleName
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved users
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.PaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespUserIndex'
+                  type: array
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Get paginated list of users
+      tags:
+      - User Management
+    post:
+      consumes:
+      - application/json
+      description: Create a new user with provided information
+      parameters:
+      - description: User creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCreateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created user
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespUser'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Create a new user
+      tags:
+      - User Management
+  /v1/user-management/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific user by their ID
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved user
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespUserDetail'
+              type: object
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Get user by ID
+      tags:
+      - User Management
+    put:
+      consumes:
+      - application/json
+      description: Update an existing user's information
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated user data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqUpdateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated user
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespUser'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Update user
+      tags:
+      - User Management
+  /v1/user-management/user/{id}/assign-status:
+    patch:
+      consumes:
+      - application/json
+      description: Activate or update status of a user account
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Activate user request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqActivateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully activated user
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespUserDetail'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Activate a user
+      tags:
+      - User Management
+  /v1/user-management/user/{id}/block:
+    patch:
+      consumes:
+      - application/json
+      description: Block a user account and revoke all their tokens
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Block user request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqBlockUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully blocked user
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespUserDetail'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Block a user
+      tags:
+      - User Management
+  /v1/user-management/user/{id}/password:
+    patch:
+      consumes:
+      - application/json
+      description: Update a user's password by their ID
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Password update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqUpdateUserPassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated password
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespUser'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Update user password
+      tags:
+      - User Management
+  /v1/user-management/user/all:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all users without pagination
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved all users
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespUser'
+                  type: array
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Get all users
+      tags:
+      - User Management
+  /v1/user-management/user/check-name:
+    get:
+      consumes:
+      - application/json
+      description: Check if a user name already exists in the database
+      parameters:
+      - description: Check duplicated user request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCheckDuplicatedUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User with such name exists
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespUser'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "404":
+          description: User with such name is not found
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Check if user name is duplicated
+      tags:
+      - User Management
   /v1/user-management/user/import:
     post:
       consumes:
@@ -429,6 +1389,43 @@ paths:
       security:
       - BearerAuth: []
       summary: Import users from Excel file
+      tags:
+      - User Management
+  /v1/user-management/user/password-confirmation:
+    post:
+      consumes:
+      - application/json
+      description: Verify the current authenticated user's password
+      parameters:
+      - description: Password confirmation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqConfirmationUserPassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password confirmed successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespUser'
+              type: object
+        "400":
+          description: Bad request - invalid password
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Confirm current user password
       tags:
       - User Management
 securityDefinitions:
