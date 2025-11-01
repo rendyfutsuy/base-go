@@ -135,6 +135,16 @@ func (m *MockUserRepository) EmailIsNotDuplicated(ctx context.Context, email str
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockUserRepository) UsernameIsNotDuplicated(ctx context.Context, username string, excludedId uuid.UUID) (bool, error) {
+	args := m.Called(ctx, username, excludedId)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockUserRepository) NikIsNotDuplicated(ctx context.Context, nik string, excludedId uuid.UUID) (bool, error) {
+	args := m.Called(ctx, nik, excludedId)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *MockUserRepository) CountUser(ctx context.Context) (count *int, err error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
@@ -256,6 +266,14 @@ func (m *MockAuthRepository) DestroyAllResetPasswordToken(ctx context.Context, u
 // MockRoleRepository is a mock implementation of roleManagement.Repository
 type MockRoleRepository struct {
 	mock.Mock
+}
+
+func (m *MockRoleRepository) GetRoleByName(ctx context.Context, name string) (role *models.Role, err error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Role), args.Error(1)
 }
 
 func (m *MockRoleRepository) CreateTable(sqlFilePath string) (err error) {

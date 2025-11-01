@@ -48,6 +48,14 @@ func (m *MockRoleRepository) GetAllRole(ctx context.Context) (roles []models.Rol
 	return args.Get(0).([]models.Role), args.Error(1)
 }
 
+func (m *MockRoleRepository) GetRoleByName(ctx context.Context, name string) (role *models.Role, err error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Role), args.Error(1)
+}
+
 func (m *MockRoleRepository) GetIndexRole(ctx context.Context, req request.PageRequest) (roles []models.Role, total int, err error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
