@@ -31,6 +31,7 @@ func (repo *userRepository) CreateUser(ctx context.Context, userReq dto.ToDBCrea
 
 	userRes = &models.User{
 		FullName:          userReq.FullName,
+		Username:          userReq.Username,
 		Email:             userReq.Email,
 		RoleId:            userReq.RoleId,
 		IsActive:          userReq.IsActive,

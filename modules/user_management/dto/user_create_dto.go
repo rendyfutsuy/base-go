@@ -11,6 +11,7 @@ type ReqCheckDuplicatedUser struct {
 
 type ReqCreateUser struct {
 	FullName             string    `json:"name" validate:"required,max=80"`
+	Username             string    `json:"username" validate:"required"`
 	RoleId               uuid.UUID `json:"role_id" validate:"required"`
 	Email                string    `json:"email" validate:"required,email,emaildomain"`
 	IsActive             bool      `json:"is_active"`
@@ -22,6 +23,7 @@ type ReqCreateUser struct {
 func (r *ReqCreateUser) ToDBCreateUser(code, authId string) ToDBCreateUser {
 	return ToDBCreateUser{
 		FullName: r.FullName,
+		Username: r.Username,
 		RoleId:   r.RoleId,
 		Email:    r.Email,
 		IsActive: r.IsActive,
@@ -32,6 +34,7 @@ func (r *ReqCreateUser) ToDBCreateUser(code, authId string) ToDBCreateUser {
 
 type ToDBCreateUser struct {
 	FullName string    `json:"name"`
+	Username string    `json:"username"`
 	RoleId   uuid.UUID `json:"role_id"`
 	Email    string    `json:"email"`
 	IsActive bool      `json:"is_active"`
