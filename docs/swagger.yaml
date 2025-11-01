@@ -1391,6 +1391,36 @@ paths:
       summary: Import users from Excel file
       tags:
       - User Management
+  /v1/user-management/user/import/template:
+    get:
+      consumes:
+      - application/json
+      description: 'Download Excel template file for importing users. Template contains
+        columns: email, full_name, username, nik, role_name with example data.'
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: Excel template file
+          schema:
+            type: file
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Download user import Excel template
+      tags:
+      - User Management
   /v1/user-management/user/password-confirmation:
     post:
       consumes:

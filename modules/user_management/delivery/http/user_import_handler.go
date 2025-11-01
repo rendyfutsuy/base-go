@@ -10,6 +10,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/helpers/response"
+	"github.com/xuri/excelize/v2"
 )
 
 // ImportUsersFromExcel godoc
@@ -75,5 +76,80 @@ func (handler *UserManagementHandler) ImportUsersFromExcel(c echo.Context) error
 	resp, _ = resp.SetResponse(res)
 
 	return c.JSON(http.StatusOK, resp)
+}
+
+// DownloadUserImportTemplate godoc
+// @Summary		Download user import Excel template
+// @Description	Download Excel template file for importing users. Template contains columns: email, full_name, username, nik, role_name with example data.
+// @Tags			User Management
+// @Accept			json
+// @Produce		application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+// @Security		BearerAuth
+// @Success		200	{file}		file	"Excel template file"
+// @Failure		400	{object}	ResponseError	"Bad request"
+// @Failure		401	{object}	ResponseError	"Unauthorized"
+// @Failure		500	{object}	ResponseError	"Internal server error"
+// @Router			/v1/user-management/user/import/template [get]
+func (handler *UserManagementHandler) DownloadUserImportTemplate(c echo.Context) error {
+	// Create new Excel file
+	f := excelize.NewFile()
+	defer f.Close()
+
+	// Set sheet name
+	sheetName := "Import Users"
+	f.SetSheetName("Sheet1", sheetName)
+
+	// Set header row
+	headers := []string{"Email", "Full Name", "Username", "NIK", "Role Name"}
+	for i, header := range headers {
+		cellName := fmt.Sprintf("%c1", 'A'+i)
+		f.SetCellValue(sheetName, cellName, header)
+	}
+
+	// Style header row
+	headerStyle, err := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+			Size: 12,
+		},
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#E8E8E8"},
+			Pattern: 1,
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+		},
+	})
+	if err == nil {
+		f.SetCellStyle(sheetName, "A1", fmt.Sprintf("%c1", 'A'+len(headers)-1), headerStyle)
+	}
+
+	// Set column widths
+	f.SetColWidth(sheetName, "A", "A", 30) // Email
+	f.SetColWidth(sheetName, "B", "B", 30) // Full Name
+	f.SetColWidth(sheetName, "C", "C", 20) // Username
+	f.SetColWidth(sheetName, "D", "D", 20) // NIK
+	f.SetColWidth(sheetName, "E", "E", 25) // Role Name
+
+	// Add example row
+	exampleRow := []interface{}{"user@example.com", "John Doe", "johndoe", "1234567890123456", "Super Admin"}
+	for i, value := range exampleRow {
+		cellName := fmt.Sprintf("%c2", 'A'+i)
+		f.SetCellValue(sheetName, cellName, value)
+	}
+
+	// Set response headers
+	c.Response().Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Response().Header().Set("Content-Disposition", "attachment; filename=user_import_template.xlsx")
+
+	// Write Excel file to response
+	err = f.Write(c.Response().Writer)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ResponseError{Message: fmt.Sprintf("Gagal membuat template: %v", err)})
+	}
+
+	return nil
 }
 

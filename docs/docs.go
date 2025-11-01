@@ -1275,6 +1275,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/user-management/user/import/template": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Download Excel template file for importing users. Template contains columns: email, full_name, username, nik, role_name with example data.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                ],
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Download user import Excel template",
+                "responses": {
+                    "200": {
+                        "description": "Excel template file",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/user-management/user/password-confirmation": {
             "post": {
                 "security": [

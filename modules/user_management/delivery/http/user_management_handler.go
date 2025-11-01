@@ -74,6 +74,7 @@ func NewUserManagementHandler(e *echo.Echo, us user_management.Usecase, mwP _req
 	r.POST("/user/password-confirmation", handler.ConfirmCurrentUserPassword)
 
 	// user import from Excel
+	r.GET("/user/import/template", handler.DownloadUserImportTemplate, handler.middlewarePermission.PermissionValidation([]string{"api.user-management.user.store"}))
 	r.POST("/user/import", handler.ImportUsersFromExcel, handler.middlewarePermission.PermissionValidation([]string{"api.user-management.user.store"}))
 
 }
