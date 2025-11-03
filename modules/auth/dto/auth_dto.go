@@ -10,13 +10,15 @@ type ReqAuthUser struct {
 }
 
 type UserProfile struct {
-	UserId     string   `json:"user_id"`
-	Name       string   `json:"name"`
-	Role       utils.NullString `json:"role"`
-	Email      string   `json:"email"`
-	Status     string   `json:"status"`
-	Gender     string   `json:"gender"`
-	Permissions []string `json:"permissions"`
+	UserId          string          `json:"user_id"`
+	Name            string          `json:"name"`
+	Role            utils.NullString `json:"role"`
+	Email           string          `json:"email"`
+	Status          string          `json:"status"`
+	Gender          string          `json:"gender"`
+	Permissions     []string        `json:"permissions"`
+	PermissionGroups []string       `json:"permission_groups"`
+	Modules         []string        `json:"modules"`
 }
 
 type ReqUpdateProfile struct {

@@ -185,8 +185,10 @@ func (handler *AuthHandler) GetProfile(c echo.Context) error {
 			String: user.RoleName,
 			Valid:  user.RoleName != "",
 		},
-		Gender:      user.Gender,
-		Permissions: user.Permissions,
+		Gender:           user.Gender,
+		Permissions:      user.Permissions,
+		PermissionGroups: user.PermissionGroups,
+		Modules:          user.Modules,
 	}
 	if user.IsActive {
 		profile.Status = "Active"

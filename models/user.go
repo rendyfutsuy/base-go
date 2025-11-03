@@ -26,10 +26,12 @@ type User struct {
 	Counter           int            `gorm:"column:counter;default:0" json:"counter"`
 
 	// mutator - not stored in DB
-	ActiveStatus utils.NullString `gorm:"-" json:"active_status"`
-	IsBlocked    bool             `gorm:"-" json:"is_blocked"`
-	RoleName     string           `gorm:"-" json:"role_name"`
-	Permissions  []string         `gorm:"-" json:"permissions"`
+	ActiveStatus     utils.NullString `gorm:"-" json:"active_status"`
+	IsBlocked        bool             `gorm:"-" json:"is_blocked"`
+	RoleName         string            `gorm:"-" json:"role_name"`
+	Permissions      []string          `gorm:"-" json:"permissions"`
+	PermissionGroups []string          `gorm:"-" json:"permission_groups"`
+	Modules          []string          `gorm:"-" json:"modules"`
 }
 
 // TableName specifies table name for GORM

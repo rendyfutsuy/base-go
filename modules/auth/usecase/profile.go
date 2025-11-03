@@ -18,17 +18,40 @@ func (u *authUsecase) GetProfile(ctx context.Context, accessToken string) (user 
 		return user, err
 	}
 
-	// Get permissions from role if role_id exists
+	// Get permissions and permission groups from role if role_id exists
 	permissions := []string{}
+	permissionGroups := []string{}
+	modules := []string{}
+	moduleMap := make(map[string]bool) // Use map to track unique modules
 	if user.RoleId != uuid.Nil {
+		// Get permissions
 		permissionList, err := u.roleManagementRepo.GetPermissionFromRoleId(ctx, user.RoleId)
 		if err == nil && len(permissionList) > 0 {
 			for _, permission := range permissionList {
 				permissions = append(permissions, permission.Name)
 			}
 		}
+
+		// Get permission groups and extract unique modules
+		permissionGroupList, err := u.roleManagementRepo.GetPermissionGroupFromRoleId(ctx, user.RoleId)
+		if err == nil && len(permissionGroupList) > 0 {
+			for _, permissionGroup := range permissionGroupList {
+				permissionGroups = append(permissionGroups, permissionGroup.Name)
+
+				// Extract module if valid and not already in map
+				if permissionGroup.Module.Valid && permissionGroup.Module.String != "" {
+					moduleName := permissionGroup.Module.String
+					if !moduleMap[moduleName] {
+						modules = append(modules, moduleName)
+						moduleMap[moduleName] = true
+					}
+				}
+			}
+		}
 	}
 	user.Permissions = permissions
+	user.PermissionGroups = permissionGroups
+	user.Modules = modules
 
 	return user, nil
 }
