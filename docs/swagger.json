@@ -432,6 +432,69 @@
                 }
             }
         },
+        "/v1/role-management/permission-group/all/by-module": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all permission groups organized by module. Returns permission groups with a value field indicating if the permission group is assigned to the specified role. The role_id query parameter is optional.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Role Management"
+                ],
+                "summary": "Get all permission groups grouped by module",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Optional role ID to check permission group assignment",
+                        "name": "role_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved permission groups by module",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.NonPaginationResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.RespPermissionGroupByModule"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - validation error or role not found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/role-management/role": {
             "get": {
                 "security": [
@@ -2075,6 +2138,34 @@
                 }
             }
         },
+        "dto.RespPermissionGroup": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.RespPermissionGroupByModule": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "$ref": "#/definitions/utils.NullString"
+                },
+                "permission_groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.RespPermissionGroup"
+                    }
+                }
+            }
+        },
         "dto.RespPermissionGroupRoleDetail": {
             "type": "object",
             "properties": {
@@ -2242,8 +2333,26 @@
                 "gender": {
                     "type": "string"
                 },
+                "modules": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "name": {
                     "type": "string"
+                },
+                "permission_groups": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "role": {
                     "$ref": "#/definitions/utils.NullString"

@@ -215,6 +215,24 @@ definitions:
       total_rows:
         type: integer
     type: object
+  dto.RespPermissionGroup:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      value:
+        type: boolean
+    type: object
+  dto.RespPermissionGroupByModule:
+    properties:
+      name:
+        $ref: '#/definitions/utils.NullString'
+      permission_groups:
+        items:
+          $ref: '#/definitions/dto.RespPermissionGroup'
+        type: array
+    type: object
   dto.RespPermissionGroupRoleDetail:
     properties:
       id:
@@ -324,8 +342,20 @@ definitions:
         type: string
       gender:
         type: string
+      modules:
+        items:
+          type: string
+        type: array
       name:
         type: string
+      permission_groups:
+        items:
+          type: string
+        type: array
+      permissions:
+        items:
+          type: string
+        type: array
       role:
         $ref: '#/definitions/utils.NullString'
       status:
@@ -660,6 +690,45 @@ paths:
       summary: Reset user password
       tags:
       - Authentication
+  /v1/role-management/permission-group/all/by-module:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all permission groups organized by module. Returns permission
+        groups with a value field indicating if the permission group is assigned to
+        the specified role. The role_id query parameter is optional.
+      parameters:
+      - description: Optional role ID to check permission group assignment
+        in: query
+        name: role_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved permission groups by module
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespPermissionGroupByModule'
+                  type: array
+              type: object
+        "400":
+          description: Bad request - validation error or role not found
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Get all permission groups grouped by module
+      tags:
+      - Role Management
   /v1/role-management/role:
     get:
       consumes:
