@@ -260,9 +260,9 @@ func (repo *authRepository) getFullUserData(ctx context.Context, userId uuid.UUI
 	var user models.User
 	err := repo.DB.WithContext(ctx).
 		Table("users usr").
-		Select("usr.id as id, usr.full_name as full_name, usr.email, usr.role_id, roles.name as role_name").
-		Joins("JOIN roles ON roles.id = usr.role_id").
-		Where("usr.id = ?", userId).
+		Select("usr.id, usr.full_name, usr.email, usr.username, usr.is_active, usr.gender, usr.role_id, roles.name as role_name").
+		Joins("LEFT JOIN roles ON roles.id = usr.role_id AND roles.deleted_at IS NULL").
+		Where("usr.id = ? AND usr.deleted_at IS NULL", userId).
 		Scan(&user).Error
 
 	if err != nil {
@@ -444,13 +444,28 @@ func (repo *authRepository) FindByCurrentSession(ctx context.Context, accessToke
 		return profile, errors.New(constants.UserInvalid)
 	}
 
+	// If RoleName is empty in session, fetch from database
+	roleName := userData.RoleName
+	if roleName == "" && userData.RoleId != uuid.Nil {
+		// Fetch role name from database
+		var role models.Role
+		err := repo.DB.WithContext(ctx).
+			Table("roles").
+			Select("name").
+			Where("id = ? AND deleted_at IS NULL", userData.RoleId).
+			First(&role).Error
+		if err == nil {
+			roleName = role.Name
+		}
+	}
+
 	// Map user data to profile
 	profile.UserId = userData.ID.String()
 	profile.Email = userData.Email
 	profile.Name = userData.FullName
 	profile.Role = utils.NullString{
-		String: userData.RoleName,
-		Valid:  userData.RoleName != "",
+		String: roleName,
+		Valid:  roleName != "",
 	}
 	if userData.IsActive {
 		profile.Status = "Active"
