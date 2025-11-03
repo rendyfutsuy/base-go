@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
 	"github.com/newrelic/go-agent/v3/newrelic"
+	"github.com/redis/go-redis/v9"
 	"github.com/rendyfutsuy/base-go/database"
 	"github.com/rendyfutsuy/base-go/router"
 	"github.com/rendyfutsuy/base-go/utils"
@@ -19,6 +20,7 @@ var (
 	app struct {
 		Database    *sql.DB
 		GormDB      *gorm.DB
+		RedisClient *redis.Client
 		Router      *echo.Echo
 		NewRelicApp *newrelic.Application
 		Validator   *validator.Validate
@@ -52,6 +54,12 @@ func init() {
 		panic("Can't connect to Postgres with GORM : Database!")
 	}
 
+	// Connect to Redis
+	app.RedisClient = database.ConnectToRedis()
+	if app.RedisClient == nil {
+		utils.Logger.Warn("Could not connect to Redis, continuing without Redis support")
+	}
+
 	app.Validator = validator.New()
 	utils.RegisterCustomValidator(app.Validator)
 }
@@ -63,7 +71,7 @@ func main() {
 	// Set a timeout for each endpoint
 	timeoutContext := time.Duration(utils.ConfigVars.Int("context.timeout")) * time.Second
 
-	app.Router = router.InitializedRouter(app.Database, app.GormDB, timeoutContext, app.Validator, app.NewRelicApp)
+	app.Router = router.InitializedRouter(app.Database, app.GormDB, app.RedisClient, timeoutContext, app.Validator, app.NewRelicApp)
 
 	app.Router.Validator = &utils.CustomValidator{Validator: app.Validator}
 
@@ -78,6 +86,9 @@ func main() {
 			if sqlDB != nil {
 				sqlDB.Close()
 			}
+		}
+		if app.RedisClient != nil {
+			app.RedisClient.Close()
 		}
 	}()
 }

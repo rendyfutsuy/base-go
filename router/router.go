@@ -20,6 +20,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/newrelic/go-agent/v3/integrations/nrecho-v4"
 	"github.com/newrelic/go-agent/v3/newrelic"
+	"github.com/redis/go-redis/v9"
 	_ "github.com/rendyfutsuy/base-go/docs"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/rendyfutsuy/base-go/utils/services"
@@ -49,7 +50,7 @@ import (
 	_roleManagementService "github.com/rendyfutsuy/base-go/modules/role_management/usecase"
 )
 
-func InitializedRouter(db *sql.DB, gormDB *gorm.DB, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
+func InitializedRouter(db *sql.DB, gormDB *gorm.DB, redisClient *redis.Client, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
 	router := echo.New()
 
 	// queries := sqlc.New(db)
@@ -83,7 +84,7 @@ func InitializedRouter(db *sql.DB, gormDB *gorm.DB, timeoutContext time.Duration
 	}
 
 	// Repositories ------------------------------------------------------------------------------------------------------------------------------------------------------
-	authRepo := _authRepo.NewAuthRepository(gormDB, emailServices)                // Using GORM for auth
+	authRepo := _authRepo.NewAuthRepository(gormDB, emailServices, redisClient)    // Using GORM for auth
 	roleManagementRepo := _roleManagementRepo.NewRoleManagementRepository(gormDB) // Using GORM for role_management
 
 	userManagementRepo := _userManagementRepo.NewUserManagementRepository(gormDB) // Using GORM for user_management

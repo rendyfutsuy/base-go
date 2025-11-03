@@ -10,9 +10,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
-	redis "github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9"
 	"github.com/rendyfutsuy/base-go/constants"
-	"github.com/rendyfutsuy/base-go/database"
 	models "github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
@@ -30,7 +29,7 @@ type authRepository struct {
 	Redis        *redis.Client
 }
 
-func NewAuthRepository(DB *gorm.DB, EmailService *services.EmailService) auth.Repository {
+func NewAuthRepository(DB *gorm.DB, EmailService *services.EmailService, RedisClient *redis.Client) auth.Repository {
 
 	QueueClient := asynq.NewClient(asynq.RedisClientOpt{
 		Addr:     utils.ConfigVars.String("redis.address"),
@@ -38,14 +37,11 @@ func NewAuthRepository(DB *gorm.DB, EmailService *services.EmailService) auth.Re
 		DB:       utils.ConfigVars.Int("redis.db"),
 	})
 
-	// Initialize Redis client via central connector
-	redisClient := database.ConnectToRedis()
-
 	return &authRepository{
 		DB:           DB,
 		EmailService: EmailService,
 		QueueClient:  QueueClient,
-		Redis:        redisClient,
+		Redis:        RedisClient,
 	}
 }
 
