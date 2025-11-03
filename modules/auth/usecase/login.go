@@ -8,6 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/constants"
+	"github.com/rendyfutsuy/base-go/utils"
 )
 
 func (u *authUsecase) Authenticate(ctx context.Context, login string, password string) (string, error) {
@@ -60,20 +61,23 @@ func (u *authUsecase) Authenticate(ctx context.Context, login string, password s
 	}
 
 	// --- JWT Generation Logic ---
-	now := time.Now().UTC()
-	location, _ := time.LoadLocation("Asia/Jakarta") // WIB is UTC+7
-	nowInJakarta := now.In(location)
+	// Get TTL from config (same as AddUserAccessToken)
+	ttlSeconds := utils.ConfigVars.Int("auth.access_token_ttl_seconds")
+	if ttlSeconds <= 0 {
+		ttlSeconds = 24 * 60 * 60 // Default 24 hours
+	}
 
-	nextDay := nowInJakarta.AddDate(0, 0, 1)
-	expireTime := time.Date(nextDay.Year(), nextDay.Month(), nextDay.Day(), 3, 0, 0, 0, location)
+	now := time.Now().UTC()
+	issuedAt := now
+	expireTime := now.Add(time.Duration(ttlSeconds) * time.Second)
 
 	// Generate JWT token
-	// access token would always expire in next day on 03:00 AM WIB (UTC+7)
+	// access token expires based on TTL from config (same as Redis session)
 	claims := AuthClaims{
 		UserID: user.ID.String(),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expireTime),
-			IssuedAt:  jwt.NewNumericDate(time.Now().In(location)),
+			IssuedAt:  jwt.NewNumericDate(issuedAt),
 			ID:        uuid.NewString(),
 		},
 	}
