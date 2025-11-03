@@ -1,4 +1,4 @@
-package usecase
+package test
 
 import (
 	"context"
@@ -14,18 +14,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetPermissionGroupByID(t *testing.T) {
+func TestGetPermissionByID(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockRoleRepo, _ := createTestUsecase()
+	usecaseInstance, mockRoleRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
 	validIDString := validID.String()
-	expectedPermissionGroup := &models.PermissionGroup{
+	expectedPermission := &models.Permission{
 		ID:   validID,
-		Name: "Test Permission Group",
+		Name: "Test Permission",
 	}
 
 	tests := []struct {
@@ -37,13 +37,13 @@ func TestGetPermissionGroupByID(t *testing.T) {
 		description    string
 	}{
 		{
-			name: "Positive case - successful get permission group by ID",
+			name: "Positive case - successful get permission by ID",
 			id:   validIDString,
 			setupMock: func() {
-				mockRoleRepo.On("GetPermissionGroupByID", ctx, validID).Return(expectedPermissionGroup, nil).Once()
+				mockRoleRepo.On("GetPermissionByID", ctx, validID).Return(expectedPermission, nil).Once()
 			},
 			expectedError: false,
-			description:   "Valid UUID should return permission group",
+			description:   "Valid UUID should return permission",
 		},
 		{
 			name: "Negative case - invalid UUID format",
@@ -66,18 +66,18 @@ func TestGetPermissionGroupByID(t *testing.T) {
 			description:    "Empty ID should return error",
 		},
 		{
-			name: "Negative case - permission group not found",
+			name: "Negative case - permission not found",
 			id:   validIDString,
 			setupMock: func() {
-				mockRoleRepo.On("GetPermissionGroupByID", ctx, validID).Return(nil, errors.New("permission group not found")).Once()
+				mockRoleRepo.On("GetPermissionByID", ctx, validID).Return(nil, errors.New("permission not found")).Once()
 			},
 			expectedError:  true,
-			expectedErrMsg: "permission group not found",
-			description:    "Non-existent permission group should return error",
+			expectedErrMsg: "permission not found",
+			description:    "Non-existent permission should return error",
 		},
 		{
 			name: "Negative-Positive case - SQL injection attempt in ID",
-			id:   "'; DROP TABLE permission_groups; --",
+			id:   "'; DROP TABLE permissions; --",
 			setupMock: func() {
 				// Should fail UUID parsing, preventing SQL injection
 			},
@@ -89,7 +89,7 @@ func TestGetPermissionGroupByID(t *testing.T) {
 			name: "Negative case - database error",
 			id:   validIDString,
 			setupMock: func() {
-				mockRoleRepo.On("GetPermissionGroupByID", ctx, validID).Return(nil, errors.New("database connection error")).Once()
+				mockRoleRepo.On("GetPermissionByID", ctx, validID).Return(nil, errors.New("database connection error")).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: "database connection error",
@@ -105,7 +105,7 @@ func TestGetPermissionGroupByID(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			result, err := usecase.GetPermissionGroupByID(c, tt.id)
+			result, err := usecaseInstance.GetPermissionByID(c, tt.id)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -116,7 +116,7 @@ func TestGetPermissionGroupByID(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
-				assert.Equal(t, expectedPermissionGroup.ID, result.ID)
+				assert.Equal(t, expectedPermission.ID, result.ID)
 			}
 
 			mockRoleRepo.AssertExpectations(t)
@@ -124,11 +124,11 @@ func TestGetPermissionGroupByID(t *testing.T) {
 	}
 }
 
-func TestGetIndexPermissionGroup(t *testing.T) {
+func TestGetIndexPermission(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockRoleRepo, _ := createTestUsecase()
+	usecaseInstance, mockRoleRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validPageReq := request.PageRequest{
@@ -139,9 +139,9 @@ func TestGetIndexPermissionGroup(t *testing.T) {
 		SortOrder: "ASC",
 	}
 
-	expectedPermissionGroups := []models.PermissionGroup{
-		{ID: uuid.New(), Name: "Permission Group 1"},
-		{ID: uuid.New(), Name: "Permission Group 2"},
+	expectedPermissions := []models.Permission{
+		{ID: uuid.New(), Name: "Permission 1"},
+		{ID: uuid.New(), Name: "Permission 2"},
 	}
 
 	tests := []struct {
@@ -156,16 +156,16 @@ func TestGetIndexPermissionGroup(t *testing.T) {
 			name: "Positive case - successful get index",
 			req:  validPageReq,
 			setupMock: func() {
-				mockRoleRepo.On("GetIndexPermissionGroup", ctx, validPageReq).Return(expectedPermissionGroups, 2, nil).Once()
+				mockRoleRepo.On("GetIndexPermission", ctx, validPageReq).Return(expectedPermissions, 2, nil).Once()
 			},
 			expectedError: false,
-			description:   "Valid page request should return permission groups",
+			description:   "Valid page request should return permissions",
 		},
 		{
 			name: "Negative case - database error",
 			req:  validPageReq,
 			setupMock: func() {
-				mockRoleRepo.On("GetIndexPermissionGroup", ctx, validPageReq).Return([]models.PermissionGroup(nil), 0, errors.New("database error")).Once()
+				mockRoleRepo.On("GetIndexPermission", ctx, validPageReq).Return(nil, 0, errors.New("database error")).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: "database error",
@@ -176,7 +176,7 @@ func TestGetIndexPermissionGroup(t *testing.T) {
 			req: request.PageRequest{
 				Page:      1,
 				PerPage:   10,
-				Search:    "'; DROP TABLE permission_groups; --",
+				Search:    "'; DROP TABLE permissions; --",
 				SortBy:    "name",
 				SortOrder: "ASC",
 			},
@@ -185,11 +185,11 @@ func TestGetIndexPermissionGroup(t *testing.T) {
 				injectedReq := request.PageRequest{
 					Page:      1,
 					PerPage:   10,
-					Search:    "'; DROP TABLE permission_groups; --",
+					Search:    "'; DROP TABLE permissions; --",
 					SortBy:    "name",
 					SortOrder: "ASC",
 				}
-				mockRoleRepo.On("GetIndexPermissionGroup", ctx, injectedReq).Return(expectedPermissionGroups, 2, nil).Once()
+				mockRoleRepo.On("GetIndexPermission", ctx, injectedReq).Return(expectedPermissions, 2, nil).Once()
 			},
 			expectedError: false,
 			description:   "SQL injection attempt in search should be treated as normal string",
@@ -200,7 +200,7 @@ func TestGetIndexPermissionGroup(t *testing.T) {
 				Page:      1,
 				PerPage:   10,
 				Search:    "",
-				SortBy:    "'; DROP TABLE permission_groups; --",
+				SortBy:    "'; DROP TABLE permissions; --",
 				SortOrder: "ASC",
 			},
 			setupMock: func() {
@@ -209,10 +209,10 @@ func TestGetIndexPermissionGroup(t *testing.T) {
 					Page:      1,
 					PerPage:   10,
 					Search:    "",
-					SortBy:    "'; DROP TABLE permission_groups; --",
+					SortBy:    "'; DROP TABLE permissions; --",
 					SortOrder: "ASC",
 				}
-				mockRoleRepo.On("GetIndexPermissionGroup", ctx, injectedReq).Return(expectedPermissionGroups, 2, nil).Once()
+				mockRoleRepo.On("GetIndexPermission", ctx, injectedReq).Return(expectedPermissions, 2, nil).Once()
 			},
 			expectedError: false,
 			description:   "SQL injection attempt in sort_by should be sanitized",
@@ -227,19 +227,19 @@ func TestGetIndexPermissionGroup(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			permissionGroups, total, err := usecase.GetIndexPermissionGroup(c, tt.req)
+			permissions, total, err := usecaseInstance.GetIndexPermission(c, tt.req)
 
 			if tt.expectedError {
 				assert.Error(t, err)
 				if tt.expectedErrMsg != "" {
 					assert.Contains(t, err.Error(), tt.expectedErrMsg)
 				}
-				assert.Nil(t, permissionGroups)
+				assert.Nil(t, permissions)
 				assert.Equal(t, 0, total)
 			} else {
 				assert.NoError(t, err)
-				assert.NotNil(t, permissionGroups)
-				assert.GreaterOrEqual(t, total, len(permissionGroups))
+				assert.NotNil(t, permissions)
+				assert.GreaterOrEqual(t, total, len(permissions))
 			}
 
 			mockRoleRepo.AssertExpectations(t)
@@ -247,16 +247,16 @@ func TestGetIndexPermissionGroup(t *testing.T) {
 	}
 }
 
-func TestGetAllPermissionGroup(t *testing.T) {
+func TestGetAllPermission(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockRoleRepo, _ := createTestUsecase()
+	usecaseInstance, mockRoleRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
-	expectedPermissionGroups := []models.PermissionGroup{
-		{ID: uuid.New(), Name: "Permission Group 1"},
-		{ID: uuid.New(), Name: "Permission Group 2"},
+	expectedPermissions := []models.Permission{
+		{ID: uuid.New(), Name: "Permission 1"},
+		{ID: uuid.New(), Name: "Permission 2"},
 	}
 
 	tests := []struct {
@@ -267,17 +267,17 @@ func TestGetAllPermissionGroup(t *testing.T) {
 		description    string
 	}{
 		{
-			name: "Positive case - successful get all permission groups",
+			name: "Positive case - successful get all permissions",
 			setupMock: func() {
-				mockRoleRepo.On("GetAllPermissionGroup", ctx).Return(expectedPermissionGroups, nil).Once()
+				mockRoleRepo.On("GetAllPermission", ctx).Return(expectedPermissions, nil).Once()
 			},
 			expectedError: false,
-			description:   "Should return all permission groups successfully",
+			description:   "Should return all permissions successfully",
 		},
 		{
 			name: "Negative case - database error",
 			setupMock: func() {
-				mockRoleRepo.On("GetAllPermissionGroup", ctx).Return(nil, errors.New("database error")).Once()
+				mockRoleRepo.On("GetAllPermission", ctx).Return(nil, errors.New("database error")).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: "database error",
@@ -293,18 +293,18 @@ func TestGetAllPermissionGroup(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			permissionGroups, err := usecase.GetAllPermissionGroup(c)
+			permissions, err := usecaseInstance.GetAllPermission(c)
 
 			if tt.expectedError {
 				assert.Error(t, err)
 				if tt.expectedErrMsg != "" {
 					assert.Contains(t, err.Error(), tt.expectedErrMsg)
 				}
-				assert.Nil(t, permissionGroups)
+				assert.Nil(t, permissions)
 			} else {
 				assert.NoError(t, err)
-				assert.NotNil(t, permissionGroups)
-				assert.Equal(t, len(expectedPermissionGroups), len(permissionGroups))
+				assert.NotNil(t, permissions)
+				assert.Equal(t, len(expectedPermissions), len(permissions))
 			}
 
 			mockRoleRepo.AssertExpectations(t)

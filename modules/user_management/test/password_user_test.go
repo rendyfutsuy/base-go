@@ -1,4 +1,4 @@
-package usecase
+package test
 
 import (
 	"context"
@@ -18,7 +18,7 @@ func TestUpdateUserPassword(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockUserRepo, mockAuthRepo, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, mockAuthRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -157,7 +157,7 @@ func TestUpdateUserPassword(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
 
-			err := usecase.UpdateUserPassword(c, tt.id, tt.req)
+			err := usecaseInstance.UpdateUserPassword(c, tt.id, tt.req)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -178,7 +178,7 @@ func TestAssertCurrentUserPassword(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, _, mockAuthRepo, _ := createTestUsecase()
+	usecaseInstance, _, mockAuthRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -270,7 +270,7 @@ func TestAssertCurrentUserPassword(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPost, "/", nil), httptest.NewRecorder())
 
-			err := usecase.AssertCurrentUserPassword(c, tt.id, tt.password)
+			err := usecaseInstance.AssertCurrentUserPassword(c, tt.id, tt.password)
 
 			if tt.expectedError {
 				assert.Error(t, err)

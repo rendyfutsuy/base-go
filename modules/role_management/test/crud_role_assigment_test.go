@@ -1,4 +1,4 @@
-package usecase
+package test
 
 import (
 	"context"
@@ -19,7 +19,7 @@ func TestReAssignPermissionByGroup(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockRoleRepo, _ := createTestUsecase()
+	usecaseInstance, mockRoleRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validRoleID := uuid.New()
@@ -113,7 +113,7 @@ func TestReAssignPermissionByGroup(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
 
-			result, err := usecase.ReAssignPermissionByGroup(c, tt.roleId, tt.req)
+			result, err := usecaseInstance.ReAssignPermissionByGroup(c, tt.roleId, tt.req)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -135,7 +135,7 @@ func TestAssignUsersToRole(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockRoleRepo, _ := createTestUsecase()
+	usecaseInstance, mockRoleRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validRoleID := uuid.New()
@@ -248,7 +248,7 @@ func TestAssignUsersToRole(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
 
-			result, err := usecase.AssignUsersToRole(c, tt.roleId, tt.req)
+			result, err := usecaseInstance.AssignUsersToRole(c, tt.roleId, tt.req)
 
 			if tt.expectedError {
 				assert.Error(t, err)

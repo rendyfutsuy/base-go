@@ -1,4 +1,4 @@
-package usecase
+package test
 
 import (
 	"context"
@@ -13,8 +13,10 @@ import (
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
-	authDto "github.com/rendyfutsuy/base-go/modules/auth/dto"
+	authDto 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
+	"github.com/rendyfutsuy/base-go/modules/role_management"
 	roleDto "github.com/rendyfutsuy/base-go/modules/role_management/dto"
+	"github.com/rendyfutsuy/base-go/modules/role_management/usecase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -356,25 +358,21 @@ func createEchoContext() echo.Context {
 }
 
 // Helper function to create test usecase
-func createTestUsecase() (*roleUsecase, *MockRoleRepository, *MockAuthRepository) {
+func createTestUsecase() (role_management.Usecase, *MockRoleRepository, *MockAuthRepository) {
 	mockRoleRepo := new(MockRoleRepository)
 	mockAuthRepo := new(MockAuthRepository)
 	timeout := 5 * time.Second
 
-	usecase := &roleUsecase{
-		roleRepo:       mockRoleRepo,
-		authRepo:       mockAuthRepo,
-		contextTimeout: timeout,
-	}
+	usecaseInstance := usecase.NewTestRoleUsecase(mockRoleRepo, mockAuthRepo, timeout)
 
-	return usecase, mockRoleRepo, mockAuthRepo
+	return usecaseInstance, mockRoleRepo, mockAuthRepo
 }
 
 func TestCreateRole(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockRoleRepo, _ := createTestUsecase()
+	usecaseInstance, mockRoleRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validPermissionGroupID := uuid.New()
@@ -524,7 +522,7 @@ func TestCreateRole(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPost, "/", nil), httptest.NewRecorder())
 
-			result, err := usecase.CreateRole(c, tt.req, tt.authId)
+			result, err := usecaseInstance.CreateRole(c, tt.req, tt.authId)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -546,7 +544,7 @@ func TestGetRoleByID(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockRoleRepo, _ := createTestUsecase()
+	usecaseInstance, mockRoleRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -633,7 +631,7 @@ func TestGetRoleByID(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			result, err := usecase.GetRoleByID(c, tt.id)
+			result, err := usecaseInstance.GetRoleByID(c, tt.id)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -656,7 +654,7 @@ func TestGetIndexRole(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockRoleRepo, _ := createTestUsecase()
+	usecaseInstance, mockRoleRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validPageReq := request.PageRequest{
@@ -755,7 +753,7 @@ func TestGetIndexRole(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			roles, total, err := usecase.GetIndexRole(c, tt.req)
+			roles, total, err := usecaseInstance.GetIndexRole(c, tt.req)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -779,7 +777,7 @@ func TestGetAllRole(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockRoleRepo, _ := createTestUsecase()
+	usecaseInstance, mockRoleRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
 	expectedRoles := []models.Role{
@@ -821,7 +819,7 @@ func TestGetAllRole(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			roles, err := usecase.GetAllRole(c)
+			roles, err := usecaseInstance.GetAllRole(c)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -844,7 +842,7 @@ func TestUpdateRole(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockRoleRepo, _ := createTestUsecase()
+	usecaseInstance, mockRoleRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -948,7 +946,7 @@ func TestUpdateRole(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
 
-			result, err := usecase.UpdateRole(c, tt.id, tt.req, "auth-id")
+			result, err := usecaseInstance.UpdateRole(c, tt.id, tt.req, "auth-id")
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -970,7 +968,7 @@ func TestSoftDeleteRole(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockRoleRepo, _ := createTestUsecase()
+	usecaseInstance, mockRoleRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -1040,7 +1038,7 @@ func TestSoftDeleteRole(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodDelete, "/", nil), httptest.NewRecorder())
 
-			result, err := usecase.SoftDeleteRole(c, tt.id, "auth-id")
+			result, err := usecaseInstance.SoftDeleteRole(c, tt.id, "auth-id")
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -1062,7 +1060,7 @@ func TestMyPermissionsByUserToken(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockRoleRepo, mockAuthRepo := createTestUsecase()
+	usecaseInstance, mockRoleRepo, mockAuthRepo := createTestUsecase()
 	ctx := context.Background()
 
 	validToken := "valid-access-token"
@@ -1138,7 +1136,7 @@ func TestMyPermissionsByUserToken(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			result, err := usecase.MyPermissionsByUserToken(c, tt.token)
+			result, err := usecaseInstance.MyPermissionsByUserToken(c, tt.token)
 
 			if tt.expectedError {
 				assert.Error(t, err)

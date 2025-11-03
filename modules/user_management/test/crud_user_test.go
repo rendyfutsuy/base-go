@@ -1,4 +1,4 @@
-package usecase
+package test
 
 import (
 	"context"
@@ -14,7 +14,9 @@ import (
 	"github.com/rendyfutsuy/base-go/models"
 	authDto "github.com/rendyfutsuy/base-go/modules/auth/dto"
 	roleDto "github.com/rendyfutsuy/base-go/modules/role_management/dto"
+	"github.com/rendyfutsuy/base-go/modules/user_management"
 	userDto "github.com/rendyfutsuy/base-go/modules/user_management/dto"
+	"github.com/rendyfutsuy/base-go/modules/user_management/usecase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -510,27 +512,22 @@ func (m *MockRoleRepository) CountPermissionGroup(ctx context.Context) (count *i
 	return args.Get(0).(*int), args.Error(1)
 }
 
-func createTestUsecase() (*userUsecase, *MockUserRepository, *MockAuthRepository, *MockRoleRepository) {
+func createTestUsecase() (user_management.Usecase, *MockUserRepository, *MockAuthRepository, *MockRoleRepository) {
 	mockUserRepo := new(MockUserRepository)
 	mockAuthRepo := new(MockAuthRepository)
 	mockRoleRepo := new(MockRoleRepository)
 	timeout := 5 * time.Second
 
-	usecase := &userUsecase{
-		userRepo:       mockUserRepo,
-		auth:           mockAuthRepo,
-		roleManagement: mockRoleRepo,
-		contextTimeout: timeout,
-	}
+	usecaseInstance := usecase.NewTestUserUsecase(mockUserRepo, mockRoleRepo, mockAuthRepo, timeout)
 
-	return usecase, mockUserRepo, mockAuthRepo, mockRoleRepo
+	return usecaseInstance, mockUserRepo, mockAuthRepo, mockRoleRepo
 }
 
 func TestCreateUser(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockUserRepo, mockAuthRepo, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, mockAuthRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validRoleID := uuid.New()
@@ -631,7 +628,7 @@ func TestCreateUser(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPost, "/", nil), httptest.NewRecorder())
 
-			result, err := usecase.CreateUser(c, tt.req, tt.authId)
+			result, err := usecaseInstance.CreateUser(c, tt.req, tt.authId)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -654,7 +651,7 @@ func TestGetUserByID(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockUserRepo, _, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, _, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -742,7 +739,7 @@ func TestGetUserByID(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			result, err := usecase.GetUserByID(c, tt.id)
+			result, err := usecaseInstance.GetUserByID(c, tt.id)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -764,7 +761,7 @@ func TestGetIndexUser(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockUserRepo, _, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, _, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validPageReq := request.PageRequest{
@@ -844,7 +841,7 @@ func TestGetIndexUser(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			users, total, err := usecase.GetIndexUser(c, tt.req, tt.filter)
+			users, total, err := usecaseInstance.GetIndexUser(c, tt.req, tt.filter)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -868,7 +865,7 @@ func TestGetAllUser(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockUserRepo, _, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, _, _ := createTestUsecase()
 	ctx := context.Background()
 
 	expectedUsers := []models.User{
@@ -910,7 +907,7 @@ func TestGetAllUser(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			users, err := usecase.GetAllUser(c)
+			users, err := usecaseInstance.GetAllUser(c)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -932,7 +929,7 @@ func TestUpdateUser(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockUserRepo, _, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, _, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -1041,7 +1038,7 @@ func TestUpdateUser(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
 
-			result, err := usecase.UpdateUser(c, tt.id, tt.req, tt.authId)
+			result, err := usecaseInstance.UpdateUser(c, tt.id, tt.req, tt.authId)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -1063,7 +1060,7 @@ func TestSoftDeleteUser(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockUserRepo, _, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, _, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -1135,7 +1132,7 @@ func TestSoftDeleteUser(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodDelete, "/", nil), httptest.NewRecorder())
 
-			result, err := usecase.SoftDeleteUser(c, tt.id, tt.authId)
+			result, err := usecaseInstance.SoftDeleteUser(c, tt.id, tt.authId)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -1157,7 +1154,7 @@ func TestBlockUser(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockUserRepo, mockAuthRepo, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, mockAuthRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -1255,7 +1252,7 @@ func TestBlockUser(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
 
-			result, err := usecase.BlockUser(c, tt.id, tt.req)
+			result, err := usecaseInstance.BlockUser(c, tt.id, tt.req)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -1278,7 +1275,7 @@ func TestActivateUser(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockUserRepo, mockAuthRepo, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, mockAuthRepo, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -1376,7 +1373,7 @@ func TestActivateUser(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
 
-			result, err := usecase.ActivateUser(c, tt.id, tt.req)
+			result, err := usecaseInstance.ActivateUser(c, tt.id, tt.req)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -1399,7 +1396,7 @@ func TestUserNameIsNotDuplicated(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecase, mockUserRepo, _, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, _, _ := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -1470,7 +1467,7 @@ func TestUserNameIsNotDuplicated(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			result, err := usecase.UserNameIsNotDuplicated(c, tt.fullName, tt.id)
+			result, err := usecaseInstance.UserNameIsNotDuplicated(c, tt.fullName, tt.id)
 
 			if tt.expectedError {
 				assert.Error(t, err)
