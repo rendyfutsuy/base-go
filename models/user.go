@@ -28,10 +28,10 @@ type User struct {
 	// mutator - not stored in DB
 	ActiveStatus     utils.NullString `gorm:"-" json:"active_status"`
 	IsBlocked        bool             `gorm:"-" json:"is_blocked"`
-	RoleName         string            `gorm:"-" json:"role_name"`
-	Permissions      []string          `gorm:"-" json:"permissions"`
-	PermissionGroups []string          `gorm:"-" json:"permission_groups"`
-	Modules          []string          `gorm:"-" json:"modules"`
+	RoleName         string           `gorm:"column:role_name;<-:false" json:"role_name"` // Read-only: used for fetch, ignored on insert/update
+	Permissions      []string         `gorm:"-" json:"permissions"`
+	PermissionGroups []string         `gorm:"-" json:"permission_groups"`
+	Modules          []string         `gorm:"-" json:"modules"`
 }
 
 // TableName specifies table name for GORM
