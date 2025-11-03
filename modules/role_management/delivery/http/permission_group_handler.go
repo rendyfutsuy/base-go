@@ -9,6 +9,7 @@ import (
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/helpers/response"
+	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/role_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
 )
@@ -129,7 +130,50 @@ func (handler *RoleManagementHandler) GetDuplicatedPermissionGroup(c echo.Contex
 	return c.JSON(http.StatusOK, resp)
 }
 
+// GetAllPermissionGroupByModule godoc
+// @Summary		Get all permission groups grouped by module
+// @Description	Retrieve all permission groups organized by module. Returns permission groups with a value field indicating if the permission group is assigned to the specified role. The role_id query parameter is optional.
+// @Tags			Role Management
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			role_id	query		string	false	"Optional role ID to check permission group assignment"
+// @Success		200		{object}	response.NonPaginationResponse{data=[]dto.RespPermissionGroupByModule}	"Successfully retrieved permission groups by module"
+// @Failure		400		{object}	ResponseError	"Bad request - validation error or role not found"
+// @Failure		401		{object}	ResponseError	"Unauthorized"
+// @Router			/v1/role-management/permission-group/all/by-module [get]
 func (handler *RoleManagementHandler) GetAllPermissionGroupByModule(c echo.Context) error {
+	// Get role_id from query parameter (optional)
+	roleIDStr := c.QueryParam("role_id")
+	var role *models.Role
+	var rolePermissionGroups map[uuid.UUID]bool
+
+	// If role_id is provided, validate and get role's permission groups
+	if roleIDStr != "" {
+		roleID, err := uuid.Parse(roleIDStr)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.ErrorUUIDNotRecognized})
+		}
+
+		// Validate role_id exists in database
+		role, err = handler.RoleUseCase.GetRoleByID(c, roleID.String())
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		}
+
+		// Get permission groups assigned to the role
+		rolePermissionGroups = make(map[uuid.UUID]bool)
+		if role != nil && role.PermissionGroups != nil {
+			for _, pg := range role.PermissionGroups {
+				rolePermissionGroups[pg.ID] = true
+			}
+		}
+	} else {
+		// If role_id is not provided, create empty map (all values will be false)
+		rolePermissionGroups = make(map[uuid.UUID]bool)
+	}
+
+	// Get all permission groups
 	res, err := handler.RoleUseCase.GetAllPermissionGroup(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
@@ -145,10 +189,14 @@ func (handler *RoleManagementHandler) GetAllPermissionGroupByModule(c echo.Conte
 			modules[group.Module] = []dto.RespPermissionGroup{}
 		}
 
+		// Check if this permission group is assigned to the role
+		isAssigned := rolePermissionGroups[group.ID]
+
 		// Append to the module slice
 		modules[group.Module] = append(modules[group.Module], dto.RespPermissionGroup{
-			Name: group.Name,
-			ID:   group.ID,
+			Name:  group.Name,
+			ID:    group.ID,
+			Value: isAssigned,
 		})
 
 		if moduleRead[group.Module] {
