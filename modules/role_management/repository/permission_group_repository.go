@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/utils"
@@ -23,7 +24,7 @@ func (repo *roleRepository) GetPermissionGroupByID(ctx context.Context, id uuid.
 	// Get underlying SQL DB for raw query execution
 	sqlDB, err := repo.DB.DB()
 	if err != nil {
-		return nil, fmt.Errorf("permission_group permission_group with id %s not found", id)
+		return nil, fmt.Errorf(constants.PermissionGroupNotFoundRepo, id)
 	}
 
 	// Use Raw query with manual scanning for ARRAY_AGG using pq.Array
@@ -64,7 +65,7 @@ func (repo *roleRepository) GetPermissionGroupByID(ctx context.Context, id uuid.
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("permission_group permission_group with id %s not found", id)
+			return nil, fmt.Errorf(constants.PermissionGroupNotFoundRepo, id)
 		}
 		return nil, err
 	}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/role_management/dto"
@@ -58,7 +59,7 @@ func (repo *roleRepository) CreateRole(ctx context.Context, roleReq dto.ToDBCrea
 	// assign permission group
 	err = repo.ReAssignPermissionGroup(ctx, roleRes.ID, permissionGroupIds)
 	if err != nil {
-		return nil, fmt.Errorf("Something Wrong when assigning Permission Group to Role")
+		return nil, fmt.Errorf(constants.PermissionGroupAssignError)
 	}
 
 	return roleRes, nil
@@ -74,7 +75,7 @@ func (repo *roleRepository) GetRoleByID(ctx context.Context, id uuid.UUID) (role
 	sqlDB, err := repo.DB.DB()
 	if err != nil {
 		utils.Logger.Error(err.Error())
-		return nil, fmt.Errorf("Not Such Role Exist")
+		return nil, fmt.Errorf(constants.RoleNotExist)
 	}
 
 	// Use Raw query with manual scanning for ARRAY_AGG using pq.Array
@@ -124,10 +125,10 @@ func (repo *roleRepository) GetRoleByID(ctx context.Context, id uuid.UUID) (role
 	if err != nil {
 		if err == sql.ErrNoRows {
 			utils.Logger.Error(err.Error())
-			return nil, fmt.Errorf("Not Such Role Exist")
+			return nil, fmt.Errorf(constants.RoleNotExist)
 		}
 		utils.Logger.Error(err.Error())
-		return nil, fmt.Errorf("Not Such Role Exist")
+		return nil, fmt.Errorf(constants.RoleNotExist)
 	}
 
 	// Assign scanned arrays
@@ -163,7 +164,7 @@ func (repo *roleRepository) GetRoleByID(ctx context.Context, id uuid.UUID) (role
 	// get total user
 	total, err := repo.GetTotalUser(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("Something Wrong when fetching total user")
+		return nil, fmt.Errorf(constants.RoleFetchTotalUserError)
 	}
 	role.TotalUser = total
 
@@ -358,7 +359,7 @@ func (repo *roleRepository) UpdateRole(ctx context.Context, id uuid.UUID, roleRe
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("role role with id %s not found", id)
+			return nil, fmt.Errorf(constants.RoleNotFoundWithIDRepo, id)
 		}
 		return nil, err
 	}
@@ -371,7 +372,7 @@ func (repo *roleRepository) UpdateRole(ctx context.Context, id uuid.UUID, roleRe
 	// assign permission group
 	err = repo.ReAssignPermissionGroup(ctx, roleRes.ID, permissionGroupIds)
 	if err != nil {
-		return nil, fmt.Errorf("Something Wrong when assigning Permission Group to Role")
+		return nil, fmt.Errorf(constants.PermissionGroupAssignError)
 	}
 
 	return roleRes, nil
@@ -399,7 +400,7 @@ func (repo *roleRepository) SoftDeleteRole(ctx context.Context, id uuid.UUID, ro
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("role role with id %s not found", id)
+			return nil, fmt.Errorf(constants.RoleNotFoundWithIDRepo, id)
 		}
 		return nil, err
 	}
@@ -480,7 +481,7 @@ func (repo *roleRepository) GetRoleByName(ctx context.Context, name string) (rol
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("Role with name %s not found", name)
+			return nil, fmt.Errorf(constants.RoleNotFoundWithName, name)
 		}
 		return nil, err
 	}

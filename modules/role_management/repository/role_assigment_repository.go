@@ -71,7 +71,7 @@ func (repo *roleRepository) GetPermissionFromRoleId(ctx context.Context, id uuid
 		Find(&permissions).Error
 
 	if err != nil {
-		return nil, fmt.Errorf("Something Wrong when fetching permission group..")
+		return nil, fmt.Errorf(constants.PermissionGroupFetchError)
 	}
 
 	return permissions, nil
@@ -87,7 +87,7 @@ func (repo *roleRepository) GetPermissionGroupFromRoleId(ctx context.Context, id
 		Find(&permissionGroups).Error
 
 	if err != nil {
-		return nil, fmt.Errorf("Something Wrong when fetching permission group..")
+		return nil, fmt.Errorf(constants.PermissionGroupFetchError)
 	}
 
 	return permissionGroups, nil

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"gorm.io/gorm"
@@ -25,7 +26,7 @@ func (repo *roleRepository) GetPermissionByID(ctx context.Context, id uuid.UUID)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("permission permission with id %s not found", id)
+			return nil, fmt.Errorf(constants.PermissionNotFoundWithID, id)
 		}
 		return nil, err
 	}

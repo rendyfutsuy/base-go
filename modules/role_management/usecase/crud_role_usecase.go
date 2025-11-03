@@ -24,7 +24,7 @@ func (u *roleUsecase) CreateRole(c echo.Context, req *dto.ReqCreateRole, authId 
 
 		// return error if any permission group not valid one.
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("Function with ID `%s` is not Found..", permissionGroupId))
+			return nil, errors.New(fmt.Sprintf(constants.PermissionGroupNotFoundWithID, permissionGroupId))
 		}
 	}
 
@@ -89,7 +89,7 @@ func (u *roleUsecase) UpdateRole(c echo.Context, id string, req *dto.ReqUpdateRo
 
 		// return error if any permission group not valid one.
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("Function with ID `%s` is not Found..", permissionGroupId))
+			return nil, errors.New(fmt.Sprintf(constants.PermissionGroupNotFoundWithID, permissionGroupId))
 		}
 	}
 
@@ -129,11 +129,11 @@ func (u *roleUsecase) SoftDeleteRole(c echo.Context, id string, authId string) (
 	// if role has user, return error
 	role, err := u.GetRoleByID(c, id)
 	if err != nil {
-		return nil, errors.New("Role Not Found")
+		return nil, errors.New(constants.RoleNotFound)
 	}
 
 	if role.TotalUser > 0 {
-		return nil, errors.New("Role has user. Can't be deleted")
+		return nil, errors.New(constants.RoleHasUsersCannotDelete)
 	}
 
 	roleDb := dto.ToDBDeleteRole{}

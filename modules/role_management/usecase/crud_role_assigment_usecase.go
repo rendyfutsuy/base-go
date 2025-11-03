@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/labstack/echo/v4"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/role_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
@@ -20,7 +21,7 @@ func (u *roleUsecase) ReAssignPermissionByGroup(c echo.Context, roleId string, r
 
 		// return error if any permission group not valid one.
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("Permission Group with ID `%s` is not Found..", permissionGroupId))
+			return nil, errors.New(fmt.Sprintf(constants.PermissionGroupNotFoundWithIDAlt, permissionGroupId))
 		}
 	}
 
@@ -56,7 +57,7 @@ func (u *roleUsecase) AssignUsersToRole(c echo.Context, roleId string, req *dto.
 
 		// return error if any user not valid one.
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("User with ID `%s` is not Found..", userId))
+			return nil, errors.New(fmt.Sprintf(constants.UserNotFoundWithID, userId))
 		}
 	}
 
@@ -73,14 +74,14 @@ func (u *roleUsecase) AssignUsersToRole(c echo.Context, roleId string, req *dto.
 
 	// return error if any role not valid one.
 	if err != nil {
-		return nil, errors.New("Role with ID `" + roleId + "` is not Found..")
+		return nil, errors.New(fmt.Sprintf(constants.RoleNotFoundWithID, roleId))
 	}
 
 	// assign Users to role
 	err = u.roleRepo.AssignUsers(ctx, uId, req.UserIds)
 
 	if err != nil {
-		return nil, errors.New("Something went wrong when assigning users to role, please check if role and users exist")
+		return nil, errors.New(constants.RoleAssignUsersError)
 	}
 
 	return u.roleRepo.GetRoleByID(ctx, uId)
