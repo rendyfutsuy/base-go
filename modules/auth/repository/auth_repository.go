@@ -312,7 +312,7 @@ func (repo *authRepository) AddUserAccessToken(ctx context.Context, accessToken 
 	userSetKey := fmt.Sprintf("auth:user_tokens:%s", userId.String())
 	if err := repo.Redis.SAdd(ctx, userSetKey, jti).Err(); err != nil {
 		utils.Logger.Warn("Failed to add jti to user token set", zap.Error(err))
-		// Don't fail the entire operation if set add fails
+		return err
 	}
 
 	return nil
