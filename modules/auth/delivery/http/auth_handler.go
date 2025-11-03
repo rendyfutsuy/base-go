@@ -11,6 +11,7 @@ import (
 	_reqContext "github.com/rendyfutsuy/base-go/helpers/middleware/request"
 	"github.com/rendyfutsuy/base-go/modules/auth"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
+	"github.com/rendyfutsuy/base-go/utils"
 )
 
 // GeneralResponse represent the response error struct
@@ -175,7 +176,24 @@ func (handler *AuthHandler) GetProfile(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, user)
+	// Convert models.User to dto.UserProfile
+	profile := dto.UserProfile{
+		UserId: user.ID.String(),
+		Name:   user.FullName,
+		Email:  user.Email,
+		Role: utils.NullString{
+			String: user.RoleName,
+			Valid:  user.RoleName != "",
+		},
+		Gender: user.Gender,
+	}
+	if user.IsActive {
+		profile.Status = "Active"
+	} else {
+		profile.Status = "In Active"
+	}
+
+	return c.JSON(http.StatusOK, profile)
 }
 
 // @Summary		Update user profile

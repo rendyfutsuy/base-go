@@ -6,15 +6,16 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/constants"
+	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 	"github.com/rendyfutsuy/base-go/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (u *authUsecase) GetProfile(ctx context.Context, accessToken string) (profile dto.UserProfile, err error) {
-	user, err := u.authRepo.FindByCurrentSession(ctx, accessToken)
+func (u *authUsecase) GetProfile(ctx context.Context, accessToken string) (user models.User, err error) {
+	user, err = u.authRepo.FindByCurrentSession(ctx, accessToken)
 	if err != nil {
-		return profile, err
+		return user, err
 	}
 
 	return user, nil

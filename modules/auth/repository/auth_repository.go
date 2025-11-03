@@ -410,16 +410,16 @@ func (repo *authRepository) DestroyToken(ctx context.Context, accessToken string
 	return repo.DeleteSession(ctx, jti)
 }
 
-// FindByCurrentSession retrieves user profile based on the provided access token using redis_repository helper.
+// FindByCurrentSession retrieves user based on the provided access token using redis_repository helper.
 //
 // Parameters:
 // - ctx: The context for managing request lifecycle and cancellation.
 // - accessToken: The access token used to identify the user session.
 //
 // Returns:
-// - profile: User profile information.
+// - user: User information.
 // - err: An error if the retrieval fails, nil otherwise.
-func (repo *authRepository) FindByCurrentSession(ctx context.Context, accessToken string) (profile dto.UserProfile, err error) {
+func (repo *authRepository) FindByCurrentSession(ctx context.Context, accessToken string) (user models.User, err error) {
 	// Extract JTI from token
 	jti, rerr := repo.extractJTIFromToken(accessToken)
 	if rerr != nil {
@@ -433,20 +433,19 @@ func (repo *authRepository) FindByCurrentSession(ctx context.Context, accessToke
 	if rerr != nil {
 		if rerr == redis.Nil {
 			log.Printf("No session found")
-			return profile, errors.New(constants.UserInvalid)
+			return user, errors.New(constants.UserInvalid)
 		}
 		log.Printf("Error querying redis session: %v", rerr)
-		return profile, rerr
+		return user, rerr
 	}
 
 	if userData == nil {
 		log.Printf("No user data found in session")
-		return profile, errors.New(constants.UserInvalid)
+		return user, errors.New(constants.UserInvalid)
 	}
 
 	// If RoleName is empty in session, fetch from database
-	roleName := userData.RoleName
-	if roleName == "" && userData.RoleId != uuid.Nil {
+	if userData.RoleName == "" && userData.RoleId != uuid.Nil {
 		// Fetch role name from database
 		var role models.Role
 		err := repo.DB.WithContext(ctx).
@@ -455,26 +454,11 @@ func (repo *authRepository) FindByCurrentSession(ctx context.Context, accessToke
 			Where("id = ? AND deleted_at IS NULL", userData.RoleId).
 			First(&role).Error
 		if err == nil {
-			roleName = role.Name
+			userData.RoleName = role.Name
 		}
 	}
 
-	// Map user data to profile
-	profile.UserId = userData.ID.String()
-	profile.Email = userData.Email
-	profile.Name = userData.FullName
-	profile.Role = utils.NullString{
-		String: roleName,
-		Valid:  roleName != "",
-	}
-	if userData.IsActive {
-		profile.Status = "Active"
-	} else {
-		profile.Status = "In Active"
-	}
-	profile.Gender = userData.Gender
-
-	return profile, nil
+	return *userData, nil
 }
 
 // UpdateProfileById updates the full name of a user profile by ID.

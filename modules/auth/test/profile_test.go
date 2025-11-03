@@ -8,9 +8,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/constants"
+	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 	"github.com/rendyfutsuy/base-go/modules/auth/usecase"
-	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -28,13 +28,13 @@ func TestGetProfile(t *testing.T) {
 	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, timeout, hashSalt, signingKey, 24*time.Hour)
 
 	accessToken := "valid-access-token"
-	expectedProfile := dto.UserProfile{
-		UserId: uuid.New().String(),
-		Name:   "Test User",
-		Email:  "test@example.com",
-		Role:   utils.NullString{String: "Admin", Valid: true},
-		Status: "Active",
-		Gender: "Male",
+	expectedUser := models.User{
+		ID:       uuid.New(),
+		FullName: "Test User",
+		Email:    "test@example.com",
+		RoleName: "Admin",
+		IsActive: true,
+		Gender:   "Male",
 	}
 
 	tests := []struct {
@@ -49,7 +49,7 @@ func TestGetProfile(t *testing.T) {
 			name:        "Positive case - successful get profile",
 			accessToken: accessToken,
 			setupMock: func() {
-				mockRepo.On("FindByCurrentSession", ctx, accessToken).Return(expectedProfile, nil).Once()
+				mockRepo.On("FindByCurrentSession", ctx, accessToken).Return(expectedUser, nil).Once()
 			},
 			expectedError: false,
 			description:   "Valid token should return user profile",
@@ -58,7 +58,7 @@ func TestGetProfile(t *testing.T) {
 			name:        "Negative case - invalid token",
 			accessToken: "invalid-token",
 			setupMock: func() {
-				mockRepo.On("FindByCurrentSession", ctx, "invalid-token").Return(dto.UserProfile{}, errors.New(constants.UserInvalid)).Once()
+				mockRepo.On("FindByCurrentSession", ctx, "invalid-token").Return(models.User{}, errors.New(constants.UserInvalid)).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: constants.UserInvalid,
@@ -68,7 +68,7 @@ func TestGetProfile(t *testing.T) {
 			name:        "Negative case - empty token",
 			accessToken: "",
 			setupMock: func() {
-				mockRepo.On("FindByCurrentSession", ctx, "").Return(dto.UserProfile{}, errors.New(constants.UserInvalid)).Once()
+				mockRepo.On("FindByCurrentSession", ctx, "").Return(models.User{}, errors.New(constants.UserInvalid)).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: constants.UserInvalid,
@@ -79,7 +79,7 @@ func TestGetProfile(t *testing.T) {
 			accessToken: "token'; DROP TABLE jwt_tokens; --",
 			setupMock: func() {
 				// Should not find user even with SQL injection attempt due to parameterized query
-				mockRepo.On("FindByCurrentSession", ctx, "token'; DROP TABLE jwt_tokens; --").Return(dto.UserProfile{}, errors.New(constants.UserInvalid)).Once()
+				mockRepo.On("FindByCurrentSession", ctx, "token'; DROP TABLE jwt_tokens; --").Return(models.User{}, errors.New(constants.UserInvalid)).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: constants.UserInvalid,
@@ -89,7 +89,7 @@ func TestGetProfile(t *testing.T) {
 			name:        "Negative case - database error",
 			accessToken: accessToken,
 			setupMock: func() {
-				mockRepo.On("FindByCurrentSession", ctx, accessToken).Return(dto.UserProfile{}, errors.New("database error")).Once()
+				mockRepo.On("FindByCurrentSession", ctx, accessToken).Return(models.User{}, errors.New("database error")).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: "database error",
@@ -103,19 +103,20 @@ func TestGetProfile(t *testing.T) {
 			mockRepo.Calls = nil
 			tt.setupMock()
 
-			profile, err := usecaseInstance.GetProfile(ctx, tt.accessToken)
+			user, err := usecaseInstance.GetProfile(ctx, tt.accessToken)
 
 			if tt.expectedError {
 				assert.Error(t, err)
 				if tt.expectedErrMsg != "" {
 					assert.Contains(t, err.Error(), tt.expectedErrMsg)
 				}
-				assert.Empty(t, profile.UserId)
+				assert.Equal(t, uuid.Nil, user.ID)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, expectedProfile.UserId, profile.UserId)
-				assert.Equal(t, expectedProfile.Name, profile.Name)
-				assert.Equal(t, expectedProfile.Email, profile.Email)
+				assert.Equal(t, expectedUser.ID, user.ID)
+				assert.Equal(t, expectedUser.FullName, user.FullName)
+				assert.Equal(t, expectedUser.Email, user.Email)
+				assert.Equal(t, expectedUser.RoleName, user.RoleName)
 			}
 
 			mockRepo.AssertExpectations(t)

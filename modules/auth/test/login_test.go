@@ -53,9 +53,9 @@ func (m *MockAuthRepository) DestroyToken(ctx context.Context, accessToken strin
 	return args.Error(0)
 }
 
-func (m *MockAuthRepository) FindByCurrentSession(ctx context.Context, accessToken string) (dto.UserProfile, error) {
+func (m *MockAuthRepository) FindByCurrentSession(ctx context.Context, accessToken string) (models.User, error) {
 	args := m.Called(ctx, accessToken)
-	return args.Get(0).(dto.UserProfile), args.Error(1)
+	return args.Get(0).(models.User), args.Error(1)
 }
 
 func (m *MockAuthRepository) UpdateProfileById(ctx context.Context, profileChunks dto.ReqUpdateProfile, userId uuid.UUID) (bool, error) {
