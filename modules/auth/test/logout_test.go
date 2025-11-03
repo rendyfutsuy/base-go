@@ -1,4 +1,4 @@
-package usecase
+package test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rendyfutsuy/base-go/modules/auth/usecase"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,12 +20,7 @@ func TestSignOut(t *testing.T) {
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecase := &authUsecase{
-		authRepo:       mockRepo,
-		contextTimeout: timeout,
-		hashSalt:       hashSalt,
-		signingKey:     signingKey,
-	}
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, timeout, hashSalt, signingKey, 24*time.Hour)
 
 	validToken := "valid-access-token"
 
@@ -94,7 +90,7 @@ func TestSignOut(t *testing.T) {
 			mockRepo.Calls = nil
 			tt.setupMock()
 
-			err := usecase.SignOut(ctx, tt.token)
+			err := usecaseInstance.SignOut(ctx, tt.token)
 
 			if tt.expectedError {
 				assert.Error(t, err)

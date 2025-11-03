@@ -1,4 +1,4 @@
-package usecase
+package test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
+	"github.com/rendyfutsuy/base-go/modules/auth/usecase"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -24,12 +25,7 @@ func TestGetProfile(t *testing.T) {
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecase := &authUsecase{
-		authRepo:       mockRepo,
-		contextTimeout: timeout,
-		hashSalt:       hashSalt,
-		signingKey:     signingKey,
-	}
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, timeout, hashSalt, signingKey, 24*time.Hour)
 
 	accessToken := "valid-access-token"
 	expectedProfile := dto.UserProfile{
@@ -107,7 +103,7 @@ func TestGetProfile(t *testing.T) {
 			mockRepo.Calls = nil
 			tt.setupMock()
 
-			profile, err := usecase.GetProfile(ctx, tt.accessToken)
+			profile, err := usecaseInstance.GetProfile(ctx, tt.accessToken)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -137,12 +133,7 @@ func TestUpdateProfile(t *testing.T) {
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecase := &authUsecase{
-		authRepo:       mockRepo,
-		contextTimeout: timeout,
-		hashSalt:       hashSalt,
-		signingKey:     signingKey,
-	}
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, timeout, hashSalt, signingKey, 24*time.Hour)
 
 	validUserId := uuid.New().String()
 
@@ -242,7 +233,7 @@ func TestUpdateProfile(t *testing.T) {
 			mockRepo.Calls = nil
 			tt.setupMock()
 
-			err := usecase.UpdateProfile(ctx, tt.profileChunks, tt.userId)
+			err := usecaseInstance.UpdateProfile(ctx, tt.profileChunks, tt.userId)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -268,12 +259,7 @@ func TestUpdateMyPassword(t *testing.T) {
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecase := &authUsecase{
-		authRepo:       mockRepo,
-		contextTimeout: timeout,
-		hashSalt:       hashSalt,
-		signingKey:     signingKey,
-	}
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, timeout, hashSalt, signingKey, 24*time.Hour)
 
 	validUserId := uuid.New().String()
 	oldPassword := "oldpassword123"
@@ -458,7 +444,7 @@ func TestUpdateMyPassword(t *testing.T) {
 			mockRepo.Calls = nil
 			tt.setupMock()
 
-			err := usecase.UpdateMyPassword(ctx, tt.passwordChunks, tt.userId)
+			err := usecaseInstance.UpdateMyPassword(ctx, tt.passwordChunks, tt.userId)
 
 			if tt.expectedError {
 				assert.Error(t, err)

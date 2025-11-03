@@ -1,4 +1,4 @@
-package usecase
+package test
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	models "github.com/rendyfutsuy/base-go/models"
+	"github.com/rendyfutsuy/base-go/modules/auth/usecase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
@@ -23,12 +24,7 @@ func TestRequestResetPassword(t *testing.T) {
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecase := &authUsecase{
-		authRepo:       mockRepo,
-		contextTimeout: timeout,
-		hashSalt:       hashSalt,
-		signingKey:     signingKey,
-	}
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, timeout, hashSalt, signingKey, 24*time.Hour)
 
 	testUser := models.User{
 		ID:    uuid.New(),
@@ -103,7 +99,7 @@ func TestRequestResetPassword(t *testing.T) {
 			mockRepo.Calls = nil
 			tt.setupMock()
 
-			err := usecase.RequestResetPassword(ctx, tt.email)
+			err := usecaseInstance.RequestResetPassword(ctx, tt.email)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -129,12 +125,7 @@ func TestResetUserPassword(t *testing.T) {
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecase := &authUsecase{
-		authRepo:       mockRepo,
-		contextTimeout: timeout,
-		hashSalt:       hashSalt,
-		signingKey:     signingKey,
-	}
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, timeout, hashSalt, signingKey, 24*time.Hour)
 
 	testUserID := uuid.New()
 	hashedOldPassword, _ := bcrypt.GenerateFromPassword([]byte("oldpassword123"), bcrypt.DefaultCost)
@@ -278,7 +269,7 @@ func TestResetUserPassword(t *testing.T) {
 			mockRepo.Calls = nil
 			tt.setupMock()
 
-			err := usecase.ResetUserPassword(ctx, tt.newPassword, tt.token)
+			err := usecaseInstance.ResetUserPassword(ctx, tt.newPassword, tt.token)
 
 			if tt.expectedError {
 				assert.Error(t, err)

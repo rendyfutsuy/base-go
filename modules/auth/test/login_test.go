@@ -1,4 +1,4 @@
-package usecase
+package test
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"github.com/rendyfutsuy/base-go/constants"
 	models "github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
+	"github.com/rendyfutsuy/base-go/modules/auth/usecase"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -132,13 +133,7 @@ func TestAuthenticate(t *testing.T) {
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecase := &authUsecase{
-		authRepo:       mockRepo,
-		contextTimeout: timeout,
-		hashSalt:       hashSalt,
-		signingKey:     signingKey,
-		expireDuration: 24 * time.Hour, // Set default expire duration for test
-	}
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, timeout, hashSalt, signingKey, 24*time.Hour)
 
 	testUserID := uuid.New()
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
@@ -292,7 +287,7 @@ func TestAuthenticate(t *testing.T) {
 			mockRepo.Calls = nil
 			tt.setupMock()
 
-			token, err := usecase.Authenticate(ctx, tt.login, tt.password)
+			token, err := usecaseInstance.Authenticate(ctx, tt.login, tt.password)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -323,13 +318,7 @@ func TestIsUserPasswordExpired(t *testing.T) {
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecase := &authUsecase{
-		authRepo:       mockRepo,
-		contextTimeout: timeout,
-		hashSalt:       hashSalt,
-		signingKey:     signingKey,
-		expireDuration: 24 * time.Hour, // Set default expire duration for test
-	}
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, timeout, hashSalt, signingKey, 24*time.Hour)
 
 	testUserID := uuid.New()
 	testUser := models.User{
@@ -394,7 +383,7 @@ func TestIsUserPasswordExpired(t *testing.T) {
 			mockRepo.Calls = nil
 			tt.setupMock()
 
-			err := usecase.IsUserPasswordExpired(ctx, tt.login)
+			err := usecaseInstance.IsUserPasswordExpired(ctx, tt.login)
 
 			if tt.expectedError {
 				assert.Error(t, err)
