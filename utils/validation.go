@@ -82,7 +82,7 @@ func ValidateRequest(req interface{}, valStruck *validator.Validate) error {
 					emailScopesStr := strings.Join(emailScopes, ", ")
 
 					// Construct a human-friendly error message
-					errorMessages = append(errorMessages, fmt.Sprintf("Your Email is not Valid.., you must use `"+emailScopesStr+"` domain"))
+					errorMessages = append(errorMessages, fmt.Sprintf("Your Email is not Valid.., you must use `%s` domain", emailScopesStr))
 				}
 
 				if fe.Tag() == "nullableDate" {

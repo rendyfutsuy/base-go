@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/knadh/koanf/v2"
 	"github.com/rendyfutsuy/base-go/constants"
 	models "github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
+	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
@@ -116,6 +118,14 @@ func (m *MockAuthRepository) DestroyAllResetPasswordToken(ctx context.Context, u
 }
 
 func TestAuthenticate(t *testing.T) {
+	// Initialize ConfigVars for test to avoid nil pointer
+	// Create empty koanf instance for testing if ConfigVars is nil
+	if utils.ConfigVars == nil {
+		utils.ConfigVars = koanf.New(".")
+	}
+	// Set test config value
+	utils.ConfigVars.Set("auth.access_token_ttl_seconds", 86400) // 24 hours in seconds
+
 	ctx := context.Background()
 	mockRepo := new(MockAuthRepository)
 	signingKey := []byte("test-secret-key-for-jwt")
@@ -127,6 +137,7 @@ func TestAuthenticate(t *testing.T) {
 		contextTimeout: timeout,
 		hashSalt:       hashSalt,
 		signingKey:     signingKey,
+		expireDuration: 24 * time.Hour, // Set default expire duration for test
 	}
 
 	testUserID := uuid.New()
@@ -181,7 +192,7 @@ func TestAuthenticate(t *testing.T) {
 				mockRepo.On("AssertPasswordAttemptPassed", ctx, testUserID).Return(false, nil).Once()
 			},
 			expectedError:  true,
-			expectedErrMsg: "too many password attempts",
+			expectedErrMsg: constants.AuthTooManyPasswordAttempts,
 			description:    "Too many attempts should return error",
 		},
 		{
@@ -194,7 +205,7 @@ func TestAuthenticate(t *testing.T) {
 				mockRepo.On("AssertPasswordRight", ctx, "wrongpassword", testUserID).Return(false, nil).Once()
 			},
 			expectedError:  true,
-			expectedErrMsg: "invalid credentials",
+			expectedErrMsg: constants.AuthInvalidCredentials,
 			description:    "Wrong password should return error",
 		},
 		{
@@ -235,7 +246,7 @@ func TestAuthenticate(t *testing.T) {
 				mockRepo.On("AssertPasswordRight", ctx, "password123'; DROP TABLE users; --", testUserID).Return(false, nil).Once()
 			},
 			expectedError:  true,
-			expectedErrMsg: "invalid credentials",
+			expectedErrMsg: constants.AuthInvalidCredentials,
 			description:    "SQL injection in password should be treated as wrong password, not executed",
 		},
 		{
@@ -259,7 +270,7 @@ func TestAuthenticate(t *testing.T) {
 				mockRepo.On("AssertPasswordRight", ctx, "", testUserID).Return(false, nil).Once()
 			},
 			expectedError:  true,
-			expectedErrMsg: "invalid credentials",
+			expectedErrMsg: constants.AuthInvalidCredentials,
 			description:    "Empty password should return error",
 		},
 		{
@@ -300,6 +311,12 @@ func TestAuthenticate(t *testing.T) {
 }
 
 func TestIsUserPasswordExpired(t *testing.T) {
+	// Initialize ConfigVars for test to avoid nil pointer
+	// Create empty koanf instance for testing if ConfigVars is nil
+	if utils.ConfigVars == nil {
+		utils.ConfigVars = koanf.New(".")
+	}
+
 	ctx := context.Background()
 	mockRepo := new(MockAuthRepository)
 	signingKey := []byte("test-secret-key")
@@ -311,6 +328,7 @@ func TestIsUserPasswordExpired(t *testing.T) {
 		contextTimeout: timeout,
 		hashSalt:       hashSalt,
 		signingKey:     signingKey,
+		expireDuration: 24 * time.Hour, // Set default expire duration for test
 	}
 
 	testUserID := uuid.New()
