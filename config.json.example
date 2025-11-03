@@ -1,0 +1,38 @@
+{
+  "app_name": "base v1.0",
+  "app_env": "development",
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "user": "postgres",
+    "password": "postgres",
+    "db_name": "base",
+    "sslmode": "disable"
+  },
+  "user": {
+    "default_password_template": "temp"
+  },
+  "format": {
+    "time": "2006-01-02T15:04:05.999Z07:00"
+  },
+  "app_port": 9090,
+  "jwt_key": 123456,
+  "email": {
+    "smtp_host":"",
+    "smtp_port":"587",
+    "smtp_sender_mail":"",
+    "smtp_auth_email":"",
+    "smtp_password":"",
+    "reset_password_url":"http://localhost:3000/reset-password",
+    "validation-scope": "gmail.com|mailinator.com|company.com"
+  },
+  "redis": {
+    "addr": "",
+    "password": "",
+    "db": "db0",
+    "concurrency": 10
+  },
+  "auth": {
+    "access_token_ttl_seconds": 86400 // 24 jam
+  }
+}

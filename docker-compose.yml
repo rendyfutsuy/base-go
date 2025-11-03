@@ -1,0 +1,19 @@
+version: '3'
+services:
+  base-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: base-backend
+    container_name: base-backend
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "9000:9000"
+    networks:
+      - base-network
+
+#Docker Networks
+networks:
+  base-network:
+    driver: bridge

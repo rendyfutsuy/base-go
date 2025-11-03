@@ -1,0 +1,18 @@
+version: 3
+
+tasks:
+  migrate-up:
+    cmds:
+      - migrate -path ./database/migrations -database "postgresql://USERNAME:PASSWORD@localhost:PORT/DATABASE_NAME?sslmode=disable" up
+
+  migrate-down:
+    cmds:
+      - migrate -path ./database/migrations -database "postgresql://USERNAME:PASSWORD@localhost:PORT/DATABASE_NAME?sslmode=disable" down
+
+  seed-up:
+    cmds:
+      - migrate -path ./database/seeders -database "postgresql://USERNAME:PASSWORD@localhost:PORT/DATABASE_NAME?sslmode=disable&x-migrations-table=seeder_migrations" up
+
+  seed-down:
+    cmds:
+      - migrate -path ./database/seeders -database "postgresql://USERNAME:PASSWORD@localhost:PORT/DATABASE_NAME?sslmode=disable&x-migrations-table=seeder_migrations" down
