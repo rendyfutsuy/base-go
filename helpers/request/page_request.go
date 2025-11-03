@@ -25,12 +25,14 @@ func NewPageRequest(page, perPage int, search, sortBy, sortOrder string) *PageRe
 	}
 }
 
-// ApplySearchCondition applies search condition to a GORM query using ILIKE with OR conditions.
+// ApplySearchCondition applies search condition to a GORM query using ILIKE with per-word matching.
+// Each word in the search query (separated by spaces) is searched independently (OR between words, OR between columns).
+// If any word matches any column, the record will be included in the results.
 // If searchQuery is empty, the query is returned unchanged.
 //
 // Parameters:
 //   - query: The GORM query builder
-//   - searchQuery: The search string to match against
+//   - searchQuery: The search string to match against (words separated by spaces)
 //   - searchColumns: List of column names to search in (e.g., []string{"usr.full_name", "usr.email"})
 //
 // Returns:
@@ -38,25 +40,48 @@ func NewPageRequest(page, perPage int, search, sortBy, sortOrder string) *PageRe
 //
 // Example:
 //
-//	query = ApplySearchCondition(query, "john", []string{"usr.full_name", "usr.email", "rl.name"})
-//	// Results in: WHERE (usr.full_name ILIKE '%john%' OR usr.email ILIKE '%john%' OR rl.name ILIKE '%john%')
+//	query = ApplySearchCondition(query, "Add Role", []string{"usr.full_name", "usr.email", "rl.name"})
+//	// Results in: WHERE ((usr.full_name ILIKE '%Add%' OR usr.email ILIKE '%Add%' OR rl.name ILIKE '%Add%')
+//	//            OR (usr.full_name ILIKE '%Role%' OR usr.email ILIKE '%Role%' OR rl.name ILIKE '%Role%'))
 func ApplySearchCondition(query *gorm.DB, searchQuery string, searchColumns []string) *gorm.DB {
 	if searchQuery == "" || len(searchColumns) == 0 {
 		return query
 	}
 
-	// Build OR conditions for each column
-	conditions := make([]string, len(searchColumns))
-	args := make([]interface{}, len(searchColumns))
-	searchPattern := "%" + searchQuery + "%"
-
-	for i, column := range searchColumns {
-		conditions[i] = column + " ILIKE ?"
-		args[i] = searchPattern
+	// Split search query by spaces and filter out empty strings
+	words := strings.Fields(searchQuery)
+	if len(words) == 0 {
+		return query
 	}
 
-	// Combine with OR
-	whereClause := "(" + strings.Join(conditions, " OR ") + ")"
+	// Build conditions for each word
+	wordConditions := make([]string, 0, len(words))
+	args := make([]interface{}, 0)
+
+	for _, word := range words {
+		if word == "" {
+			continue
+		}
+
+		// For each word, build OR conditions for all columns
+		columnConditions := make([]string, len(searchColumns))
+		searchPattern := "%" + word + "%"
+
+		for i, column := range searchColumns {
+			columnConditions[i] = column + " ILIKE ?"
+			args = append(args, searchPattern)
+		}
+
+		// Combine column conditions with OR and wrap in parentheses
+		wordConditions = append(wordConditions, "("+strings.Join(columnConditions, " OR ")+")")
+	}
+
+	if len(wordConditions) == 0 {
+		return query
+	}
+
+	// Combine all word conditions with OR (not AND)
+	whereClause := "(" + strings.Join(wordConditions, " OR ") + ")"
 
 	return query.Where(whereClause, args...)
 }
@@ -145,21 +170,24 @@ func ValidatePaginationParams(page, perPage, maxPerPage int) (validatedPage, val
 // BuildSearchConditionForRawSQL builds a search condition clause and arguments for raw SQL queries.
 // This is useful when you need to use ARRAY_AGG or other complex SQL features that require raw queries.
 // Uses the same logic as ApplySearchCondition but returns SQL clause string for raw queries.
+// Each word in the search query (separated by spaces) is searched independently (OR between words, OR between columns).
+// If any word matches any column, the record will be included in the results.
 //
 // Parameters:
-//   - searchQuery: The search string to match against
+//   - searchQuery: The search string to match against (words separated by spaces)
 //   - searchColumns: List of column names to search in (e.g., []string{"role.name", "pg.module"})
 //   - startArgIndex: Starting index for PostgreSQL parameter placeholders (default: 1)
 //   - clauseType: Type of clause - "WHERE" or "HAVING" (default: "HAVING" for GROUP BY queries)
 //
 // Returns:
-//   - clause: SQL clause string (e.g., " HAVING (role.name ILIKE $1 OR pg.module ILIKE $2)")
-//   - args: Arguments for parameter binding (one per column)
+//   - clause: SQL clause string (e.g., " HAVING ((role.name ILIKE $1 OR pg.module ILIKE $2) OR (role.name ILIKE $3 OR pg.module ILIKE $4))")
+//   - args: Arguments for parameter binding (one per column per word)
 //
 // Example:
 //
-//	clause, args := BuildSearchConditionForRawSQL("john", []string{"role.name", "pg.module"}, 1, "HAVING")
-//	// Returns: clause=" HAVING (role.name ILIKE $1 OR pg.module ILIKE $2)", args=["%john%", "%john%"]
+//	clause, args := BuildSearchConditionForRawSQL("Add Role", []string{"role.name", "pg.module"}, 1, "HAVING")
+//	// Returns: clause=" HAVING ((role.name ILIKE $1 OR pg.module ILIKE $2) OR (role.name ILIKE $3 OR pg.module ILIKE $4))"
+//	//          args=["%Add%", "%Add%", "%Role%", "%Role%"]
 func BuildSearchConditionForRawSQL(searchQuery string, searchColumns []string, startArgIndex int, clauseType string) (clause string, args []interface{}) {
 	if searchQuery == "" || len(searchColumns) == 0 {
 		return "", []interface{}{}
@@ -173,20 +201,41 @@ func BuildSearchConditionForRawSQL(searchQuery string, searchColumns []string, s
 		startArgIndex = 1
 	}
 
-	// Build OR conditions for each column using PostgreSQL numbered parameters
-	// Each column gets its own parameter index (matching ApplySearchCondition behavior)
-	conditions := make([]string, len(searchColumns))
-	searchPattern := "%" + searchQuery + "%"
-	currentArgIndex := startArgIndex
-
-	for i, column := range searchColumns {
-		conditions[i] = column + " ILIKE $" + fmt.Sprintf("%d", currentArgIndex)
-		args = append(args, searchPattern)
-		currentArgIndex++
+	// Split search query by spaces and filter out empty strings
+	words := strings.Fields(searchQuery)
+	if len(words) == 0 {
+		return "", []interface{}{}
 	}
 
-	// Combine with OR
-	whereClause := " " + clauseType + " (" + strings.Join(conditions, " OR ") + ")"
+	// Build conditions for each word
+	wordConditions := make([]string, 0, len(words))
+	currentArgIndex := startArgIndex
+
+	for _, word := range words {
+		if word == "" {
+			continue
+		}
+
+		// For each word, build OR conditions for all columns
+		columnConditions := make([]string, len(searchColumns))
+		searchPattern := "%" + word + "%"
+
+		for i, column := range searchColumns {
+			columnConditions[i] = column + " ILIKE $" + fmt.Sprintf("%d", currentArgIndex)
+			args = append(args, searchPattern)
+			currentArgIndex++
+		}
+
+		// Combine column conditions with OR and wrap in parentheses
+		wordConditions = append(wordConditions, "("+strings.Join(columnConditions, " OR ")+")")
+	}
+
+	if len(wordConditions) == 0 {
+		return "", []interface{}{}
+	}
+
+	// Combine all word conditions with OR (not AND)
+	whereClause := " " + clauseType + " (" + strings.Join(wordConditions, " OR ") + ")"
 
 	return whereClause, args
 }
