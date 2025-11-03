@@ -112,7 +112,7 @@ func (repo *authRepository) AssertPasswordRight(ctx context.Context, password st
 			})
 
 		// Passwords do not match, return error
-		return false, errors.New("Password Not Match")
+		return false, errors.New(constants.AuthPasswordNotMatch)
 	}
 
 	return true, nil
@@ -149,7 +149,7 @@ func (repo *authRepository) AssertPasswordNeverUsesByUser(ctx context.Context, n
 		err = bcrypt.CompareHashAndPassword([]byte(history.HashedPassword), []byte(newPassword))
 		if err == nil {
 			// Password matches an old password
-			return false, fmt.Errorf("Youre already used this password, please try another one..")
+			return false, fmt.Errorf(constants.AuthPasswordAlreadyUsed)
 		} else if err != bcrypt.ErrMismatchedHashAndPassword {
 			// Unknown error
 			return false, fmt.Errorf("error comparing hashed password: %w", err)
@@ -190,7 +190,7 @@ func (repo *authRepository) AssertPasswordExpiredIsPassed(ctx context.Context, u
 	// Compare expirationDate with currentTime to check if it has passed
 	if user.PasswordExpiredAt.Before(currentTime) {
 		// Password has expired
-		return true, errors.New("password has expired, please change your password now")
+		return true, errors.New(constants.AuthPasswordExpiredMessage)
 	}
 
 	// if password not expired, return false
@@ -216,7 +216,7 @@ func (repo *authRepository) AssertPasswordAttemptPassed(ctx context.Context, use
 	// if attempt above or equals to 3, return false
 	if user.Counter >= 3 {
 		// Password has expired
-		return false, errors.New("Password Attempt is above 3, you're blocked. please contact admin")
+		return false, errors.New(constants.AuthPasswordAttemptExceeded)
 	}
 
 	return true, nil
@@ -246,11 +246,11 @@ func (repo *authRepository) extractJTIFromToken(tokenString string) (string, err
 		parser := jwt.NewParser(jwt.WithValidMethods([]string{}))
 		_, _, err := parser.ParseUnverified(tokenString, claims)
 		if err != nil {
-			return "", fmt.Errorf("failed to parse token: %w", err)
+			return "", fmt.Errorf("%s: %w", constants.AuthTokenParseFailed, err)
 		}
 	}
 	if claims.ID == "" {
-		return "", errors.New("token does not contain jti claim")
+		return "", errors.New(constants.AuthTokenMissingJTI)
 	}
 	return claims.ID, nil
 }
@@ -368,14 +368,14 @@ func (repo *authRepository) GetUserByAccessToken(ctx context.Context, accessToke
 	if err != nil {
 		if err == redis.Nil {
 			log.Printf("No user found with this access token")
-			return user, errors.New("User Not Found, the access token is not valid please re-login")
+			return user, errors.New(constants.AuthTokenInvalid)
 		}
 		log.Printf("Error querying redis session: %v", err)
 		return user, err
 	}
 
 	if userData == nil {
-		return user, errors.New("User Not Found, the access token is not valid please re-login")
+		return user, errors.New(constants.AuthTokenInvalid)
 	}
 
 	return *userData, nil

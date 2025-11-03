@@ -29,7 +29,7 @@ func (u *authUsecase) Authenticate(ctx context.Context, login string, password s
 	if !isAttemptPassed {
 		// This should return a specific "too many attempts" error.
 		// For now, we'll assume the repo returns it in the 'err' variable.
-		return "", errors.New("too many password attempts")
+		return "", errors.New(constants.AuthTooManyPasswordAttempts)
 	}
 
 	// assert password given is same with saved password
@@ -40,7 +40,7 @@ func (u *authUsecase) Authenticate(ctx context.Context, login string, password s
 	}
 	if !isPasswordRight {
 		// This should return a specific "invalid credentials" error.
-		return "", errors.New("invalid credentials")
+		return "", errors.New(constants.AuthInvalidCredentials)
 	}
 
 	// Reset password attempt counter to 0 since login was successful.

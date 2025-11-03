@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rendyfutsuy/base-go/constants"
 	models "github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth/tasks"
 	"github.com/rendyfutsuy/base-go/utils"
@@ -79,7 +80,7 @@ func (repo *authRepository) GetUserByResetPasswordToken(ctx context.Context, tok
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Printf("No user found with this reset token")
-			return user, errors.New("User Not Found, the access token is not valid please restart the process...")
+			return user, errors.New(constants.AuthTokenInvalidRestart)
 		}
 		log.Printf("Error querying user: %v", err)
 		return user, err

@@ -6,6 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 )
 
@@ -41,7 +42,7 @@ func (handler *AuthHandler) ResetPasswordRequest(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, GeneralResponse{Message: "Successfully Send Reset Email Request"})
+	return c.JSON(http.StatusOK, GeneralResponse{Message: constants.AuthResetEmailSent})
 }
 
 // ResetUserPassword godoc
@@ -75,7 +76,7 @@ func (handler *AuthHandler) ResetUserPassword(c echo.Context) error {
 	// Decode the Base64 token
 	decodedToken, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: "Invalid token"})
+		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: constants.AuthInvalidToken})
 	}
 
 	//get user through password reset token
@@ -86,5 +87,5 @@ func (handler *AuthHandler) ResetUserPassword(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, GeneralResponse{Message: "Successfully Reset Password"})
+	return c.JSON(http.StatusOK, GeneralResponse{Message: constants.AuthPasswordResetSuccess})
 }

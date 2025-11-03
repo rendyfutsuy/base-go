@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/utils"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -14,7 +15,7 @@ func (u *authUsecase) RequestResetPassword(ctx context.Context, email string) er
 
 	// if fail to get user return error
 	if err != nil {
-		return errors.New("Email not found, please be sure no typo on email input...")
+		return errors.New(constants.AuthEmailNotFound)
 
 	}
 
@@ -35,7 +36,7 @@ func (u *authUsecase) ResetUserPassword(ctx context.Context, newPassword string,
 
 	// if current password same with current password, return error
 	if isNewPasswordRight {
-		return errors.New("New Password should not be same with Current Password")
+		return errors.New(constants.AuthNewPasswordSameAsOld)
 	}
 
 	// assert new password not the same with any previous password

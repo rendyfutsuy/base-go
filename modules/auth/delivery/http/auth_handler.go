@@ -148,7 +148,7 @@ func (handler *AuthHandler) SignOut(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, GeneralResponse{Message: "Successfully Logged Out"})
+	return c.JSON(http.StatusOK, GeneralResponse{Message: constants.AuthLogoutSuccess})
 }
 
 // @Summary		Get user profile
@@ -214,7 +214,7 @@ func (handler *AuthHandler) UpdateProfile(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, GeneralResponse{Message: "Successfully Updated Profile"})
+	return c.JSON(http.StatusOK, GeneralResponse{Message: constants.AuthProfileUpdated})
 }
 
 // @Summary		Update user password
@@ -253,7 +253,7 @@ func (handler *AuthHandler) UpdateMyPassword(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, GeneralResponse{Message: "Successfully Updated My Password"})
+	return c.JSON(http.StatusOK, GeneralResponse{Message: constants.AuthPasswordUpdated})
 }
 
 // @Summary		Refresh access token

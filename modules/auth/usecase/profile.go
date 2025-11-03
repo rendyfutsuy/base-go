@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 	"github.com/rendyfutsuy/base-go/utils"
 	"golang.org/x/crypto/bcrypt"
@@ -52,7 +53,7 @@ func (u *authUsecase) UpdateMyPassword(ctx context.Context, passwordChunks dto.R
 
 	// if old password fail to match return error
 	if !isPasswordRight {
-		return errors.New("Old Password not Match")
+		return errors.New(constants.AuthOldPasswordNotMatch)
 	}
 
 	// assert current password not the same with new password
@@ -60,7 +61,7 @@ func (u *authUsecase) UpdateMyPassword(ctx context.Context, passwordChunks dto.R
 
 	// if current password same with current password, return error
 	if isNewPasswordRight {
-		return errors.New("New Password should not be same with Current Password")
+		return errors.New(constants.AuthNewPasswordSameAsOld)
 	}
 
 	// assert new password not the same wit any previous password
