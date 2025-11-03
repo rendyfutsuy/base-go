@@ -19,25 +19,25 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 	f, err := excelize.OpenFile(filePath)
 	if err != nil {
 		utils.Logger.Error(err.Error())
-		return nil, fmt.Errorf("failed to open Excel file: %v", err)
+		return nil, fmt.Errorf("%s: %v", constants.UserImportExcelOpenFailed, err)
 	}
 	defer f.Close()
 
 	// Get the first sheet
 	sheetName := f.GetSheetName(0)
 	if sheetName == "" {
-		return nil, fmt.Errorf("Excel file has no sheets")
+		return nil, fmt.Errorf(constants.UserImportExcelNoSheets)
 	}
 
 	// Read all rows
 	rows, err := f.GetRows(sheetName)
 	if err != nil {
 		utils.Logger.Error(err.Error())
-		return nil, fmt.Errorf("failed to read Excel file: %v", err)
+		return nil, fmt.Errorf("%s: %v", constants.UserImportExcelReadFailed, err)
 	}
 
 	if len(rows) < 2 {
-		return nil, fmt.Errorf("Excel file must have at least header row and one data row")
+		return nil, fmt.Errorf(constants.UserImportExcelInsufficientRows)
 	}
 
 	// Get password default from config
@@ -109,26 +109,26 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 		if rowIndex >= 0 && rowIndex < len(rows) && len(rows[rowIndex]) < 5 {
 			parsedRow.Result.Success = false
 			parsedRow.Result.Status = "failed"
-			parsedRow.Result.ErrorMessage = "Row tidak memiliki cukup kolom (minimal 5 kolom: email, full_name, username, nik, role_name)"
+			parsedRow.Result.ErrorMessage = constants.UserImportRowInsufficientColumns
 			continue
 		}
 
 		// Validate required fields
 		var validationErrors []string
 		if parsedRow.Email == "" {
-			validationErrors = append(validationErrors, "email tidak boleh kosong")
+			validationErrors = append(validationErrors, constants.UserImportEmailRequired)
 		}
 		if parsedRow.FullName == "" {
-			validationErrors = append(validationErrors, "full_name tidak boleh kosong")
+			validationErrors = append(validationErrors, constants.UserImportFullNameRequired)
 		}
 		if parsedRow.Username == "" {
-			validationErrors = append(validationErrors, "username tidak boleh kosong")
+			validationErrors = append(validationErrors, constants.UserImportUsernameRequired)
 		}
 		if parsedRow.Nik == "" {
-			validationErrors = append(validationErrors, "nik tidak boleh kosong")
+			validationErrors = append(validationErrors, constants.UserImportNikRequired)
 		}
 		if parsedRow.RoleName == "" {
-			validationErrors = append(validationErrors, "role_name tidak boleh kosong")
+			validationErrors = append(validationErrors, constants.UserImportRoleNameRequired)
 		}
 
 		if len(validationErrors) > 0 {
@@ -142,7 +142,7 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 		if !strings.Contains(parsedRow.Email, "@") {
 			parsedRow.Result.Success = false
 			parsedRow.Result.Status = "failed"
-			parsedRow.Result.ErrorMessage = "Format email tidak valid"
+			parsedRow.Result.ErrorMessage = constants.UserImportEmailInvalidFormat
 			continue
 		}
 
@@ -156,7 +156,7 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 	// Phase 3: Batch validation - check for duplicates (single query for all)
 	duplicatedEmails, duplicatedUsernames, duplicatedNiks, err := u.userRepo.CheckBatchDuplication(ctx, emails, usernames, niks)
 	if err != nil {
-		return nil, fmt.Errorf("failed to check batch duplication: %v", err)
+		return nil, fmt.Errorf("%s: %v", constants.UserImportBatchDuplicationFailed, err)
 	}
 
 	// Phase 4: Batch fetch roles (cache roles to avoid duplicate queries)
@@ -210,7 +210,7 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 		// Check role
 		roleId, exists := roleMap[parsedRow.RoleName]
 		if !exists {
-			allErrors = append(allErrors, fmt.Sprintf("Role dengan nama '%s' tidak ditemukan", parsedRow.RoleName))
+			allErrors = append(allErrors, fmt.Sprintf(constants.UserImportRoleNotFound, parsedRow.RoleName))
 		}
 
 		// If there are any errors, mark as failed with all error messages
@@ -251,7 +251,7 @@ func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res
 				if idx < len(results) {
 					results[idx].Success = false
 					results[idx].Status = "failed"
-					results[idx].ErrorMessage = fmt.Sprintf("Error creating user in batch: %v", err)
+					results[idx].ErrorMessage = fmt.Sprintf("%s: %v", constants.UserImportBatchCreateFailed, err)
 				}
 			}
 		}

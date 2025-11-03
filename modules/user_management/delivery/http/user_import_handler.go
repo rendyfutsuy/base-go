@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/response"
 	"github.com/xuri/excelize/v2"
 )
@@ -30,19 +31,19 @@ func (handler *UserManagementHandler) ImportUsersFromExcel(c echo.Context) error
 	// Get uploaded file
 	file, err := c.FormFile("file")
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: "File tidak ditemukan. Gunakan field 'file' untuk upload Excel file"})
+		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.UserImportFileNotFound})
 	}
 
 	// Validate file extension
 	ext := filepath.Ext(file.Filename)
 	if ext != ".xlsx" && ext != ".xls" {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: "File harus berformat .xlsx atau .xls"})
+		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.UserImportInvalidFileFormat})
 	}
 
 	// Open uploaded file
 	src, err := file.Open()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{Message: fmt.Sprintf("Gagal membuka file: %v", err)})
+		return c.JSON(http.StatusInternalServerError, ResponseError{Message: fmt.Sprintf("%s: %v", constants.UserImportFileOpenFailed, err)})
 	}
 	defer src.Close()
 
@@ -54,7 +55,7 @@ func (handler *UserManagementHandler) ImportUsersFromExcel(c echo.Context) error
 	// Create temporary file
 	dst, err := os.Create(tempFilePath)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{Message: fmt.Sprintf("Gagal membuat file temporary: %v", err)})
+		return c.JSON(http.StatusInternalServerError, ResponseError{Message: fmt.Sprintf("%s: %v", constants.UserImportTempFileCreateFailed, err)})
 	}
 	defer dst.Close()
 	defer os.Remove(tempFilePath) // Clean up temporary file
@@ -62,7 +63,7 @@ func (handler *UserManagementHandler) ImportUsersFromExcel(c echo.Context) error
 	// Copy uploaded file to temporary file
 	_, err = io.Copy(dst, src)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{Message: fmt.Sprintf("Gagal menyimpan file: %v", err)})
+		return c.JSON(http.StatusInternalServerError, ResponseError{Message: fmt.Sprintf("%s: %v", constants.UserImportFileSaveFailed, err)})
 	}
 
 	// Process Excel file
@@ -153,7 +154,7 @@ func (handler *UserManagementHandler) DownloadUserImportTemplate(c echo.Context)
 	// Write Excel file to response
 	err = f.Write(c.Response().Writer)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{Message: fmt.Sprintf("Gagal membuat template: %v", err)})
+		return c.JSON(http.StatusInternalServerError, ResponseError{Message: fmt.Sprintf("%s: %v", constants.UserImportTemplateCreateFailed, err)})
 	}
 
 	return nil
