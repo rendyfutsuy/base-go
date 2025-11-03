@@ -1,21 +1,53 @@
 package controllers
 
 import (
+	"html/template"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/constants"
 )
 
-type Response struct {
-	Message string `json:"message"`
-	Version string `json:"version"`
+type HomepageData struct {
+	Version     string
+	LastUpdated string
 }
 
 func DefaultHomepage(c echo.Context) error {
-	response := Response{
-		Message: "Define version uses by Backend Resource, last updated 2025/08/11 08.11 WIB",
-		Version: constants.Version,
+	// Get the path to the template file
+	// Try to find the template file relative to the executable or current working directory
+	var templatePath string
+
+	// First, try relative path from current working directory
+	templatePath = filepath.Join("modules", "homepage", "delivery", "http", "templates", "homepage.html")
+	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
+		// If not found, try relative to the source file location
+		// This works during development when running from project root
+		templatePath = filepath.Join(".", "modules", "homepage", "delivery", "http", "templates", "homepage.html")
+		if _, err := os.Stat(templatePath); os.IsNotExist(err) {
+			return c.HTML(http.StatusInternalServerError, "<h1>Error: Template file not found</h1>")
+		}
 	}
-	return c.JSON(http.StatusOK, response)
+
+	// Parse template
+	tmpl, err := template.ParseFiles(templatePath)
+	if err != nil {
+		return c.HTML(http.StatusInternalServerError, "<h1>Error loading template</h1>")
+	}
+
+	// Prepare data
+	data := HomepageData{
+		Version:     constants.Version,
+		LastUpdated: "2025/11/03",
+	}
+
+	// Execute template
+	err = tmpl.Execute(c.Response().Writer, data)
+	if err != nil {
+		return c.HTML(http.StatusInternalServerError, "<h1>Error rendering template</h1>")
+	}
+
+	return nil
 }
