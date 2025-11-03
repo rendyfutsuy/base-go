@@ -18,7 +18,18 @@ func (u *authUsecase) GetProfile(ctx context.Context, accessToken string) (user 
 		return user, err
 	}
 
-	// Permissions will be fetched in handler from roleManagementRepo
+	// Get permissions from role if role_id exists
+	permissions := []string{}
+	if user.RoleId != uuid.Nil {
+		permissionList, err := u.roleManagementRepo.GetPermissionFromRoleId(ctx, user.RoleId)
+		if err == nil && len(permissionList) > 0 {
+			for _, permission := range permissionList {
+				permissions = append(permissions, permission.Name)
+			}
+		}
+	}
+	user.Permissions = permissions
+
 	return user, nil
 }
 

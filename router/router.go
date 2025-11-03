@@ -109,7 +109,6 @@ func InitializedRouter(db *sql.DB, gormDB *gorm.DB, redisClient *redis.Client, t
 	_authController.NewAuthHandler(
 		router,
 		authService,
-		roleManagementRepo,
 		middlewareAuth,
 		middlewarePageRequest,
 	)

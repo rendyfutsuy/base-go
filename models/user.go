@@ -29,6 +29,7 @@ type User struct {
 	ActiveStatus utils.NullString `gorm:"-" json:"active_status"`
 	IsBlocked    bool             `gorm:"-" json:"is_blocked"`
 	RoleName     string           `gorm:"-" json:"role_name"`
+	Permissions  []string         `gorm:"-" json:"permissions"`
 }
 
 // TableName specifies table name for GORM
