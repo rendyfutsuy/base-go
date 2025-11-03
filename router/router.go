@@ -101,6 +101,7 @@ func InitializedRouter(db *sql.DB, gormDB *gorm.DB, redisClient *redis.Client, t
 	// Auth
 	authService := _authService.NewAuthUsecase(
 		authRepo,
+		roleManagementRepo,
 		timeoutContext,
 		utils.ConfigVars.String("jwt_key"),
 		[]byte(utils.ConfigVars.String("jwt_key")),
@@ -108,6 +109,7 @@ func InitializedRouter(db *sql.DB, gormDB *gorm.DB, redisClient *redis.Client, t
 	_authController.NewAuthHandler(
 		router,
 		authService,
+		roleManagementRepo,
 		middlewareAuth,
 		middlewarePageRequest,
 	)

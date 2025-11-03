@@ -6,11 +6,13 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 
+	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/middleware"
 	_reqContext "github.com/rendyfutsuy/base-go/helpers/middleware/request"
 	"github.com/rendyfutsuy/base-go/modules/auth"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
+	roleManagement "github.com/rendyfutsuy/base-go/modules/role_management"
 	"github.com/rendyfutsuy/base-go/utils"
 )
 
@@ -29,19 +31,21 @@ type ResponseError struct {
 
 // AuthHandler represent the http handler for auth
 type AuthHandler struct {
-	AuthUseCase    auth.Usecase
-	validator      *validator.Validate
-	middlewareAuth middleware.IMiddlewareAuth
-	mwPageRequest  _reqContext.IMiddlewarePageRequest
+	AuthUseCase        auth.Usecase
+	RoleManagementRepo roleManagement.Repository
+	validator          *validator.Validate
+	middlewareAuth     middleware.IMiddlewareAuth
+	mwPageRequest      _reqContext.IMiddlewarePageRequest
 }
 
 // NewAuthHandler will initialize the auth/ resources endpoint
-func NewAuthHandler(e *echo.Echo, us auth.Usecase, middlewareAuth middleware.IMiddlewareAuth, mwP _reqContext.IMiddlewarePageRequest) {
+func NewAuthHandler(e *echo.Echo, us auth.Usecase, rm roleManagement.Repository, middlewareAuth middleware.IMiddlewareAuth, mwP _reqContext.IMiddlewarePageRequest) {
 	handler := &AuthHandler{
-		AuthUseCase:    us,
-		validator:      validator.New(),
-		middlewareAuth: middlewareAuth,
-		mwPageRequest:  mwP,
+		AuthUseCase:        us,
+		RoleManagementRepo: rm,
+		validator:          validator.New(),
+		middlewareAuth:     middlewareAuth,
+		mwPageRequest:      mwP,
 	}
 
 	r := e.Group("v1/auth")
@@ -176,6 +180,17 @@ func (handler *AuthHandler) GetProfile(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, GeneralResponse{Message: err.Error()})
 	}
 
+	// Get permissions from role if role_id exists
+	permissions := []string{}
+	if user.RoleId != uuid.Nil {
+		permissionList, err := handler.RoleManagementRepo.GetPermissionFromRoleId(ctx, user.RoleId)
+		if err == nil && len(permissionList) > 0 {
+			for _, permission := range permissionList {
+				permissions = append(permissions, permission.Name)
+			}
+		}
+	}
+
 	// Convert models.User to dto.UserProfile
 	profile := dto.UserProfile{
 		UserId: user.ID.String(),
@@ -185,7 +200,8 @@ func (handler *AuthHandler) GetProfile(c echo.Context) error {
 			String: user.RoleName,
 			Valid:  user.RoleName != "",
 		},
-		Gender: user.Gender,
+		Gender:      user.Gender,
+		Permissions: permissions,
 	}
 	if user.IsActive {
 		profile.Status = "Active"

@@ -18,6 +18,7 @@ func (u *authUsecase) GetProfile(ctx context.Context, accessToken string) (user 
 		return user, err
 	}
 
+	// Permissions will be fetched in handler from roleManagementRepo
 	return user, nil
 }
 
