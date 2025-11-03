@@ -40,7 +40,7 @@ func DefaultHomepage(c echo.Context) error {
 	// Prepare data
 	data := HomepageData{
 		Version:     constants.Version,
-		LastUpdated: "2025/11/03",
+		LastUpdated: "2025/11/03 14:32 WIB",
 	}
 
 	// Execute template
