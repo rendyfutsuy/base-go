@@ -8,11 +8,13 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/constants"
+	"github.com/rendyfutsuy/base-go/utils"
 )
 
 type HomepageData struct {
-	Version     string
-	LastUpdated string
+	Version        string
+	LastUpdated    string
+	ShowSwaggerLink bool
 }
 
 func DefaultHomepage(c echo.Context) error {
@@ -38,9 +40,13 @@ func DefaultHomepage(c echo.Context) error {
 	}
 
 	// Prepare data
+	appEnv := utils.ConfigVars.String("app_env")
+	showSwaggerLink := appEnv == "development"
+	
 	data := HomepageData{
-		Version:     constants.Version,
-		LastUpdated: "2025/11/03 14:32 WIB",
+		Version:        constants.Version,
+		LastUpdated:    "2025/11/03 14:32 WIB",
+		ShowSwaggerLink: showSwaggerLink,
 	}
 
 	// Execute template
