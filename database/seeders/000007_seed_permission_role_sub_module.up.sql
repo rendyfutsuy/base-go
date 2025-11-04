@@ -108,6 +108,18 @@ VALUES
     (
         'f9a3bff0-22f9-45f5-9385-623206b5b4da',
         'b8e7e8d9-4b8e-8e5e-8d8b-9a4b8e8e8e5f' 
+    ),
+    (
+        'd2193e52-4e89-4b50-b7ab-745d6ab36a22',
+        'b8fcd1a1-53e7-4d6e-b9c2-4582b3d9d0e3'
+    ),
+    (
+        'd2193e52-4e89-4b50-b7ab-745d6ab36a22',
+        'b8fcd1a1-53e7-4d6e-b9c2-4582b3d9d0e3'
+    ),
+    (
+        '3a02c1a9-d4c4-42a4-9f52-0c3b6794b580',
+        'f9a1a4be-6f2d-4e43-8a3a-3a3d21a7c2cb'
     )
 -- Sub Module Roles Permission Scope END
 ;
