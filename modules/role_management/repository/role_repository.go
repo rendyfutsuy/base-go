@@ -382,13 +382,37 @@ func (repo *roleRepository) UpdateRole(ctx context.Context, id uuid.UUID, roleRe
 func (repo *roleRepository) SoftDeleteRole(ctx context.Context, id uuid.UUID, roleReq dto.ToDBDeleteRole) (roleRes *models.Role, err error) {
 	roleRes = &models.Role{}
 
-	// GORM soft delete automatically sets deleted_at
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf(constants.RoleNotFoundWithIDRepo, id)
+		}
+		return nil, err
+	}
+
+	// Soft delete by updating deleted_at column (not using Delete() which would hard delete)
+	now := time.Now().UTC()
+	updates := map[string]interface{}{
+		"deleted_at": now,
+		"updated_at": now,
+	}
+
 	err = repo.DB.WithContext(ctx).
+		Model(&models.Role{}).
 		Where("id = ? AND deleted_at IS NULL", id).
-		Delete(&models.Role{}).Error
+		Updates(updates).Error
 
 	if err != nil {
 		return nil, err
+	}
+
+	// Update the deleted_at in the response
+	roleRes.DeletedAt = utils.NullTime{
+		Time:  now,
+		Valid: true,
+	}
+	roleRes.UpdatedAt = utils.NullTime{
+		Time:  now,
+		Valid: true,
 	}
 
 	// Get the deleted role (with Unscoped to include soft deleted)
@@ -397,13 +421,6 @@ func (repo *roleRepository) SoftDeleteRole(ctx context.Context, id uuid.UUID, ro
 		Select("id", "name", "created_at", "updated_at", "deleted_at").
 		Where("id = ?", id).
 		First(roleRes).Error
-
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf(constants.RoleNotFoundWithIDRepo, id)
-		}
-		return nil, err
-	}
 
 	return roleRes, nil
 }
@@ -430,8 +447,9 @@ func (repo *roleRepository) CountRole(ctx context.Context) (count *int, err erro
 func (repo *roleRepository) RoleNameIsNotDuplicated(ctx context.Context, name string, excludedId uuid.UUID) (bool, error) {
 	var count int64
 	query := repo.DB.WithContext(ctx).
+		Unscoped().
 		Model(&models.Role{}).
-		Where("name = ? AND deleted_at IS NULL", name)
+		Where("name = ?", name)
 
 	if excludedId != uuid.Nil {
 		query = query.Where("id <> ?", excludedId)
