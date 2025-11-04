@@ -116,7 +116,6 @@ func (u *roleUsecase) UpdateRole(c echo.Context, id string, req *dto.ReqUpdateRo
 	roleDb := dto.ToDBUpdateRole{
 		Name:             req.Name,
 		Description:      req.Description,
-		Cobs:             req.Cobs,
 		PermissionGroups: req.PermissionGroups,
 	}
 

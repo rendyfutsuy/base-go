@@ -853,7 +853,6 @@ func TestUpdateRole(t *testing.T) {
 		Name:             "Updated Role",
 		Description:      "Updated Description",
 		PermissionGroups: []uuid.UUID{validPermissionGroupID},
-		Cobs:             []uuid.UUID{validPermissionGroupID},
 	}
 
 	expectedRole := &models.Role{
@@ -924,7 +923,6 @@ func TestUpdateRole(t *testing.T) {
 				Name:             "'; DROP TABLE roles; --",
 				Description:      "Test",
 				PermissionGroups: []uuid.UUID{validPermissionGroupID},
-				Cobs:             []uuid.UUID{validPermissionGroupID},
 			},
 			setupMock: func() {
 				mockRoleRepo.On("GetPermissionGroupByID", ctx, validPermissionGroupID).Return(&models.PermissionGroup{ID: validPermissionGroupID}, nil).Once()
