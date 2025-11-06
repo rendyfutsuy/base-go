@@ -33,7 +33,8 @@
     "concurrency": 10
   },
   "auth": {
-    "access_token_ttl_seconds": 86400 // 24 jam
+    "access_token_ttl_seconds": 172800, // 2 days (2 * 24 * 60 * 60) - Redis session TTL
+    "jwt_expires_at_seconds": 1800 // 30 minutes (30 * 60) - JWT expiration time
   },
     "file": {
     "max_size": "30000000",

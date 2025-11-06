@@ -299,7 +299,7 @@ func (repo *authRepository) AddUserAccessToken(ctx context.Context, accessToken 
 	// Get TTL from config
 	ttlSeconds := utils.ConfigVars.Int("auth.access_token_ttl_seconds")
 	if ttlSeconds <= 0 {
-		ttlSeconds = 24 * 60 * 60 // Default 24 hours
+		ttlSeconds = 2 * 24 * 60 * 60 // Default 2 days
 	}
 	ttl := time.Duration(ttlSeconds) * time.Second
 
@@ -364,21 +364,33 @@ func (repo *authRepository) GetUserByAccessToken(ctx context.Context, accessToke
 	}
 
 	// Use GetSessionData helper from redis_repository.go
-	userData, err := repo.GetSessionData(ctx, jti)
-	if err != nil {
-		if err == redis.Nil {
-			log.Printf("No user found with this access token")
-			return user, errors.New(constants.AuthTokenInvalid)
+	userData, rerr := repo.GetSessionData(ctx, jti)
+	if rerr != nil {
+		if rerr == redis.Nil {
+			log.Printf("No session found")
+			return user, errors.New(constants.UserInvalid)
 		}
-		log.Printf("Error querying redis session: %v", err)
-		return user, err
+		log.Printf("Error querying redis session: %v", rerr)
+		return user, rerr
 	}
 
 	if userData == nil {
-		return user, errors.New(constants.AuthTokenInvalid)
+		log.Printf("No user data found in session")
+		return user, errors.New(constants.UserInvalid)
 	}
 
-	return *userData, nil
+	// Fetch user
+	err = repo.DB.WithContext(ctx).
+		Table("users").
+		Select("id", "full_name", "email", "username", "is_active", "gender", "role_id", "is_first_time_login").
+		Where("username = ? AND deleted_at IS NULL", userData.Username).
+		First(&user).Error
+
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
 }
 
 // DestroyToken deletes a JWT token from Redis using redis_repository helper.
@@ -444,21 +456,32 @@ func (repo *authRepository) FindByCurrentSession(ctx context.Context, accessToke
 		return user, errors.New(constants.UserInvalid)
 	}
 
+	// Fetch user
+	err = repo.DB.WithContext(ctx).
+		Table("users").
+		Select("id", "full_name", "email", "username", "is_active", "gender", "role_id", "is_first_time_login").
+		Where("username = ? AND deleted_at IS NULL", userData.Username).
+		First(&user).Error
+
+	if err != nil {
+		return user, err
+	}
+
 	// If RoleName is empty in session, fetch from database
-	if userData.RoleName == "" && userData.RoleId != uuid.Nil {
+	if user.RoleName == "" && user.RoleId != uuid.Nil {
 		// Fetch role name from database
 		var role models.Role
 		err := repo.DB.WithContext(ctx).
 			Table("roles").
 			Select("name").
-			Where("id = ? AND deleted_at IS NULL", userData.RoleId).
+			Where("id = ? AND deleted_at IS NULL", user.RoleId).
 			First(&role).Error
 		if err == nil {
-			userData.RoleName = role.Name
+			user.RoleName = role.Name
 		}
 	}
 
-	return *userData, nil
+	return user, nil
 }
 
 // UpdateProfileById updates the full name of a user profile by ID.
@@ -472,10 +495,14 @@ func (repo *authRepository) FindByCurrentSession(ctx context.Context, accessToke
 // - bool: True if the profile was successfully updated, false otherwise.
 // - error: An error if the update fails.
 func (repo *authRepository) UpdateProfileById(ctx context.Context, profileChunks dto.ReqUpdateProfile, userId uuid.UUID) (bool, error) {
+	updates := map[string]interface{}{
+		"password":            profileChunks.Name,
+		"is_first_time_login": false,
+	}
 	err := repo.DB.WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ?", userId).
-		Update("full_name", profileChunks.Name).Error
+		Updates(updates).Error
 
 	if err != nil {
 		return false, err
@@ -501,11 +528,15 @@ func (repo *authRepository) UpdatePasswordById(ctx context.Context, newPassword 
 		return false, err
 	}
 
-	// Update password
+	// Update password and set is_first_time_login to false
+	updates := map[string]interface{}{
+		"password":            string(hashedPassword),
+		"is_first_time_login": false,
+	}
 	err = repo.DB.WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ?", userId).
-		Update("password", string(hashedPassword)).Error
+		Updates(updates).Error
 
 	if err != nil {
 		return false, err

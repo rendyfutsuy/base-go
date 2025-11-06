@@ -61,18 +61,25 @@ func (u *authUsecase) Authenticate(ctx context.Context, login string, password s
 	}
 
 	// --- JWT Generation Logic ---
-	// Get TTL from config (same as AddUserAccessToken)
+	// Get Redis TTL from config (for session storage)
 	ttlSeconds := utils.ConfigVars.Int("auth.access_token_ttl_seconds")
 	if ttlSeconds <= 0 {
-		ttlSeconds = 24 * 60 * 60 // Default 24 hours
+		ttlSeconds = 2 * 24 * 60 * 60 // Default 2 days
+	}
+
+	// Get JWT expiration time from config (for token expiration)
+	jwtExpiresAtSeconds := utils.ConfigVars.Int("auth.jwt_expires_at_seconds")
+	if jwtExpiresAtSeconds <= 0 {
+		jwtExpiresAtSeconds = 30 * 60 // Default 30 minutes
 	}
 
 	now := time.Now().UTC()
 	issuedAt := now
-	expireTime := now.Add(time.Duration(ttlSeconds) * time.Second)
+	expireTime := now.Add(time.Duration(jwtExpiresAtSeconds) * time.Second)
 
 	// Generate JWT token
-	// access token expires based on TTL from config (same as Redis session)
+	// JWT expires based on jwt_expires_at_seconds (30 minutes)
+	// Redis session TTL is based on access_token_ttl_seconds (2 days)
 	claims := AuthClaims{
 		UserID: user.ID.String(),
 		RegisteredClaims: jwt.RegisteredClaims{
