@@ -45,18 +45,17 @@ func (u *authUsecase) Authenticate(ctx context.Context, login string, password s
 		return auth.AuthenticateResult{}, err // If fail to reset, return error.
 	}
 
-	// 2025/11/06 - Remove the password expiration check, i wont be needed
 	// assert if password expiration passed
-	// isPasswordExpired, err := u.authRepo.AssertPasswordExpiredIsPassed(ctx, user.ID)
-	// if err != nil {
-	// 	return auth.AuthenticateResult{}, err // Return error from the check itself.
-	// }
+	isPasswordExpired, err := u.authRepo.AssertPasswordExpiredIsPassed(ctx, user.ID)
+	if err != nil {
+		return auth.AuthenticateResult{}, err // Return error from the check itself.
+	}
 	// When the password has expired, `isPasswordExpired` is true.
 	// You must return the specific `ErrPasswordExpired` variable, not the `err` variable
 	// from the line above (which is nil in this case).
-	// if isPasswordExpired {
-	// 	return auth.AuthenticateResult{}, constants.ErrPasswordExpired
-	// }
+	if isPasswordExpired {
+		return auth.AuthenticateResult{}, constants.ErrPasswordExpired
+	}
 
 	// Get is_first_time_login status
 	isFirstTimeLogin, err := u.authRepo.GetIsFirstTimeLogin(ctx, user.ID)

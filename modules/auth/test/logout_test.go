@@ -20,7 +20,7 @@ func TestSignOut(t *testing.T) {
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, timeout, hashSalt, signingKey, 24*time.Hour)
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, 24*time.Hour)
 
 	validToken := "valid-access-token"
 

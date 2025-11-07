@@ -138,7 +138,7 @@ func TestAuthenticate(t *testing.T) {
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, timeout, hashSalt, signingKey, 24*time.Hour)
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, 24*time.Hour)
 
 	testUserID := uuid.New()
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
@@ -166,7 +166,7 @@ func TestAuthenticate(t *testing.T) {
 				mockRepo.On("AssertPasswordAttemptPassed", ctx, testUserID).Return(true, nil).Once()
 				mockRepo.On("AssertPasswordRight", ctx, "password123", testUserID).Return(true, nil).Once()
 				mockRepo.On("ResetPasswordAttempt", ctx, testUserID).Return(nil).Once()
-				// AssertPasswordExpiredIsPassed is commented out in usecase, so no need to mock it
+				mockRepo.On("AssertPasswordExpiredIsPassed", ctx, testUserID).Return(false, nil).Once()
 				mockRepo.On("GetIsFirstTimeLogin", ctx, testUserID).Return(false, nil).Once()
 				mockRepo.On("AddUserAccessToken", ctx, mock.AnythingOfType("string"), testUserID).Return(nil).Once()
 			},
@@ -218,14 +218,11 @@ func TestAuthenticate(t *testing.T) {
 				mockRepo.On("AssertPasswordAttemptPassed", ctx, testUserID).Return(true, nil).Once()
 				mockRepo.On("AssertPasswordRight", ctx, "password123", testUserID).Return(true, nil).Once()
 				mockRepo.On("ResetPasswordAttempt", ctx, testUserID).Return(nil).Once()
-				// AssertPasswordExpiredIsPassed is commented out in usecase, so no need to mock it
-				// Note: Password expiration check is commented out in usecase, so GetIsFirstTimeLogin will still be called
-				mockRepo.On("GetIsFirstTimeLogin", ctx, testUserID).Return(false, nil).Once()
-				mockRepo.On("AddUserAccessToken", ctx, mock.AnythingOfType("string"), testUserID).Return(nil).Once()
+				mockRepo.On("AssertPasswordExpiredIsPassed", ctx, testUserID).Return(true, nil).Once()
 			},
-			expectedError:  false, // Changed to false because password expiration check is commented out
-			expectedErrMsg: "",    // No error expected since password expiration check is disabled
-			description:    "Expired password check is disabled, so login succeeds",
+			expectedError:  true,
+			expectedErrMsg: constants.ErrPasswordExpired.Error(),
+			description:    "Expired password should return error",
 		},
 		{
 			name:     "Negative-Positive case - SQL injection attempt in login",
@@ -296,17 +293,17 @@ func TestAuthenticate(t *testing.T) {
 			mockRepo.Calls = nil
 			tt.setupMock()
 
-			token, err := usecaseInstance.Authenticate(ctx, tt.login, tt.password)
+			result, err := usecaseInstance.Authenticate(ctx, tt.login, tt.password)
 
 			if tt.expectedError {
 				assert.Error(t, err)
 				if tt.expectedErrMsg != "" {
 					assert.Contains(t, err.Error(), tt.expectedErrMsg)
 				}
-				assert.Empty(t, token)
+				assert.Empty(t, result.AccessToken)
 			} else {
 				assert.NoError(t, err)
-				assert.NotEmpty(t, token)
+				assert.NotEmpty(t, result.AccessToken)
 			}
 
 			mockRepo.AssertExpectations(t)
@@ -327,7 +324,7 @@ func TestIsUserPasswordExpired(t *testing.T) {
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, timeout, hashSalt, signingKey, 24*time.Hour)
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, 24*time.Hour)
 
 	testUserID := uuid.New()
 	testUser := models.User{

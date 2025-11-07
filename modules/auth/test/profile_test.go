@@ -11,9 +11,227 @@ import (
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 	"github.com/rendyfutsuy/base-go/modules/auth/usecase"
+	roleManagementDto "github.com/rendyfutsuy/base-go/modules/role_management/dto"
+	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+// MockRoleManagementRepository is a mock implementation of roleManagement.Repository
+type MockRoleManagementRepository struct {
+	mock.Mock
+}
+
+func (m *MockRoleManagementRepository) CreateTable(sqlFilePath string) error {
+	args := m.Called(sqlFilePath)
+	return args.Error(0)
+}
+
+func (m *MockRoleManagementRepository) CreateRole(ctx context.Context, roleReq roleManagementDto.ToDBCreateRole) (*models.Role, error) {
+	args := m.Called(ctx, roleReq)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Role), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetRoleByID(ctx context.Context, id uuid.UUID) (*models.Role, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Role), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetRoleByName(ctx context.Context, name string) (*models.Role, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Role), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetAllRole(ctx context.Context) ([]models.Role, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]models.Role), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetIndexRole(ctx context.Context, req request.PageRequest) ([]models.Role, int, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).([]models.Role), args.Int(1), args.Error(2)
+}
+
+func (m *MockRoleManagementRepository) UpdateRole(ctx context.Context, id uuid.UUID, roleReq roleManagementDto.ToDBUpdateRole) (*models.Role, error) {
+	args := m.Called(ctx, id, roleReq)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Role), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) SoftDeleteRole(ctx context.Context, id uuid.UUID, roleReq roleManagementDto.ToDBDeleteRole) (*models.Role, error) {
+	args := m.Called(ctx, id, roleReq)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Role), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) RoleNameIsNotDuplicated(ctx context.Context, name string, excludedId uuid.UUID) (bool, error) {
+	args := m.Called(ctx, name, excludedId)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetDuplicatedRole(ctx context.Context, name string, excludedId uuid.UUID) (*models.Role, error) {
+	args := m.Called(ctx, name, excludedId)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Role), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) RoleNameIsNotDuplicatedOnSoftDeleted(ctx context.Context, name string, excludedId uuid.UUID) (bool, error) {
+	args := m.Called(ctx, name, excludedId)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetDuplicatedRoleOnSoftDeleted(ctx context.Context, name string, excludedId uuid.UUID) (*models.Role, error) {
+	args := m.Called(ctx, name, excludedId)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Role), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) CountRole(ctx context.Context) (*int, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*int), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) ReAssignPermissionGroup(ctx context.Context, id uuid.UUID, permissionGroupReq roleManagementDto.ToDBUpdatePermissionGroupAssignmentToRole) error {
+	args := m.Called(ctx, id, permissionGroupReq)
+	return args.Error(0)
+}
+
+func (m *MockRoleManagementRepository) GetTotalUser(ctx context.Context, id uuid.UUID) (int, error) {
+	args := m.Called(ctx, id)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetPermissionFromRoleId(ctx context.Context, id uuid.UUID) ([]models.Permission, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return []models.Permission{}, args.Error(1)
+	}
+	return args.Get(0).([]models.Permission), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetPermissionGroupFromRoleId(ctx context.Context, id uuid.UUID) ([]models.PermissionGroup, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return []models.PermissionGroup{}, args.Error(1)
+	}
+	return args.Get(0).([]models.PermissionGroup), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) AssignUsers(ctx context.Context, roleId uuid.UUID, userReq []uuid.UUID) error {
+	args := m.Called(ctx, roleId, userReq)
+	return args.Error(0)
+}
+
+func (m *MockRoleManagementRepository) ReAssignPermissionsToPermissionGroup(ctx context.Context, id uuid.UUID, permissions []uuid.UUID) error {
+	args := m.Called(ctx, id, permissions)
+	return args.Error(0)
+}
+
+func (m *MockRoleManagementRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.User), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetPermissionByID(ctx context.Context, id uuid.UUID) (*models.Permission, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Permission), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetAllPermission(ctx context.Context) ([]models.Permission, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]models.Permission), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetIndexPermission(ctx context.Context, req request.PageRequest) ([]models.Permission, int, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).([]models.Permission), args.Int(1), args.Error(2)
+}
+
+func (m *MockRoleManagementRepository) PermissionNameIsNotDuplicated(ctx context.Context, name string, excludedId uuid.UUID) (bool, error) {
+	args := m.Called(ctx, name, excludedId)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetDuplicatedPermission(ctx context.Context, name string, excludedId uuid.UUID) (*models.Permission, error) {
+	args := m.Called(ctx, name, excludedId)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Permission), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) CountPermission(ctx context.Context) (*int, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*int), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetPermissionGroupByID(ctx context.Context, id uuid.UUID) (*models.PermissionGroup, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.PermissionGroup), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetAllPermissionGroup(ctx context.Context) ([]models.PermissionGroup, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]models.PermissionGroup), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetIndexPermissionGroup(ctx context.Context, req request.PageRequest) ([]models.PermissionGroup, int, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).([]models.PermissionGroup), args.Int(1), args.Error(2)
+}
+
+func (m *MockRoleManagementRepository) PermissionGroupNameIsNotDuplicated(ctx context.Context, name string, excludedId uuid.UUID) (bool, error) {
+	args := m.Called(ctx, name, excludedId)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) GetDuplicatedPermissionGroup(ctx context.Context, name string, excludedId uuid.UUID) (*models.PermissionGroup, error) {
+	args := m.Called(ctx, name, excludedId)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.PermissionGroup), args.Error(1)
+}
+
+func (m *MockRoleManagementRepository) CountPermissionGroup(ctx context.Context) (*int, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*int), args.Error(1)
+}
 
 func TestGetProfile(t *testing.T) {
 	// Setup test logger to prevent nil pointer panics
@@ -21,15 +239,18 @@ func TestGetProfile(t *testing.T) {
 
 	ctx := context.Background()
 	mockRepo := new(MockAuthRepository)
+	mockRoleManagementRepo := new(MockRoleManagementRepository)
 	signingKey := []byte("test-secret-key")
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, timeout, hashSalt, signingKey, 24*time.Hour)
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, mockRoleManagementRepo, timeout, hashSalt, signingKey, 24*time.Hour)
 
 	accessToken := "valid-access-token"
+	testRoleId := uuid.New()
 	expectedUser := models.User{
 		ID:       uuid.New(),
+		RoleId:   testRoleId,
 		FullName: "Test User",
 		Email:    "test@example.com",
 		RoleName: "Admin",
@@ -50,6 +271,8 @@ func TestGetProfile(t *testing.T) {
 			accessToken: accessToken,
 			setupMock: func() {
 				mockRepo.On("FindByCurrentSession", ctx, accessToken).Return(expectedUser, nil).Once()
+				mockRoleManagementRepo.On("GetPermissionFromRoleId", ctx, testRoleId).Return([]models.Permission{}, nil).Once()
+				mockRoleManagementRepo.On("GetPermissionGroupFromRoleId", ctx, testRoleId).Return([]models.PermissionGroup{}, nil).Once()
 			},
 			expectedError: false,
 			description:   "Valid token should return user profile",
@@ -101,6 +324,8 @@ func TestGetProfile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo.ExpectedCalls = nil
 			mockRepo.Calls = nil
+			mockRoleManagementRepo.ExpectedCalls = nil
+			mockRoleManagementRepo.Calls = nil
 			tt.setupMock()
 
 			user, err := usecaseInstance.GetProfile(ctx, tt.accessToken)
@@ -120,6 +345,7 @@ func TestGetProfile(t *testing.T) {
 			}
 
 			mockRepo.AssertExpectations(t)
+			mockRoleManagementRepo.AssertExpectations(t)
 		})
 	}
 }
@@ -134,7 +360,7 @@ func TestUpdateProfile(t *testing.T) {
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, timeout, hashSalt, signingKey, 24*time.Hour)
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, 24*time.Hour)
 
 	validUserId := uuid.New().String()
 
@@ -260,7 +486,7 @@ func TestUpdateMyPassword(t *testing.T) {
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, timeout, hashSalt, signingKey, 24*time.Hour)
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, 24*time.Hour)
 
 	validUserId := uuid.New().String()
 	oldPassword := "oldpassword123"

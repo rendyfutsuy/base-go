@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/rendyfutsuy/base-go/modules/auth"
+	roleManagement "github.com/rendyfutsuy/base-go/modules/role_management"
 	"github.com/rendyfutsuy/base-go/utils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -11,13 +12,15 @@ import (
 
 // NewTestAuthUsecase creates a new authUsecase instance for testing purposes
 // This allows test packages to create authUsecase instances with custom configurations
-func NewTestAuthUsecase(r auth.Repository, timeout time.Duration, hashSalt string, signingKey []byte, expireDuration time.Duration) *authUsecase {
+// roleManagementRepo can be nil if not needed for the test
+func NewTestAuthUsecase(r auth.Repository, rm roleManagement.Repository, timeout time.Duration, hashSalt string, signingKey []byte, expireDuration time.Duration) *authUsecase {
 	return &authUsecase{
-		authRepo:       r,
-		contextTimeout: timeout,
-		hashSalt:       hashSalt,
-		signingKey:     signingKey,
-		expireDuration: expireDuration,
+		authRepo:           r,
+		roleManagementRepo: rm,
+		contextTimeout:     timeout,
+		hashSalt:           hashSalt,
+		signingKey:         signingKey,
+		expireDuration:     expireDuration,
 	}
 }
 

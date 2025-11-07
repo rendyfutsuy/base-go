@@ -53,15 +53,13 @@ func NewAuthHandler(e *echo.Echo, us auth.Usecase, middlewareAuth middleware.IMi
 		handler.Authenticate,
 	)
 
-	// 2025/11/04: unused - commented first
-	// r.POST("/reset-password/request",
-	// 	handler.ResetPasswordRequest,
-	// )
+	r.POST("/reset-password/request",
+		handler.ResetPasswordRequest,
+	)
 
-	// 2025/11/04: unused - commented first
-	// r.POST("/reset-password/request/:token",
-	// 	handler.ResetUserPassword,
-	// )
+	r.POST("/reset-password/request/:token",
+		handler.ResetUserPassword,
+	)
 
 	// use middleware
 	r.Use(handler.middlewareAuth.AuthorizationCheck)
@@ -75,11 +73,10 @@ func NewAuthHandler(e *echo.Echo, us auth.Usecase, middlewareAuth middleware.IMi
 		handler.middlewareAuth.AuthorizationCheck,
 	)
 
-	// 2025/11/04: unused - commented first
-	// r.POST("/profile",
-	// 	handler.UpdateProfile,
-	// 	handler.middlewareAuth.AuthorizationCheck,
-	// )
+	r.POST("/profile",
+		handler.UpdateProfile,
+		handler.middlewareAuth.AuthorizationCheck,
+	)
 
 	r.POST("/profile/my-password",
 		handler.UpdateMyPassword,
@@ -114,12 +111,6 @@ func (handler *AuthHandler) Authenticate(c echo.Context) error {
 	if err := handler.validator.Struct(req); err != nil {
 		return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, constants.AuthUsernamePasswordNotFound))
 	}
-
-	// 2025/11/06 - Remove the password expiration check, i wont be needed
-	// check if user password already expired
-	// if err := handler.AuthUseCase.IsUserPasswordExpired(ctx, req.Login); err != nil {
-	// 	return c.JSON(419, response.SetErrorResponse(419, err.Error()))
-	// }
 
 	// Authenticate user
 	result, err := handler.AuthUseCase.Authenticate(ctx, req.Login, req.Password)
@@ -209,17 +200,17 @@ func (handler *AuthHandler) GetProfile(c echo.Context) error {
 }
 
 // 2025/11/04: unused - commented first
-// // @Summary		Update user profile
-// // @Description	Updates the profile information of the authenticated user
-// // @Tags			Authentication
-// // @Accept			json
-// // @Produce		json
-// // @Security		BearerAuth
-// // @Param			request	body		dto.ReqUpdateProfile	true	"Updated user profile data"
-// // @Success		200		{object}	GeneralResponse			"Successfully updated profile"
-// // @Failure		400		{object}	GeneralResponse			"Invalid request"
-// // @Failure		401		{object}	GeneralResponse			"Unauthorized"
-// // @Router			/v1/auth/profile [put]
+// @Summary		Update user profile
+// @Description	Updates the profile information of the authenticated user
+// @Tags			Authentication
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			request	body		dto.ReqUpdateProfile	true	"Updated user profile data"
+// @Success		200		{object}	GeneralResponse			"Successfully updated profile"
+// @Failure		400		{object}	GeneralResponse			"Invalid request"
+// @Failure		401		{object}	GeneralResponse			"Unauthorized"
+// @Router			/v1/auth/profile [put]
 func (handler *AuthHandler) UpdateProfile(c echo.Context) error {
 	ctx := c.Request().Context()
 
