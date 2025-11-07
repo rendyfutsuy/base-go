@@ -183,6 +183,11 @@ type MockAuthRepository struct {
 	mock.Mock
 }
 
+func (m *MockAuthRepository) GetIsFirstTimeLogin(ctx context.Context, userId uuid.UUID) (bool, error) {
+	args := m.Called(ctx, userId)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *MockAuthRepository) UpdatePasswordById(ctx context.Context, hashedPassword string, userId uuid.UUID) (bool, error) {
 	args := m.Called(ctx, hashedPassword, userId)
 	return args.Bool(0), args.Error(1)
@@ -527,7 +532,7 @@ func TestCreateUser(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecaseInstance, mockUserRepo, mockAuthRepo, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, mockAuthRepo, mockRoleRepo := createTestUsecase()
 	ctx := context.Background()
 
 	validRoleID := uuid.New()
@@ -564,6 +569,10 @@ func TestCreateUser(t *testing.T) {
 			req:    validReq,
 			authId: validAuthID,
 			setupMock: func() {
+				mockRoleRepo.On("GetRoleByID", ctx, validRoleID).Return(&models.Role{
+					ID:   validRoleID,
+					Name: "Test Role",
+				}, nil).Once()
 				mockUserRepo.On("EmailIsNotDuplicated", ctx, validReq.Email, uuid.Nil).Return(true, nil).Once()
 				mockUserRepo.On("CountUser", ctx).Return(&validCount, nil).Once()
 				mockUserRepo.On("CreateUser", ctx, mock.Anything).Return(expectedUser, nil).Once()
@@ -577,6 +586,10 @@ func TestCreateUser(t *testing.T) {
 			req:    validReq,
 			authId: validAuthID,
 			setupMock: func() {
+				mockRoleRepo.On("GetRoleByID", ctx, validReq.RoleId).Return(&models.Role{
+					ID:   validReq.RoleId,
+					Name: "Test Role",
+				}, nil).Once()
 				mockUserRepo.On("EmailIsNotDuplicated", ctx, validReq.Email, uuid.Nil).Return(false, nil).Once()
 			},
 			expectedError:  true,
@@ -588,6 +601,10 @@ func TestCreateUser(t *testing.T) {
 			req:    validReq,
 			authId: validAuthID,
 			setupMock: func() {
+				mockRoleRepo.On("GetRoleByID", ctx, validReq.RoleId).Return(&models.Role{
+					ID:   validReq.RoleId,
+					Name: "Test Role",
+				}, nil).Once()
 				mockUserRepo.On("EmailIsNotDuplicated", ctx, validReq.Email, uuid.Nil).Return(false, errors.New("database error")).Once()
 			},
 			expectedError:  true,
@@ -607,6 +624,10 @@ func TestCreateUser(t *testing.T) {
 			},
 			authId: validAuthID,
 			setupMock: func() {
+				mockRoleRepo.On("GetRoleByID", ctx, validRoleID).Return(&models.Role{
+					ID:   validRoleID,
+					Name: "Test Role",
+				}, nil).Once()
 				// Email should be validated and treated as normal string
 				mockUserRepo.On("EmailIsNotDuplicated", ctx, "'; DROP TABLE users; --", uuid.Nil).Return(true, nil).Once()
 				mockUserRepo.On("CountUser", ctx).Return(&validCount, nil).Once()
@@ -642,6 +663,7 @@ func TestCreateUser(t *testing.T) {
 			}
 
 			mockUserRepo.AssertExpectations(t)
+			mockRoleRepo.AssertExpectations(t)
 			mockAuthRepo.AssertExpectations(t)
 		})
 	}
@@ -651,7 +673,7 @@ func TestGetUserByID(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecaseInstance, mockUserRepo, _, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, _, mockRoleRepo := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -753,6 +775,7 @@ func TestGetUserByID(t *testing.T) {
 			}
 
 			mockUserRepo.AssertExpectations(t)
+			mockRoleRepo.AssertExpectations(t)
 		})
 	}
 }
@@ -761,7 +784,7 @@ func TestGetIndexUser(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecaseInstance, mockUserRepo, _, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, _, mockRoleRepo := createTestUsecase()
 	ctx := context.Background()
 
 	validPageReq := request.PageRequest{
@@ -857,6 +880,7 @@ func TestGetIndexUser(t *testing.T) {
 			}
 
 			mockUserRepo.AssertExpectations(t)
+			mockRoleRepo.AssertExpectations(t)
 		})
 	}
 }
@@ -865,7 +889,7 @@ func TestGetAllUser(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecaseInstance, mockUserRepo, _, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, _, mockRoleRepo := createTestUsecase()
 	ctx := context.Background()
 
 	expectedUsers := []models.User{
@@ -921,6 +945,7 @@ func TestGetAllUser(t *testing.T) {
 			}
 
 			mockUserRepo.AssertExpectations(t)
+			mockRoleRepo.AssertExpectations(t)
 		})
 	}
 }
@@ -929,7 +954,7 @@ func TestUpdateUser(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecaseInstance, mockUserRepo, _, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, _, mockRoleRepo := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -967,6 +992,10 @@ func TestUpdateUser(t *testing.T) {
 			req:    validReq,
 			authId: validAuthID,
 			setupMock: func() {
+				mockRoleRepo.On("GetRoleByID", ctx, validReq.RoleId).Return(&models.Role{
+					ID:   validReq.RoleId,
+					Name: "Test Role",
+				}, nil).Once()
 				mockUserRepo.On("EmailIsNotDuplicated", ctx, validReq.Email, validID).Return(true, nil).Once()
 				mockUserRepo.On("UpdateUser", ctx, validID, mock.Anything).Return(expectedUser, nil).Once()
 			},
@@ -991,6 +1020,10 @@ func TestUpdateUser(t *testing.T) {
 			req:    validReq,
 			authId: validAuthID,
 			setupMock: func() {
+				mockRoleRepo.On("GetRoleByID", ctx, validReq.RoleId).Return(&models.Role{
+					ID:   validReq.RoleId,
+					Name: "Test Role",
+				}, nil).Once()
 				mockUserRepo.On("EmailIsNotDuplicated", ctx, validReq.Email, validID).Return(false, nil).Once()
 			},
 			expectedError:  true,
@@ -1003,6 +1036,10 @@ func TestUpdateUser(t *testing.T) {
 			req:    validReq,
 			authId: validAuthID,
 			setupMock: func() {
+				mockRoleRepo.On("GetRoleByID", ctx, validReq.RoleId).Return(&models.Role{
+					ID:   validReq.RoleId,
+					Name: "Test Role",
+				}, nil).Once()
 				mockUserRepo.On("EmailIsNotDuplicated", ctx, validReq.Email, validID).Return(true, nil).Once()
 				mockUserRepo.On("UpdateUser", ctx, validID, mock.Anything).Return(nil, errors.New("database error")).Once()
 			},
@@ -1022,6 +1059,10 @@ func TestUpdateUser(t *testing.T) {
 			},
 			authId: validAuthID,
 			setupMock: func() {
+				mockRoleRepo.On("GetRoleByID", ctx, validRoleID).Return(&models.Role{
+					ID:   validRoleID,
+					Name: "Test Role",
+				}, nil).Once()
 				mockUserRepo.On("EmailIsNotDuplicated", ctx, "'; DROP TABLE users; --", validID).Return(true, nil).Once()
 				mockUserRepo.On("UpdateUser", ctx, validID, mock.Anything).Return(expectedUser, nil).Once()
 			},
@@ -1052,6 +1093,7 @@ func TestUpdateUser(t *testing.T) {
 			}
 
 			mockUserRepo.AssertExpectations(t)
+			mockRoleRepo.AssertExpectations(t)
 		})
 	}
 }
@@ -1060,12 +1102,12 @@ func TestSoftDeleteUser(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecaseInstance, mockUserRepo, _, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, _, mockRoleRepo := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
 	validIDString := validID.String()
-	validAuthID := uuid.New().String()
+	testUserID := uuid.New()
 
 	existingUser := &models.User{
 		ID:       validID,
@@ -1091,7 +1133,7 @@ func TestSoftDeleteUser(t *testing.T) {
 		{
 			name:   "Positive case - successful soft delete",
 			id:     validIDString,
-			authId: validAuthID,
+			authId: testUserID.String(),
 			setupMock: func() {
 				mockUserRepo.On("GetUserByID", ctx, validID).Return(existingUser, nil).Once()
 				mockUserRepo.On("SoftDeleteUser", ctx, validID, mock.Anything).Return(deletedUser, nil).Once()
@@ -1102,7 +1144,7 @@ func TestSoftDeleteUser(t *testing.T) {
 		{
 			name:   "Negative case - user not found",
 			id:     validIDString,
-			authId: validAuthID,
+			authId: testUserID.String(),
 			setupMock: func() {
 				mockUserRepo.On("GetUserByID", ctx, validID).Return(nil, errors.New("user not found")).Once()
 			},
@@ -1113,7 +1155,7 @@ func TestSoftDeleteUser(t *testing.T) {
 		{
 			name:   "Negative case - database error on delete",
 			id:     validIDString,
-			authId: validAuthID,
+			authId: testUserID.String(),
 			setupMock: func() {
 				mockUserRepo.On("GetUserByID", ctx, validID).Return(existingUser, nil).Once()
 				mockUserRepo.On("SoftDeleteUser", ctx, validID, mock.Anything).Return(nil, errors.New("database error")).Once()
@@ -1130,7 +1172,12 @@ func TestSoftDeleteUser(t *testing.T) {
 			mockUserRepo.Calls = nil
 			tt.setupMock()
 
-			c := e.NewContext(httptest.NewRequest(http.MethodDelete, "/", nil), httptest.NewRecorder())
+			req := httptest.NewRequest(http.MethodDelete, "/", nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetRequest(req.WithContext(ctx))
+			// Set user context
+			c.Set("user", models.User{ID: testUserID, Username: "testuser"})
 
 			result, err := usecaseInstance.SoftDeleteUser(c, tt.id, tt.authId)
 
@@ -1146,6 +1193,7 @@ func TestSoftDeleteUser(t *testing.T) {
 			}
 
 			mockUserRepo.AssertExpectations(t)
+			mockRoleRepo.AssertExpectations(t)
 		})
 	}
 }
@@ -1154,7 +1202,7 @@ func TestBlockUser(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecaseInstance, mockUserRepo, mockAuthRepo, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, mockAuthRepo, mockRoleRepo := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -1266,6 +1314,7 @@ func TestBlockUser(t *testing.T) {
 			}
 
 			mockUserRepo.AssertExpectations(t)
+			mockRoleRepo.AssertExpectations(t)
 			mockAuthRepo.AssertExpectations(t)
 		})
 	}
@@ -1275,7 +1324,7 @@ func TestActivateUser(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecaseInstance, mockUserRepo, mockAuthRepo, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, mockAuthRepo, mockRoleRepo := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -1387,6 +1436,7 @@ func TestActivateUser(t *testing.T) {
 			}
 
 			mockUserRepo.AssertExpectations(t)
+			mockRoleRepo.AssertExpectations(t)
 			mockAuthRepo.AssertExpectations(t)
 		})
 	}
@@ -1396,7 +1446,7 @@ func TestUserNameIsNotDuplicated(t *testing.T) {
 	setupTestLogger()
 
 	e := echo.New()
-	usecaseInstance, mockUserRepo, _, _ := createTestUsecase()
+	usecaseInstance, mockUserRepo, _, mockRoleRepo := createTestUsecase()
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -1481,6 +1531,7 @@ func TestUserNameIsNotDuplicated(t *testing.T) {
 			}
 
 			mockUserRepo.AssertExpectations(t)
+			mockRoleRepo.AssertExpectations(t)
 		})
 	}
 }

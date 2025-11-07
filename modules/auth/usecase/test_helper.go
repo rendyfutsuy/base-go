@@ -29,4 +29,3 @@ func SetupTestLogger() {
 		utils.Logger = zap.New(core)
 	}
 }
-

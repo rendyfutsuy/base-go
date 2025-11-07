@@ -8,56 +8,60 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/constants"
+	"github.com/rendyfutsuy/base-go/modules/auth"
 	"github.com/rendyfutsuy/base-go/utils"
 )
 
-func (u *authUsecase) Authenticate(ctx context.Context, login string, password string) (string, error) {
+func (u *authUsecase) Authenticate(ctx context.Context, login string, password string) (auth.AuthenticateResult, error) {
 	// get user by email
 	user, err := u.authRepo.FindByEmailOrUsername(ctx, login)
 
-	// if fail to get user return error
+	// if fail to get user return error with generic message
 	if err != nil {
-		return "", err
-
+		return auth.AuthenticateResult{}, errors.New(constants.AuthUsernamePasswordNotFound)
 	}
 
 	// assert login attempt is not above 3
 	isAttemptPassed, err := u.authRepo.AssertPasswordAttemptPassed(ctx, user.ID)
 	if err != nil {
-		return "", err // Return error from the check itself.
+		return auth.AuthenticateResult{}, errors.New(constants.AuthUsernamePasswordNotFound) // Return generic error for security
 	}
 	if !isAttemptPassed {
-		// This should return a specific "too many attempts" error.
-		// For now, we'll assume the repo returns it in the 'err' variable.
-		return "", errors.New(constants.AuthTooManyPasswordAttempts)
+		return auth.AuthenticateResult{}, errors.New(constants.AuthUsernamePasswordNotFound) // Return generic error for security
 	}
 
 	// assert password given is same with saved password
 	isPasswordRight, err := u.authRepo.AssertPasswordRight(ctx, password, user.ID)
 
 	if err != nil {
-		return "", err // Return error from the check itself.
+		return auth.AuthenticateResult{}, errors.New(constants.AuthUsernamePasswordNotFound) // Return generic error for security
 	}
 	if !isPasswordRight {
-		// This should return a specific "invalid credentials" error.
-		return "", errors.New(constants.AuthInvalidCredentials)
+		return auth.AuthenticateResult{}, errors.New(constants.AuthUsernamePasswordNotFound) // Return generic error for security
 	}
 
 	// Reset password attempt counter to 0 since login was successful.
 	if err := u.authRepo.ResetPasswordAttempt(ctx, user.ID); err != nil {
-		return "", err // If fail to reset, return error.
+		return auth.AuthenticateResult{}, err // If fail to reset, return error.
 	}
 
+	// 2025/11/06 - Remove the password expiration check, i wont be needed
 	// assert if password expiration passed
-	isPasswordExpired, err := u.authRepo.AssertPasswordExpiredIsPassed(ctx, user.ID)
-	if err != nil {
-		return "", err // Return error from the check itself.
-	}
+	// isPasswordExpired, err := u.authRepo.AssertPasswordExpiredIsPassed(ctx, user.ID)
+	// if err != nil {
+	// 	return auth.AuthenticateResult{}, err // Return error from the check itself.
+	// }
 	// When the password has expired, `isPasswordExpired` is true.
 	// You must return the specific `ErrPasswordExpired` variable, not the `err` variable
 	// from the line above (which is nil in this case).
-	if isPasswordExpired {
-		return "", constants.ErrPasswordExpired
+	// if isPasswordExpired {
+	// 	return auth.AuthenticateResult{}, constants.ErrPasswordExpired
+	// }
+
+	// Get is_first_time_login status
+	isFirstTimeLogin, err := u.authRepo.GetIsFirstTimeLogin(ctx, user.ID)
+	if err != nil {
+		return auth.AuthenticateResult{}, err // If fail to get, return error.
 	}
 
 	// --- JWT Generation Logic ---
@@ -92,15 +96,18 @@ func (u *authUsecase) Authenticate(ctx context.Context, login string, password s
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	accessToken, err := token.SignedString(u.signingKey)
 	if err != nil {
-		return "", err // If fail to sign, return error.
+		return auth.AuthenticateResult{}, err // If fail to sign, return error.
 	}
 
 	// Record access token to the database.
 	if err := u.authRepo.AddUserAccessToken(ctx, accessToken, user.ID); err != nil {
-		return "", err // If fail to record, return error.
+		return auth.AuthenticateResult{}, err // If fail to record, return error.
 	}
 
-	return accessToken, nil
+	return auth.AuthenticateResult{
+		AccessToken:      accessToken,
+		IsFirstTimeLogin: isFirstTimeLogin,
+	}, nil
 }
 
 func (u *authUsecase) IsUserPasswordExpired(ctx context.Context, login string) error {

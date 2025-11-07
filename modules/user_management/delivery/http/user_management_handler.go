@@ -34,47 +34,52 @@ func NewUserManagementHandler(e *echo.Echo, us user_management.Usecase, mwP _req
 	r.Use(handler.middlewareAuth.AuthorizationCheck)
 
 	// user scope
-	r.POST("/user", handler.CreateUser, handler.middlewarePermission.PermissionValidation([]string{"api.user-management.user.store"}))
+	r.POST("/user", handler.CreateUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.create"}))
 
 	// user index eligible permission
 	indexUser := []string{
-		"api.user-management.user.index",    // access user index
-		"api.user.management.user.update",   // access user update
-		"api.user-management.user.block",    // access user block
-		"api.user-management.user.activate", // access user activate
-		"api.user-management.user.store",    // access user store
+		"user.view",     // access user index
+		"user.update",   // access user update
+		"user.block",    // access user block
+		"user.activate", // access user activate
+		"user.create",   // access user store
 	}
-	r.GET("/user", handler.GetIndexUser, handler.mwPageRequest.PageRequestCtx, handler.middlewarePermission.PermissionValidation(indexUser))
+	r.GET("/user", handler.GetIndexUser, middleware.RequireActivatedUser, handler.mwPageRequest.PageRequestCtx, handler.middlewarePermission.PermissionValidation(indexUser))
 
 	// user show eligible permission
-	allUser := append(indexUser, "api.user-management.user.all")
-	r.GET("/user/all", handler.GetAllUser, handler.middlewarePermission.PermissionValidation(allUser))
+	allUser := append(indexUser, "user.all")
+	r.GET("/user/all", handler.GetAllUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(allUser))
 
 	// user show eligible permission
-	showUser := append(indexUser, "api.user-management.user.show")
-	r.GET("/user/:id", handler.GetUserByID, handler.middlewarePermission.PermissionValidation(showUser))
+	showUser := append(indexUser, "user.get")
+	r.GET("/user/:id", handler.GetUserByID, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(showUser))
 
 	// user update
-	r.PUT("/user/:id", handler.UpdateUser, handler.middlewarePermission.PermissionValidation([]string{"api.user-management.user.update"}))
+	r.PUT("/user/:id", handler.UpdateUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.update"}))
+
+	// user delete
+	r.DELETE("/user/:id", handler.DeleteUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.delete"}))
 
 	// user check name	eligible permission
-	checkUserName := append(showUser, "api.user-management.user.check-name")
-	r.GET("/user/check-name", handler.GetDuplicatedUser, handler.middlewarePermission.PermissionValidation(checkUserName))
+	checkUserName := append(showUser, "user.check-name")
+	r.GET("/user/check-name", handler.GetDuplicatedUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(checkUserName))
 
 	// user block
-	r.PATCH("/user/:id/block", handler.BlockUser, handler.middlewarePermission.PermissionValidation([]string{"api.user-management.user.block"}))
+	r.PATCH("/user/:id/block", handler.BlockUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.block"}))
 
 	// user activate
-	r.PATCH("/user/:id/assign-status", handler.ActivateUser, handler.middlewarePermission.PermissionValidation([]string{"api.user-management.user.activate"}))
+	r.PATCH("/user/:id/assign-status", handler.ActivateUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.activate"}))
 
 	// user update password
-	r.PATCH("/user/:id/password", handler.UpdateUserPassword, handler.middlewarePermission.PermissionValidation([]string{"api.user-management.user.update-password"}))
+	// Allow password update without RequireActivatedUser so user can activate themselves
+	r.PATCH("/user/:id/password", handler.UpdateUserPassword, handler.middlewarePermission.PermissionValidation([]string{"user.update-password"}))
 
 	// user password confirmation
+	// Allow password confirmation without RequireActivatedUser
 	r.POST("/user/password-confirmation", handler.ConfirmCurrentUserPassword)
 
 	// user import from Excel
-	r.GET("/user/import/template", handler.DownloadUserImportTemplate, handler.middlewarePermission.PermissionValidation([]string{"api.user-management.user.store"}))
-	r.POST("/user/import", handler.ImportUsersFromExcel, handler.middlewarePermission.PermissionValidation([]string{"api.user-management.user.store"}))
+	r.GET("/user/import/template", handler.DownloadUserImportTemplate, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.create"}))
+	r.POST("/user/import", handler.ImportUsersFromExcel, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.create"}))
 
 }

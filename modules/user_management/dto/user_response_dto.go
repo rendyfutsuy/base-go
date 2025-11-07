@@ -1,6 +1,8 @@
 package dto
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/utils"
@@ -24,6 +26,8 @@ type RespUserIndex struct {
 	IsActive     bool             `json:"is_active"`
 	ActiveStatus utils.NullString `json:"active_status"`
 	Gender       string           `json:"gender"`
+	CreatedAt    time.Time        `json:"created_at"`
+	UpdatedAt    time.Time        `json:"updated_at"`
 }
 
 type ReqUserIndexFilter struct {
@@ -52,6 +56,8 @@ type RespUserDetail struct {
 	IsActive     bool             `json:"is_active"`
 	ActiveStatus utils.NullString `json:"active_status"`
 	Gender       string           `json:"gender"`
+	CreatedAt    time.Time        `json:"created_at"`
+	UpdatedAt    time.Time        `json:"updated_at"`
 }
 
 // to get role info for compact use
@@ -76,6 +82,8 @@ func ToRespUserIndex(userDb models.User) RespUserIndex {
 		ActiveStatus: userDb.ActiveStatus,
 		RoleName:     userDb.RoleName,
 		Gender:       userDb.Gender,
+		CreatedAt:    userDb.CreatedAt,
+		UpdatedAt:    userDb.UpdatedAt,
 	}
 
 }
@@ -93,5 +101,7 @@ func ToRespUserDetail(userDb models.User) RespUserDetail {
 		IsActive:     userDb.IsActive,
 		ActiveStatus: userDb.ActiveStatus,
 		Gender:       userDb.Gender,
+		CreatedAt:    userDb.CreatedAt,
+		UpdatedAt:    userDb.UpdatedAt,
 	}
 }

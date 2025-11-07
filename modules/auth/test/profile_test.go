@@ -285,6 +285,7 @@ func TestUpdateMyPassword(t *testing.T) {
 			},
 			setupMock: func() {
 				parsedUUID, _ := uuid.Parse(validUserId)
+				mockRepo.On("GetIsFirstTimeLogin", ctx, parsedUUID).Return(true, nil).Once()
 				mockRepo.On("AssertPasswordRight", ctx, oldPassword, parsedUUID).Return(true, nil).Once()
 				mockRepo.On("AssertPasswordRight", ctx, newPassword, parsedUUID).Return(false, errors.New("Password Not Match")).Once()
 				mockRepo.On("AssertPasswordNeverUsesByUser", ctx, newPassword, parsedUUID).Return(true, nil).Once()
@@ -295,6 +296,22 @@ func TestUpdateMyPassword(t *testing.T) {
 			},
 			expectedError: false,
 			description:   "Valid password update should succeed",
+		},
+		{
+			name:   "Negative case - user already changed password",
+			userId: validUserId,
+			passwordChunks: dto.ReqUpdatePassword{
+				OldPassword:          oldPassword,
+				NewPassword:          newPassword,
+				PasswordConfirmation: newPassword,
+			},
+			setupMock: func() {
+				parsedUUID, _ := uuid.Parse(validUserId)
+				mockRepo.On("GetIsFirstTimeLogin", ctx, parsedUUID).Return(false, nil).Once()
+			},
+			expectedError:  true,
+			expectedErrMsg: constants.AuthPasswordAlreadyChanged,
+			description:    "User already changed password should return error",
 		},
 		{
 			name:   "Negative case - invalid UUID",
@@ -319,6 +336,7 @@ func TestUpdateMyPassword(t *testing.T) {
 			},
 			setupMock: func() {
 				parsedUUID, _ := uuid.Parse(validUserId)
+				mockRepo.On("GetIsFirstTimeLogin", ctx, parsedUUID).Return(true, nil).Once()
 				mockRepo.On("AssertPasswordRight", ctx, "wrongoldpassword", parsedUUID).Return(false, errors.New("Password Not Match")).Once()
 			},
 			expectedError:  true,
@@ -335,6 +353,7 @@ func TestUpdateMyPassword(t *testing.T) {
 			},
 			setupMock: func() {
 				parsedUUID, _ := uuid.Parse(validUserId)
+				mockRepo.On("GetIsFirstTimeLogin", ctx, parsedUUID).Return(true, nil).Once()
 				mockRepo.On("AssertPasswordRight", ctx, oldPassword, parsedUUID).Return(true, nil).Once()
 				mockRepo.On("AssertPasswordRight", ctx, oldPassword, parsedUUID).Return(true, nil).Once()
 			},
@@ -352,6 +371,7 @@ func TestUpdateMyPassword(t *testing.T) {
 			},
 			setupMock: func() {
 				parsedUUID, _ := uuid.Parse(validUserId)
+				mockRepo.On("GetIsFirstTimeLogin", ctx, parsedUUID).Return(true, nil).Once()
 				mockRepo.On("AssertPasswordRight", ctx, oldPassword, parsedUUID).Return(true, nil).Once()
 				mockRepo.On("AssertPasswordRight", ctx, newPassword, parsedUUID).Return(false, errors.New("Password Not Match")).Once()
 				mockRepo.On("AssertPasswordNeverUsesByUser", ctx, newPassword, parsedUUID).Return(false, errors.New("Youre already used this password")).Once()
@@ -370,6 +390,7 @@ func TestUpdateMyPassword(t *testing.T) {
 			},
 			setupMock: func() {
 				parsedUUID, _ := uuid.Parse(validUserId)
+				mockRepo.On("GetIsFirstTimeLogin", ctx, parsedUUID).Return(true, nil).Once()
 				mockRepo.On("AssertPasswordRight", ctx, "", parsedUUID).Return(false, errors.New("Password Not Match")).Once()
 			},
 			expectedError:  true,
@@ -386,6 +407,7 @@ func TestUpdateMyPassword(t *testing.T) {
 			},
 			setupMock: func() {
 				parsedUUID, _ := uuid.Parse(validUserId)
+				mockRepo.On("GetIsFirstTimeLogin", ctx, parsedUUID).Return(true, nil).Once()
 				mockRepo.On("AssertPasswordRight", ctx, oldPassword, parsedUUID).Return(true, nil).Once()
 				mockRepo.On("AssertPasswordRight", ctx, "", parsedUUID).Return(false, errors.New("Password Not Match")).Once()
 				mockRepo.On("AssertPasswordNeverUsesByUser", ctx, "", parsedUUID).Return(true, nil).Once()
@@ -407,6 +429,7 @@ func TestUpdateMyPassword(t *testing.T) {
 			},
 			setupMock: func() {
 				parsedUUID, _ := uuid.Parse(validUserId)
+				mockRepo.On("GetIsFirstTimeLogin", ctx, parsedUUID).Return(true, nil).Once()
 				// Should not match, SQL injection should not execute
 				mockRepo.On("AssertPasswordRight", ctx, "'; DROP TABLE users; --", parsedUUID).Return(false, errors.New("Password Not Match")).Once()
 			},
@@ -424,6 +447,7 @@ func TestUpdateMyPassword(t *testing.T) {
 			},
 			setupMock: func() {
 				parsedUUID, _ := uuid.Parse(validUserId)
+				mockRepo.On("GetIsFirstTimeLogin", ctx, parsedUUID).Return(true, nil).Once()
 				mockRepo.On("AssertPasswordRight", ctx, oldPassword, parsedUUID).Return(true, nil).Once()
 				// New password should not match old password
 				mockRepo.On("AssertPasswordRight", ctx, "'; DROP TABLE users; --", parsedUUID).Return(false, errors.New("Password Not Match")).Once()
@@ -436,6 +460,22 @@ func TestUpdateMyPassword(t *testing.T) {
 			},
 			expectedError: false,
 			description:   "SQL injection in new password should be treated as literal string",
+		},
+		{
+			name:   "Negative case - GetIsFirstTimeLogin returns error",
+			userId: validUserId,
+			passwordChunks: dto.ReqUpdatePassword{
+				OldPassword:          oldPassword,
+				NewPassword:          newPassword,
+				PasswordConfirmation: newPassword,
+			},
+			setupMock: func() {
+				parsedUUID, _ := uuid.Parse(validUserId)
+				mockRepo.On("GetIsFirstTimeLogin", ctx, parsedUUID).Return(false, errors.New("database error")).Once()
+			},
+			expectedError:  true,
+			expectedErrMsg: "database error",
+			description:    "Database error on GetIsFirstTimeLogin should return error",
 		},
 	}
 

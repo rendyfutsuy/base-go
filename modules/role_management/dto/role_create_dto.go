@@ -5,14 +5,14 @@ import (
 )
 
 type ReqCheckDuplicatedRole struct {
-	Name           string    `json:"name" validate:"required"`
+	Name           string    `json:"role_name" validate:"required,uppercase_letters"`
 	ExcludedRoleId uuid.UUID `json:"excluded_role_info_id"`
 }
 
 type ReqCreateRole struct {
-	Name             string      `json:"name" validate:"required,max=80"`
-	Description      string      `json:"description"`
-	PermissionGroups []uuid.UUID `json:"permission_groups" validate:"required,min=1"`
+	Name             string      `form:"role_name" json:"role_name" validate:"required,max=80,uppercase_letters"`
+	Description      string      `form:"description" json:"description"`
+	PermissionGroups []uuid.UUID `form:"accesses" json:"accesses" validate:"required,min=1"`
 }
 
 func (r *ReqCreateRole) ToDBCreateRole(code, authId string) ToDBCreateRole {
@@ -24,9 +24,7 @@ func (r *ReqCreateRole) ToDBCreateRole(code, authId string) ToDBCreateRole {
 }
 
 type ToDBCreateRole struct {
-	Name             string      `json:"name"`
+	Name             string      `json:"role_name"`
 	Description      string      `json:"description"`
-	PermissionGroups []uuid.UUID `json:"permission_groups"`
-	Cobs             []uuid.UUID `json:"cobs"`
-	Categories       []uuid.UUID `json:"categories"`
+	PermissionGroups []uuid.UUID `json:"accesses"`
 }

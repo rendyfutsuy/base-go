@@ -10,14 +10,14 @@ type ReqCheckDuplicatedUser struct {
 }
 
 type ReqCreateUser struct {
-	FullName             string    `json:"name" validate:"required,max=80"`
-	Username             string    `json:"username" validate:"required"`
-	RoleId               uuid.UUID `json:"role_id" validate:"required"`
-	Email                string    `json:"email" validate:"required,email,emaildomain"`
-	IsActive             bool      `json:"is_active"`
-	Gender               string    `json:"gender" validate:"required,oneof='male' 'female'"`
-	Password             string    `json:"password" validate:"required"`
-	PasswordConfirmation string    `json:"password_confirmation" validate:"required,eqfield=Password"`
+	FullName             string    `form:"name" json:"name" validate:"required,max=80,uppercase_letters"`
+	Username             string    `form:"username" json:"username" validate:"required,uppercase_letters"`
+	RoleId               uuid.UUID `form:"role_id" json:"role_id" validate:"required"`
+	Email                string    `form:"email" json:"email"`
+	IsActive             bool      `form:"is_active" json:"is_active"`
+	Gender               string    `form:"gender" json:"gender"`
+	Password             string    `form:"password" json:"password" validate:"required,min=8,password_uppercase"`
+	PasswordConfirmation string    `form:"password_confirmation" json:"password_confirmation" validate:"required,eqfield=Password"`
 }
 
 func (r *ReqCreateUser) ToDBCreateUser(code, authId string) ToDBCreateUser {

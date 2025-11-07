@@ -10,6 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/rendyfutsuy/base-go/helpers/response"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/utils"
 
@@ -43,7 +44,7 @@ func (a *MiddlewareAuth) AuthorizationCheck(next echo.HandlerFunc) echo.HandlerF
 
 		// if token set in header
 		if authorization == "" {
-			return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: "unauthorized"})
+			return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, "unauthorized"))
 		}
 
 		// if bearer token not set
@@ -52,7 +53,7 @@ func (a *MiddlewareAuth) AuthorizationCheck(next echo.HandlerFunc) echo.HandlerF
 		// tokenString = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQzMTUyMDAsInVzZXJfaWQiOiIwMTkwZDlkNi1kNDI3LTc5ZDctYjgyYy1jODAzN2EzYWQ0N2YifQ.e3lE58KU_NLE_hn4FJNLMfmgDkhLQL8xKRLJIxdUjGY"
 
 		if tokenString == "" {
-			return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: "unauthorized"})
+			return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, "unauthorized"))
 		}
 
 		// Check if this is a refresh token endpoint
@@ -78,7 +79,7 @@ func (a *MiddlewareAuth) AuthorizationCheck(next echo.HandlerFunc) echo.HandlerF
 			// For refresh token, we only fail if signature is invalid
 			// Expired token is fine as long as Redis session exists (validated in getUserData)
 			if err != nil || (token != nil && !token.Valid) {
-				return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: "unauthorized"})
+				return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, "unauthorized"))
 			}
 		} else {
 			// Standard parsing with expiration validation
@@ -88,12 +89,12 @@ func (a *MiddlewareAuth) AuthorizationCheck(next echo.HandlerFunc) echo.HandlerF
 
 			// Check if the token is expired (for non-refresh endpoints)
 			if claims.ExpiresAt != nil && claims.ExpiresAt.Unix() < time.Now().Unix() {
-				return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: "Token Expired"})
+				return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, "Token Expired"))
 			}
 
 			// check if token valid (signature and structure)
 			if err != nil || !token.Valid {
-				return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: "unauthorized"})
+				return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, "unauthorized"))
 			}
 		}
 
@@ -102,7 +103,7 @@ func (a *MiddlewareAuth) AuthorizationCheck(next echo.HandlerFunc) echo.HandlerF
 		// For other endpoints: session must exist and token must not be expired
 		userData, err := a.getUserData(ctx, tokenString)
 		if err != nil {
-			return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: err.Error()})
+			return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, err.Error()))
 		}
 
 		// set token and user data to context

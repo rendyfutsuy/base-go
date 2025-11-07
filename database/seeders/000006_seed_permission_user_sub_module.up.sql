@@ -32,6 +32,10 @@ VALUES
     (
         'b9185b71-5c25-45f7-bf1b-e3d4e09b4ecf',
         'b72e75d3-73fe-43fc-8b24-06b74f5c707d'
+    ),
+    (
+        'a96bf8ed-fb62-4786-bcd2-024f29c32194',
+        'fa2bcd6c-e4c7-4bda-b80e-cf9d3fdac557'
     )
 -- Sub Module Users Permission Scope END
 ;

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/rendyfutsuy/base-go/helpers/response"
 	"github.com/rendyfutsuy/base-go/models"
 
 	"github.com/google/uuid"
@@ -38,36 +39,36 @@ func (a *MiddlewarePermission) PermissionValidation(args []string) echo.Middlewa
 			authorization := c.Request().Header.Get("Authorization")
 
 			if authorization == "" {
-				return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: "Unauthorized: No Authorization header"})
+				return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, "Unauthorized: No Authorization header"))
 			}
 
 			tokenParts := strings.Split(authorization, "Bearer ")
 			if len(tokenParts) != 2 {
-				return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: "Unauthorized: Invalid Token format"})
+				return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, "Unauthorized: Invalid Token format"))
 			}
 
 			tokenString := tokenParts[1]
 			if tokenString == "" {
-				return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: "Unauthorized: Token not provided"})
+				return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, "Unauthorized: Token not provided"))
 			}
 
 			// get user data from token
 			user, err := a.getUserData(ctx, tokenString)
 
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: "Unauthorized: Token invalid"})
+				return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, "Unauthorized: Token invalid"))
 			}
 
 			// fetch permissions based on role user's has
 			// get user data from token
 			permissions, err := a.getUserPermissions(ctx, user.RoleId)
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, GeneralResponse{Message: "Unauthorized: Unable to fetch permissions"})
+				return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, "Unauthorized: Unable to fetch permissions"))
 			}
 
 			// compare if there match between permissions and requiredPermissions
 			if !a.assertUserHaveRequiredPermissions(permissions, args) {
-				return c.JSON(http.StatusForbidden, GeneralResponse{Message: "Forbidden: Insufficient permissions"})
+				return c.JSON(http.StatusForbidden, response.SetErrorResponse(http.StatusForbidden, "Forbidden: Insufficient permissions"))
 			}
 
 			return next(c)

@@ -53,7 +53,7 @@ func ValidateRequest(req interface{}, valStruck *validator.Validate) error {
 
 				if fe.Tag() == "min" {
 					// Construct a human-friendly error message
-					errorMessages = append(errorMessages, fmt.Sprintf("The Value You Enter is Insufficient"))
+					errorMessages = append(errorMessages, fmt.Sprintf("The %s Value You Enter is Insufficient", fe.Field()))
 				}
 
 				if fe.Tag() == "eqfield" {
@@ -93,6 +93,16 @@ func ValidateRequest(req interface{}, valStruck *validator.Validate) error {
 				if fe.Tag() == "required_if" {
 					// Construct a human-friendly error message
 					errorMessages = append(errorMessages, fmt.Sprintf("%s: now required", fieldName))
+				}
+
+				if fe.Tag() == "password_uppercase" {
+					// Construct a human-friendly error message
+					errorMessages = append(errorMessages, fmt.Sprintf("%s must be alphanumeric, minimum 8 characters, and all letters must be uppercase", fieldName))
+				}
+
+				if fe.Tag() == "uppercase_letters" {
+					// Construct a human-friendly error message
+					errorMessages = append(errorMessages, fmt.Sprintf("%s must have all alphabetic characters in uppercase", fieldName))
 				}
 			}
 			// Join all error messages and return as a single string
@@ -153,6 +163,42 @@ func validateEmailDomain(fl validator.FieldLevel) bool {
 	return regex.MatchString(email)
 }
 
+// Custom validation function for password
+// Password must be alphanumeric, minimum 8 characters, and all letters must be uppercase
+// shall not be called on other class by itself
+func validatePasswordUppercase(fl validator.FieldLevel) bool {
+	password := fl.Field().String()
+
+	// Check minimum length
+	if len(password) < 8 {
+		return false
+	}
+
+	// Check if all characters are alphanumeric and uppercase
+	// Regex: ^[A-Z0-9]+$ means only uppercase letters and numbers
+	regex := regexp.MustCompile(`^[A-Z0-9]+$`)
+	return regex.MatchString(password)
+}
+
+// Custom validation function for uppercase letters
+// Ensures all alphabetic characters in the string are uppercase
+// shall not be called on other class by itself
+func validateUppercaseLetters(fl validator.FieldLevel) bool {
+	str := fl.Field().String()
+	if str == "" {
+		return true // Skip validation if empty (use "required" tag for that)
+	}
+
+	// Check if all alphabetic characters are uppercase
+	// Regex: ^[^a-z]*$ means no lowercase letters allowed
+	for _, char := range str {
+		if char >= 'a' && char <= 'z' {
+			return false
+		}
+	}
+	return true
+}
+
 // Helper function to check if a slice contains a particular value
 func contains(slice []string, item string) bool {
 	return slices.Contains(slice, item)
@@ -161,6 +207,8 @@ func contains(slice []string, item string) bool {
 func RegisterCustomValidator(v *validator.Validate) {
 	v.RegisterValidation("emaildomain", validateEmailDomain)
 	v.RegisterValidation("nullableDate", validateNullableDate)
+	v.RegisterValidation("password_uppercase", validatePasswordUppercase)
+	v.RegisterValidation("uppercase_letters", validateUppercaseLetters)
 }
 
 // Helper function to get custom field name from struct tag

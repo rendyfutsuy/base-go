@@ -22,6 +22,7 @@ type Usecase interface {
 
 	// password management
 	UpdateUserPassword(c echo.Context, userId string, passwordChunks *dto.ReqUpdateUserPassword) error
+	UpdateUserPasswordNoCheckRequired(c echo.Context, userId string, passwordChunks *dto.ReqUpdateUserPassword) error
 	AssertCurrentUserPassword(c echo.Context, id string, inputtedPassword string) error
 
 	// import users

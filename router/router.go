@@ -48,6 +48,26 @@ import (
 	_roleManagementController "github.com/rendyfutsuy/base-go/modules/role_management/delivery/http"
 	_roleManagementRepo "github.com/rendyfutsuy/base-go/modules/role_management/repository"
 	_roleManagementService "github.com/rendyfutsuy/base-go/modules/role_management/usecase"
+
+	_groupController "github.com/rendyfutsuy/base-go/modules/group/delivery/http"
+	_groupRepo "github.com/rendyfutsuy/base-go/modules/group/repository"
+	_groupService "github.com/rendyfutsuy/base-go/modules/group/usecase"
+
+	_parameterController "github.com/rendyfutsuy/base-go/modules/parameter/delivery/http"
+	_parameterRepo "github.com/rendyfutsuy/base-go/modules/parameter/repository"
+	_parameterService "github.com/rendyfutsuy/base-go/modules/parameter/usecase"
+
+	_regencyController "github.com/rendyfutsuy/base-go/modules/regency/delivery/http"
+	_regencyRepo "github.com/rendyfutsuy/base-go/modules/regency/repository"
+	_regencyService "github.com/rendyfutsuy/base-go/modules/regency/usecase"
+
+	_subGroupController "github.com/rendyfutsuy/base-go/modules/sub-group/delivery/http"
+	_subGroupRepo "github.com/rendyfutsuy/base-go/modules/sub-group/repository"
+	_subGroupService "github.com/rendyfutsuy/base-go/modules/sub-group/usecase"
+
+	_typeController "github.com/rendyfutsuy/base-go/modules/type/delivery/http"
+	_typeRepo "github.com/rendyfutsuy/base-go/modules/type/repository"
+	_typeService "github.com/rendyfutsuy/base-go/modules/type/usecase"
 )
 
 func InitializedRouter(db *sql.DB, gormDB *gorm.DB, redisClient *redis.Client, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
@@ -84,10 +104,20 @@ func InitializedRouter(db *sql.DB, gormDB *gorm.DB, redisClient *redis.Client, t
 	}
 
 	// Repositories ------------------------------------------------------------------------------------------------------------------------------------------------------
-	authRepo := _authRepo.NewAuthRepository(gormDB, emailServices, redisClient)    // Using GORM for auth
+	authRepo := _authRepo.NewAuthRepository(gormDB, emailServices, redisClient)   // Using GORM for auth
 	roleManagementRepo := _roleManagementRepo.NewRoleManagementRepository(gormDB) // Using GORM for role_management
 
 	userManagementRepo := _userManagementRepo.NewUserManagementRepository(gormDB) // Using GORM for user_management
+
+	groupRepo := _groupRepo.NewGroupRepository(gormDB) // Using GORM for group
+
+	parameterRepo := _parameterRepo.NewParameterRepository(gormDB) // Using GORM for parameter
+
+	regencyRepo := _regencyRepo.NewRegencyRepository(gormDB) // Using GORM for regency
+
+	subGroupRepo := _subGroupRepo.NewSubGroupRepository(gormDB) // Using GORM for sub-group
+
+	typeRepo := _typeRepo.NewTypeRepository(gormDB) // Using GORM for type
 
 	// Middlewares ------------------------------------------------------------------------------------------------------------------------------------------------------
 	middlewareAuth := authmiddleware.NewMiddlewareAuth(authRepo)
@@ -137,6 +167,56 @@ func InitializedRouter(db *sql.DB, gormDB *gorm.DB, redisClient *redis.Client, t
 	_userManagementController.NewUserManagementHandler(
 		router,
 		userManagementService,
+		middlewarePageRequest,
+		middlewareAuth,
+		middlewarePermission,
+	)
+
+	// group management
+	groupService := _groupService.NewGroupUsecase(groupRepo)
+	_groupController.NewGroupHandler(
+		router,
+		groupService,
+		middlewarePageRequest,
+		middlewareAuth,
+		middlewarePermission,
+	)
+
+	// parameter management
+	parameterService := _parameterService.NewParameterUsecase(parameterRepo)
+	_parameterController.NewParameterHandler(
+		router,
+		parameterService,
+		middlewarePageRequest,
+		middlewareAuth,
+		middlewarePermission,
+	)
+
+	// regency management
+	regencyService := _regencyService.NewRegencyUsecase(regencyRepo)
+	_regencyController.NewRegencyHandler(
+		router,
+		regencyService,
+		middlewarePageRequest,
+		middlewareAuth,
+		middlewarePermission,
+	)
+
+	// sub-group management
+	subGroupService := _subGroupService.NewSubGroupUsecase(subGroupRepo, groupRepo)
+	_subGroupController.NewSubGroupHandler(
+		router,
+		subGroupService,
+		middlewarePageRequest,
+		middlewareAuth,
+		middlewarePermission,
+	)
+
+	// type management
+	typeService := _typeService.NewTypeUsecase(typeRepo, subGroupRepo)
+	_typeController.NewTypeHandler(
+		router,
+		typeService,
 		middlewarePageRequest,
 		middlewareAuth,
 		middlewarePermission,

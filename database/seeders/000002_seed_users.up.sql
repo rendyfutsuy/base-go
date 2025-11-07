@@ -11,7 +11,8 @@ INSERT INTO users (
     is_active,
     gender,
     counter,
-    nik
+    nik,
+    is_first_time_login
 ) VALUES
 (
     -- Super Admin User
@@ -31,5 +32,6 @@ INSERT INTO users (
     TRUE,
     'male',
     0,
-    '3175091206980001'
+    '3175091206980001',
+    false
 )

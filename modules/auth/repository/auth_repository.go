@@ -545,6 +545,29 @@ func (repo *authRepository) UpdatePasswordById(ctx context.Context, newPassword 
 	return true, nil
 }
 
+// GetIsFirstTimeLogin retrieves the is_first_time_login status of a user by ID.
+//
+// Parameters:
+// - ctx: The context for managing request lifecycle and cancellation.
+// - userId: The unique identifier of the user.
+//
+// Returns:
+// - bool: The is_first_time_login status of the user.
+// - error: An error if the retrieval fails.
+func (repo *authRepository) GetIsFirstTimeLogin(ctx context.Context, userId uuid.UUID) (bool, error) {
+	var user models.User
+	err := repo.DB.WithContext(ctx).
+		Select("is_first_time_login").
+		Where("id = ? AND deleted_at IS NULL", userId).
+		First(&user).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	return user.IsFirstTimeLogin, nil
+}
+
 // DestroyAllToken deletes all tokens associated with a specific user ID.
 // Uses the user token set maintained in AddUserAccessToken for efficient deletion.
 //

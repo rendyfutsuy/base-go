@@ -95,6 +95,59 @@ func (u *userUsecase) UpdateUserPassword(c echo.Context, id string, passwordChun
 	return nil
 }
 
+func (u *userUsecase) UpdateUserPasswordNoCheckRequired(c echo.Context, id string, passwordChunks *dto.ReqUpdateUserPassword) error {
+	ctx := c.Request().Context()
+
+	// parsing UUID
+	userId, err := utils.StringToUUID(id)
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		return err
+	}
+
+	// add new password to password history
+	// hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(passwordChunks.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		return err
+	}
+
+	// add new password to password history
+	err = u.auth.AddPasswordHistory(ctx, string(hashedPassword), userId)
+
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		return err
+	}
+
+	// reset password attempt counter to 0
+	err = u.auth.ResetPasswordAttempt(ctx, userId)
+
+	// if fail to reset return error
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		return err
+	}
+
+	// update user password bases on new_password
+	_, err = u.auth.UpdatePasswordById(ctx, passwordChunks.NewPassword, userId)
+
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		return err
+	}
+
+	// destroy all token session
+	err = u.auth.DestroyAllToken(ctx, userId)
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		return err
+	}
+
+	return nil
+}
+
 func (u *userUsecase) AssertCurrentUserPassword(c echo.Context, id string, inputtedPassword string) error {
 	ctx := c.Request().Context()
 

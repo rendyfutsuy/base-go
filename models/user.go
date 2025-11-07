@@ -24,11 +24,12 @@ type User struct {
 	PasswordExpiredAt time.Time      `gorm:"column:password_expired_at" json:"password_expired_at"`
 	Gender            string         `gorm:"column:gender;type:varchar(20)" json:"gender"`
 	Counter           int            `gorm:"column:counter;default:0" json:"counter"`
+	IsFirstTimeLogin  bool           `gorm:"column:is_first_time_login;default:true" json:"is_first_time_login"`
 
 	// mutator - not stored in DB
-	ActiveStatus     utils.NullString `gorm:"-" json:"active_status"`
-	IsBlocked        bool             `gorm:"-" json:"is_blocked"`
-	RoleName         string           `gorm:"column:role_name;<-:false" json:"role_name"` // Read-only: used for fetch, ignored on insert/update
+	ActiveStatus     utils.NullString `gorm:"column:active_status;<-:false" json:"active_status"` // Read-only: used for fetch, ignored on insert/update
+	IsBlocked        bool             `gorm:"column:is_blocked;<-:false" json:"is_blocked"`       // Read-only: used for fetch, ignored on insert/update
+	RoleName         string           `gorm:"column:role_name;<-:false" json:"role_name"`         // Read-only: used for fetch, ignored on insert/update
 	Permissions      []string         `gorm:"-" json:"permissions"`
 	PermissionGroups []string         `gorm:"-" json:"permission_groups"`
 	Modules          []string         `gorm:"-" json:"modules"`

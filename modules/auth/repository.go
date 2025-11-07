@@ -32,4 +32,7 @@ type Repository interface {
 	DestroyResetPasswordToken(ctx context.Context, token string) error
 	IncreasePasswordExpiredAt(ctx context.Context, userId uuid.UUID) error
 	DestroyAllResetPasswordToken(ctx context.Context, userId uuid.UUID) error
+
+	// Get user is_first_time_login status
+	GetIsFirstTimeLogin(ctx context.Context, userId uuid.UUID) (bool, error)
 }

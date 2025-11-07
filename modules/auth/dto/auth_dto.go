@@ -10,25 +10,23 @@ type ReqAuthUser struct {
 }
 
 type UserProfile struct {
-	UserId          string          `json:"user_id"`
-	Name            string          `json:"name"`
-	Role            utils.NullString `json:"role"`
-	Email           string          `json:"email"`
-	Status          string          `json:"status"`
-	Gender          string          `json:"gender"`
-	Permissions     []string        `json:"permissions"`
-	PermissionGroups []string       `json:"permission_groups"`
-	Modules         []string        `json:"modules"`
+	UserId           string           `json:"id"`
+	Name             string           `json:"name"`
+	Username         string           `json:"username"`
+	Role             utils.NullString `json:"role"`
+	Email            string           `json:"email"`
+	IsFirstTimeLogin bool             `json:"is_first_time_login"`
+	Permissions      []string         `json:"permissions"`
 }
 
 type ReqUpdateProfile struct {
-	Name string `json:"name" validate:"required"`
+	Name string `form:"name" json:"name" validate:"required"`
 }
 
 type ReqUpdatePassword struct {
-	OldPassword          string `json:"old_password" validate:"required"`
-	NewPassword          string `json:"new_password" validate:"required"`
-	PasswordConfirmation string `json:"password_confirmation" validate:"required,eqfield=NewPassword"`
+	OldPassword          string `form:"old_password" json:"old_password" validate:"required"`
+	NewPassword          string `form:"new_password" json:"new_password" validate:"required"`
+	PasswordConfirmation string `form:"password_confirmation" json:"password_confirmation" validate:"required,eqfield=NewPassword"`
 }
 
 type ReqResetPasswordRequest struct {

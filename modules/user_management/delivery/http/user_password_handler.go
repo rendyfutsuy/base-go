@@ -25,9 +25,9 @@ import (
 // @Param			id		path	string					true	"User UUID"
 // @Param			request	body	dto.ReqUpdateUserPassword	true	"Password update data"
 // @Success		200		{object}	response.NonPaginationResponse{data=dto.RespUser}	"Successfully updated password"
-// @Failure		400		{object}	ResponseError	"Bad request - validation error"
-// @Failure		401		{object}	ResponseError	"Unauthorized"
-// @Failure		404		{object}	ResponseError	"User not found"
+// @Failure		400		{object}	response.NonPaginationResponse	"Bad request - validation error"
+// @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
+// @Failure		404		{object}	response.NonPaginationResponse	"User not found"
 // @Router			/v1/user-management/user/{id}/password [patch]
 func (handler *UserManagementHandler) UpdateUserPassword(c echo.Context) error {
 	// get params ID
@@ -36,29 +36,29 @@ func (handler *UserManagementHandler) UpdateUserPassword(c echo.Context) error {
 	// validate id
 	err := uuid.Validate(id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.ErrorUUIDNotRecognized})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.ErrorUUIDNotRecognized))
 	}
 
 	req := new(dto.ReqUpdateUserPassword)
 	if err := c.Bind(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// validate request
 	if err := c.Validate(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// update Update User Password By Passed ID
 	err = handler.UserUseCase.UpdateUserPassword(c, id, req)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// get User ID By Passed ID
 	res, err := handler.UserUseCase.GetUserByID(c, id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	resResp := dto.ToRespUser(*res)
@@ -77,8 +77,8 @@ func (handler *UserManagementHandler) UpdateUserPassword(c echo.Context) error {
 // @Security		BearerAuth
 // @Param			request	body	dto.ReqConfirmationUserPassword	true	"Password confirmation data"
 // @Success		200		{object}	response.NonPaginationResponse{data=dto.RespUser}	"Password confirmed successfully"
-// @Failure		400		{object}	ResponseError	"Bad request - invalid password"
-// @Failure		401		{object}	ResponseError	"Unauthorized"
+// @Failure		400		{object}	response.NonPaginationResponse	"Bad request - invalid password"
+// @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/user-management/user/password-confirmation [post]
 func (handler *UserManagementHandler) ConfirmCurrentUserPassword(c echo.Context) error {
 	// get auth ID
@@ -87,24 +87,24 @@ func (handler *UserManagementHandler) ConfirmCurrentUserPassword(c echo.Context)
 
 	req := new(dto.ReqConfirmationUserPassword)
 	if err := c.Bind(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// validate request
 	if err := c.Validate(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// update Update User Password By Passed ID
 	err := handler.UserUseCase.AssertCurrentUserPassword(c, authId, req.Password)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// get User ID By Passed ID
 	res, err := handler.UserUseCase.GetUserByID(c, authId)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	resResp := dto.ToRespUser(*res)

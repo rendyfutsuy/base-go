@@ -15,7 +15,7 @@ type RespRole struct {
 
 type RespRoleIndex struct {
 	ID        uuid.UUID          `json:"id"`
-	Name      string             `json:"name"`
+	Name      string             `json:"role_name"`
 	TotalUser int                `json:"total_user"`
 	CreatedAt time.Time          `json:"created_at"`
 	UpdatedAt utils.NullTime     `json:"updated_at"`
@@ -29,14 +29,13 @@ type RespPermissionGroupRoleDetail struct {
 }
 
 type RespRoleDetail struct {
-	ID               uuid.UUID                       `json:"id"`
-	Name             string                          `json:"name"`
-	TotalUser        int                             `json:"total_user"`
-	PermissionGroups []RespPermissionGroupRoleDetail `json:"permission_groups"`
-	Modules          []utils.NullString              `json:"modules"`
-	CreatedAt        time.Time                       `json:"created_at"`
-	UpdatedAt        utils.NullTime                  `json:"updated_at"`
-	Description      utils.NullString                `json:"description"`
+	ID          uuid.UUID                     `json:"id"`
+	Name        string                        `json:"role_name"`
+	TotalUser   int                           `json:"total_user"`
+	Modules     []RespPermissionGroupByModule `json:"modules"`
+	CreatedAt   time.Time                     `json:"created_at"`
+	UpdatedAt   utils.NullTime                `json:"updated_at"`
+	Description utils.NullString              `json:"description"`
 }
 
 // to get role info for compact use
@@ -83,7 +82,7 @@ func ToRespRoleIndex(roleDb models.Role) RespRoleIndex {
 }
 
 // to get role info with references
-func ToRespRoleDetail(roleDb models.Role) RespRoleDetail {
+func ToRespRoleDetail(roleDb models.Role, modules []RespPermissionGroupByModule) RespRoleDetail {
 	// mapping permission group to show at Role Detail
 	PermissionGroups := make([]RespPermissionGroupRoleDetail, 0)
 	for _, PermissionGroup := range roleDb.PermissionGroups {
@@ -95,24 +94,13 @@ func ToRespRoleDetail(roleDb models.Role) RespRoleDetail {
 		})
 	}
 
-	// mapping permission to show at Role Detail
-	Modules := make([]utils.NullString, 0)
-	for _, Module := range roleDb.Modules {
-		// append Module to array
-
-		if Module.String != "" {
-			Modules = append(Modules, Module)
-		}
-	}
-
 	return RespRoleDetail{
-		ID:               roleDb.ID,
-		Name:             roleDb.Name,
-		TotalUser:        roleDb.TotalUser,
-		PermissionGroups: PermissionGroups,
-		Modules:          Modules,
-		CreatedAt:        roleDb.CreatedAt,
-		UpdatedAt:        roleDb.UpdatedAt,
-		Description:      roleDb.Description,
+		ID:          roleDb.ID,
+		Name:        roleDb.Name,
+		TotalUser:   roleDb.TotalUser,
+		Modules:     modules,
+		CreatedAt:   roleDb.CreatedAt,
+		UpdatedAt:   roleDb.UpdatedAt,
+		Description: roleDb.Description,
 	}
 }

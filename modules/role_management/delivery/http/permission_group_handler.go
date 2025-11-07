@@ -31,7 +31,7 @@ func (handler *RoleManagementHandler) GetIndexPermissionGroup(c echo.Context) er
 	res, total, err := handler.RoleUseCase.GetIndexPermissionGroup(c, *pageRequest)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	respPermissionGroup := []dto.RespPermissionGroupIndex{}
@@ -44,7 +44,7 @@ func (handler *RoleManagementHandler) GetIndexPermissionGroup(c echo.Context) er
 	respPag, err = respPag.SetResponse(respPermissionGroup, total, pageRequest.PerPage, pageRequest.Page)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, respPag)
@@ -54,7 +54,7 @@ func (handler *RoleManagementHandler) GetAllPermissionGroup(c echo.Context) erro
 
 	res, err := handler.RoleUseCase.GetAllPermissionGroup(c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	respPermissionGroup := []dto.RespPermissionGroup{}
@@ -76,12 +76,12 @@ func (handler *RoleManagementHandler) GetPermissionGroupByID(c echo.Context) err
 	// validate id
 	err := uuid.Validate(id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.ErrorUUIDNotRecognized})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.ErrorUUIDNotRecognized))
 	}
 
 	res, err := handler.RoleUseCase.GetPermissionGroupByID(c, id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	resResp := dto.ToRespPermissionGroupDetail(*res)
@@ -94,13 +94,13 @@ func (handler *RoleManagementHandler) GetPermissionGroupByID(c echo.Context) err
 func (handler *RoleManagementHandler) GetDuplicatedPermissionGroup(c echo.Context) error {
 	req := new(dto.ReqCheckDuplicatedPermissionGroup)
 	if err := c.Bind(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// validate input
 	// validate request
 	if err := c.Validate(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// initialize uid
@@ -115,11 +115,11 @@ func (handler *RoleManagementHandler) GetDuplicatedPermissionGroup(c echo.Contex
 
 	// if name havent been uses by existing account info, return not found error
 	if res == nil {
-		return c.JSON(http.StatusNotFound, ResponseError{Message: "PermissionGroup Info with such name is not found"})
+		return c.JSON(http.StatusNotFound, response.SetErrorResponse(http.StatusNotFound, "PermissionGroup Info with such name is not found"))
 	}
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// if name already uses by existing account info, return PermissionGroup object
@@ -130,21 +130,10 @@ func (handler *RoleManagementHandler) GetDuplicatedPermissionGroup(c echo.Contex
 	return c.JSON(http.StatusOK, resp)
 }
 
-// GetAllPermissionGroupByModule godoc
-// @Summary		Get all permission groups grouped by module
-// @Description	Retrieve all permission groups organized by module. Returns permission groups with a value field indicating if the permission group is assigned to the specified role. The role_id query parameter is optional.
-// @Tags			Role Management
-// @Accept			json
-// @Produce		json
-// @Security		BearerAuth
-// @Param			role_id	query		string	false	"Optional role ID to check permission group assignment"
-// @Success		200		{object}	response.NonPaginationResponse{data=[]dto.RespPermissionGroupByModule}	"Successfully retrieved permission groups by module"
-// @Failure		400		{object}	ResponseError	"Bad request - validation error or role not found"
-// @Failure		401		{object}	ResponseError	"Unauthorized"
-// @Router			/v1/role-management/permission-group/all/by-module [get]
-func (handler *RoleManagementHandler) GetAllPermissionGroupByModule(c echo.Context) error {
-	// Get role_id from query parameter (optional)
-	roleIDStr := c.QueryParam("role_id")
+// buildPermissionGroupsByModule builds permission groups grouped by module with assignment status
+// It takes an echo context, optional roleID string, and returns permission groups organized by module
+// If roleID is provided, it will mark which permission groups are assigned to that role
+func (handler *RoleManagementHandler) buildPermissionGroupsByModule(c echo.Context, roleIDStr string) ([]dto.RespPermissionGroupByModule, error) {
 	var role *models.Role
 	var rolePermissionGroups map[uuid.UUID]bool
 
@@ -152,13 +141,13 @@ func (handler *RoleManagementHandler) GetAllPermissionGroupByModule(c echo.Conte
 	if roleIDStr != "" {
 		roleID, err := uuid.Parse(roleIDStr)
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.ErrorUUIDNotRecognized})
+			return nil, err
 		}
 
 		// Validate role_id exists in database
 		role, err = handler.RoleUseCase.GetRoleByID(c, roleID.String())
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+			return nil, err
 		}
 
 		// Get permission groups assigned to the role
@@ -176,7 +165,7 @@ func (handler *RoleManagementHandler) GetAllPermissionGroupByModule(c echo.Conte
 	// Get all permission groups
 	res, err := handler.RoleUseCase.GetAllPermissionGroup(c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return nil, err
 	}
 
 	modules := make(map[utils.NullString][]dto.RespPermissionGroup)
@@ -219,6 +208,36 @@ func (handler *RoleManagementHandler) GetAllPermissionGroupByModule(c echo.Conte
 			Name:             module,
 			PermissionGroups: modules[module], // Assign the slice of functions
 		})
+	}
+
+	return respPermissionGroup, nil
+}
+
+// GetAllPermissionGroupByModule godoc
+// @Summary		Get all permission groups grouped by module
+// @Description	Retrieve all permission groups organized by module. Returns permission groups with a value field indicating if the permission group is assigned to the specified role. The role_id query parameter is optional.
+// @Tags			Role Management
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			role_id	query		string	false	"Optional role ID to check permission group assignment"
+// @Success		200		{object}	response.NonPaginationResponse{data=[]dto.RespPermissionGroupByModule}	"Successfully retrieved permission groups by module"
+// @Failure		400		{object}	response.NonPaginationResponse	"Bad request - validation error or role not found"
+// @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
+// @Router			/v1/role-management/role/module-access [get]
+func (handler *RoleManagementHandler) GetAllPermissionGroupByModule(c echo.Context) error {
+	// Get role_id from query parameter (optional)
+	roleIDStr := c.QueryParam("role_id")
+
+	respPermissionGroup, err := handler.buildPermissionGroupsByModule(c, roleIDStr)
+	if err != nil {
+		// Handle specific error for UUID parsing
+		if roleIDStr != "" {
+			if _, parseErr := uuid.Parse(roleIDStr); parseErr != nil {
+				return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.ErrorUUIDNotRecognized))
+			}
+		}
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	resp := response.NonPaginationResponse{}

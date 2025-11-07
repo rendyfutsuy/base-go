@@ -12,10 +12,26 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 func (u *userUsecase) CreateUser(c echo.Context, req *dto.ReqCreateUser, authId string) (userRes *models.User, err error) {
 	ctx := c.Request().Context()
+
+	// Check if role_id exists
+	if req.RoleId != uuid.Nil {
+		roleObject, err := u.roleManagement.GetRoleByID(ctx, req.RoleId)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, errors.New(constants.UserRoleNotFound)
+			}
+			return nil, err
+		}
+		// Additional check: ensure roleObject is valid
+		if roleObject == nil || roleObject.ID == uuid.Nil {
+			return nil, errors.New(constants.UserRoleNotFound)
+		}
+	}
 
 	// assert email is not duplicated
 	result, err := u.userRepo.EmailIsNotDuplicated(ctx, req.Email, uuid.Nil)
@@ -87,6 +103,21 @@ func (u *userUsecase) UpdateUser(c echo.Context, id string, req *dto.ReqUpdateUs
 		return nil, err
 	}
 
+	// Check if role_id exists
+	if req.RoleId != uuid.Nil {
+		roleObject, err := u.roleManagement.GetRoleByID(ctx, req.RoleId)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, errors.New(constants.UserRoleNotFound)
+			}
+			return nil, err
+		}
+		// Additional check: ensure roleObject is valid
+		if roleObject == nil || roleObject.ID == uuid.Nil {
+			return nil, errors.New(constants.UserRoleNotFound)
+		}
+	}
+
 	// assert email is not duplicated
 	result, err := u.userRepo.EmailIsNotDuplicated(ctx, req.Email, uId)
 
@@ -114,7 +145,7 @@ func (u *userUsecase) UpdateUser(c echo.Context, id string, req *dto.ReqUpdateUs
 func (u *userUsecase) SoftDeleteUser(c echo.Context, id string, authId string) (userRes *models.User, err error) {
 	ctx := c.Request().Context()
 
-	// if user has user, return error
+	// Check if user exists
 	user, err := u.GetUserByID(c, id)
 	if err != nil {
 		return nil, errors.New(constants.UserNotFound)
