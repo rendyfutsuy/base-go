@@ -7,10 +7,16 @@ import (
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 )
 
+// AuthenticateResult represents the result of authentication
+type AuthenticateResult struct {
+	AccessToken      string
+	IsFirstTimeLogin bool
+}
+
 // Usecase represent the auth's usecases
 type Usecase interface {
 	// every new usecase on ..modules/auth/usecase/, please register it here
-	Authenticate(ctx context.Context, login string, password string) (string, error)
+	Authenticate(ctx context.Context, login string, password string) (AuthenticateResult, error)
 	SignOut(ctx context.Context, token string) error
 	GetProfile(ctx context.Context, accessToken string) (user models.User, err error)
 	UpdateProfile(ctx context.Context, profileChunks dto.ReqUpdateProfile, userId string) error

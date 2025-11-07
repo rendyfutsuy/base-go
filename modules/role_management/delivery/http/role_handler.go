@@ -30,8 +30,8 @@ import (
 // @Security		BearerAuth
 // @Param			request	body		dto.ReqCreateRole	true	"Role creation data"
 // @Success		200		{object}	response.NonPaginationResponse{data=dto.RespRole}	"Successfully created role"
-// @Failure		400		{object}	ResponseError	"Bad request - validation error"
-// @Failure		401		{object}	ResponseError	"Unauthorized"
+// @Failure		400		{object}	response.NonPaginationResponse	"Bad request - validation error"
+// @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/role-management/role [post]
 func (handler *RoleManagementHandler) CreateRole(c echo.Context) error {
 
@@ -43,17 +43,17 @@ func (handler *RoleManagementHandler) CreateRole(c echo.Context) error {
 
 	req := new(dto.ReqCreateRole)
 	if err := c.Bind(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// validate request
 	if err := c.Validate(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	res, err := handler.RoleUseCase.CreateRole(c, req, authId)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	resResp := dto.ToRespRole(*res)
@@ -76,8 +76,8 @@ func (handler *RoleManagementHandler) CreateRole(c echo.Context) error {
 // @Param			sort_order	query		string	false	"Sort order (asc/desc)"
 // @Param			search		query		string	false	"Search query"
 // @Success		200		{object}	response.PaginationResponse{data=[]dto.RespRoleIndex}	"Successfully retrieved roles"
-// @Failure		400		{object}	ResponseError	"Bad request"
-// @Failure		401		{object}	ResponseError	"Unauthorized"
+// @Failure		400		{object}	response.NonPaginationResponse	"Bad request"
+// @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/role-management/role [get]
 func (handler *RoleManagementHandler) GetIndexRole(c echo.Context) error {
 	pageRequest := c.Get("page_request").(*request.PageRequest)
@@ -85,7 +85,7 @@ func (handler *RoleManagementHandler) GetIndexRole(c echo.Context) error {
 	res, total, err := handler.RoleUseCase.GetIndexRole(c, *pageRequest)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	respRole := []dto.RespRoleIndex{}
@@ -98,7 +98,7 @@ func (handler *RoleManagementHandler) GetIndexRole(c echo.Context) error {
 	respPag, err = respPag.SetResponse(respRole, total, pageRequest.PerPage, pageRequest.Page)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, respPag)
@@ -112,14 +112,14 @@ func (handler *RoleManagementHandler) GetIndexRole(c echo.Context) error {
 // @Produce		json
 // @Security		BearerAuth
 // @Success		200		{object}	response.NonPaginationResponse{data=[]dto.RespRole}	"Successfully retrieved all roles"
-// @Failure		400		{object}	ResponseError	"Bad request"
-// @Failure		401		{object}	ResponseError	"Unauthorized"
+// @Failure		400		{object}	response.NonPaginationResponse	"Bad request"
+// @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/role-management/role/all [get]
 func (handler *RoleManagementHandler) GetAllRole(c echo.Context) error {
 
 	res, err := handler.RoleUseCase.GetAllRole(c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	respRole := []dto.RespRole{}
@@ -143,9 +143,9 @@ func (handler *RoleManagementHandler) GetAllRole(c echo.Context) error {
 // @Security		BearerAuth
 // @Param			id	path		string	true	"Role UUID"
 // @Success		200	{object}	response.NonPaginationResponse{data=dto.RespRoleDetail}	"Successfully retrieved role"
-// @Failure		400	{object}	ResponseError	"Bad request - invalid UUID"
-// @Failure		401	{object}	ResponseError	"Unauthorized"
-// @Failure		404	{object}	ResponseError	"Role not found"
+// @Failure		400	{object}	response.NonPaginationResponse	"Bad request - invalid UUID"
+// @Failure		401	{object}	response.NonPaginationResponse	"Unauthorized"
+// @Failure		404	{object}	response.NonPaginationResponse	"Role not found"
 // @Router			/v1/role-management/role/{id} [get]
 func (handler *RoleManagementHandler) GetRoleByID(c echo.Context) error {
 
@@ -154,15 +154,29 @@ func (handler *RoleManagementHandler) GetRoleByID(c echo.Context) error {
 	// validate id
 	err := uuid.Validate(id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.ErrorUUIDNotRecognized})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.ErrorUUIDNotRecognized))
 	}
 
 	res, err := handler.RoleUseCase.GetRoleByID(c, id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	resResp := dto.ToRespRoleDetail(*res)
+	// if name already uses by existing account info, return Role object
+	modules := []dto.RespPermissionGroupByModule{}
+
+	modules, err = handler.buildPermissionGroupsByModule(c, id)
+	if err != nil {
+		// Handle specific error for UUID parsing
+		if id != "" {
+			if _, parseErr := uuid.Parse(id); parseErr != nil {
+				return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.ErrorUUIDNotRecognized))
+			}
+		}
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	resResp := dto.ToRespRoleDetail(*res, modules)
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(resResp)
 
@@ -179,9 +193,9 @@ func (handler *RoleManagementHandler) GetRoleByID(c echo.Context) error {
 // @Param			id		path	string				true	"Role UUID"
 // @Param			request	body	dto.ReqUpdateRole	true	"Updated role data"
 // @Success		200		{object}	response.NonPaginationResponse{data=dto.RespRole}	"Successfully updated role"
-// @Failure		400		{object}	ResponseError	"Bad request - validation error"
-// @Failure		401		{object}	ResponseError	"Unauthorized"
-// @Failure		404		{object}	ResponseError	"Role not found"
+// @Failure		400		{object}	response.NonPaginationResponse	"Bad request - validation error"
+// @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
+// @Failure		404		{object}	response.NonPaginationResponse	"Role not found"
 // @Router			/v1/role-management/role/{id} [put]
 func (handler *RoleManagementHandler) UpdateRole(c echo.Context) error {
 
@@ -193,22 +207,22 @@ func (handler *RoleManagementHandler) UpdateRole(c echo.Context) error {
 	// validate id
 	err := uuid.Validate(id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.ErrorUUIDNotRecognized})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.ErrorUUIDNotRecognized))
 	}
 
 	req := new(dto.ReqUpdateRole)
 	if err := c.Bind(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// validate request
 	if err := c.Validate(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	res, err := handler.RoleUseCase.UpdateRole(c, id, req, authId)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	resResp := dto.ToRespRole(*res)
@@ -227,9 +241,9 @@ func (handler *RoleManagementHandler) UpdateRole(c echo.Context) error {
 // @Security		BearerAuth
 // @Param			id	path	string	true	"Role UUID"
 // @Success		200	{object}	response.NonPaginationResponse{data=dto.RespRole}	"Successfully deleted role"
-// @Failure		400	{object}	ResponseError	"Bad request - invalid UUID"
-// @Failure		401	{object}	ResponseError	"Unauthorized"
-// @Failure		404	{object}	ResponseError	"Role not found"
+// @Failure		400	{object}	response.NonPaginationResponse	"Bad request - invalid UUID"
+// @Failure		401	{object}	response.NonPaginationResponse	"Unauthorized"
+// @Failure		404	{object}	response.NonPaginationResponse	"Role not found"
 // @Router			/v1/role-management/role/{id} [delete]
 func (handler *RoleManagementHandler) DeleteRole(c echo.Context) error {
 	// get auth ID
@@ -240,12 +254,18 @@ func (handler *RoleManagementHandler) DeleteRole(c echo.Context) error {
 	// validate id
 	err := uuid.Validate(id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.ErrorUUIDNotRecognized})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.ErrorUUIDNotRecognized))
 	}
 
 	res, err := handler.RoleUseCase.SoftDeleteRole(c, id, authId)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	// if total user is greater than 0, return error
+	// role that have been uses can not be deleted
+	if res.TotalUser > 0 {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.ErrorCannotDeleteRole))
 	}
 
 	resResp := dto.ToRespRole(*res)
@@ -264,20 +284,20 @@ func (handler *RoleManagementHandler) DeleteRole(c echo.Context) error {
 // @Security		BearerAuth
 // @Param			request	body	dto.ReqCheckDuplicatedRole	true	"Check duplicated role request"
 // @Success		200		{object}	response.NonPaginationResponse{data=dto.RespRole}	"Role with such name exists"
-// @Failure		400		{object}	ResponseError	"Bad request"
-// @Failure		401		{object}	ResponseError	"Unauthorized"
-// @Failure		404		{object}	ResponseError	"Role with such name is not found"
+// @Failure		400		{object}	response.NonPaginationResponse	"Bad request"
+// @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
+// @Failure		404		{object}	response.NonPaginationResponse	"Role with such name is not found"
 // @Router			/v1/role-management/role/check-name [get]
 func (handler *RoleManagementHandler) GetDuplicatedRole(c echo.Context) error {
 	req := new(dto.ReqCheckDuplicatedRole)
 	if err := c.Bind(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// validate input
 	// validate request
 	if err := c.Validate(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// initialize uid
@@ -292,11 +312,11 @@ func (handler *RoleManagementHandler) GetDuplicatedRole(c echo.Context) error {
 
 	// if name havent been uses by existing account info, return not found error
 	if res == nil {
-		return c.JSON(http.StatusNotFound, ResponseError{Message: "Role Info with such name is not found"})
+		return c.JSON(http.StatusNotFound, response.SetErrorResponse(http.StatusNotFound, "Role Info with such name is not found"))
 	}
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// if name already uses by existing account info, return Role object
@@ -312,10 +332,23 @@ func (handler *RoleManagementHandler) GetMyPermissions(c echo.Context) error {
 
 	res, err := handler.RoleUseCase.MyPermissionsByUserToken(c, token)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	resResp := dto.ToRespRoleDetail(*res)
+	// if name already uses by existing account info, return Role object
+	modules := []dto.RespPermissionGroupByModule{}
+	modules, err = handler.buildPermissionGroupsByModule(c, res.ID.String())
+	if err != nil {
+		// Handle specific error for UUID parsing
+		if res.ID.String() != "" {
+			if _, parseErr := uuid.Parse(res.ID.String()); parseErr != nil {
+				return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.ErrorUUIDNotRecognized))
+			}
+		}
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	resResp := dto.ToRespRoleDetail(*res, modules)
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(resResp)
 

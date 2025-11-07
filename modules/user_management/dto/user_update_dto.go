@@ -5,25 +5,27 @@ import (
 )
 
 type ReqUpdateUserPassword struct {
-	OldPassword          string `json:"old_password" validate:"required"`
-	NewPassword          string `json:"new_password" validate:"required"`
-	PasswordConfirmation string `json:"password_confirmation" validate:"required,eqfield=NewPassword"`
+	OldPassword          string `form:"old_password" json:"old_password" validate:"required"`
+	NewPassword          string `form:"new_password" json:"new_password" validate:"required"`
+	PasswordConfirmation string `form:"password_confirmation" json:"password_confirmation" validate:"required,eqfield=NewPassword"`
 }
 
 type ReqBlockUser struct {
-	IsBlock bool `json:"is_block"`
+	IsBlock bool `form:"is_block" json:"is_block"`
 }
 
 type ReqActivateUser struct {
-	IsActive bool `json:"is_active"`
+	IsActive bool `form:"is_active" json:"is_active"`
 }
 
 type ReqUpdateUser struct {
-	FullName string    `json:"name" validate:"required,max=80"`
-	RoleId   uuid.UUID `json:"role_id" validate:"required"`
-	Email    string    `json:"email" validate:"required,email,emaildomain"`
-	IsActive bool      `json:"is_active"`
-	Gender   string    `json:"gender" validate:"required,oneof='male' 'female'"`
+	FullName             string    `form:"name" json:"name" validate:"required,max=80,uppercase_letters"`
+	RoleId               uuid.UUID `form:"role_id" json:"role_id" validate:"required"`
+	Email                string    `form:"email" json:"email"`
+	IsActive             bool      `form:"is_active" json:"is_active"`
+	Gender               string    `form:"gender" json:"gender"`
+	Password             string    `form:"password" json:"password"`
+	PasswordConfirmation string    `form:"password_confirmation" json:"password_confirmation"`
 }
 
 func (r *ReqUpdateUser) ToDBUpdateUser(authId string) ToDBUpdateUser {

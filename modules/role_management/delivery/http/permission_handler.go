@@ -23,7 +23,7 @@ func (handler *RoleManagementHandler) GetIndexPermission(c echo.Context) error {
 	res, total, err := handler.RoleUseCase.GetIndexPermission(c, *pageRequest)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	respPermission := []dto.RespPermissionIndex{}
@@ -36,7 +36,7 @@ func (handler *RoleManagementHandler) GetIndexPermission(c echo.Context) error {
 	respPag, err = respPag.SetResponse(respPermission, total, pageRequest.PerPage, pageRequest.Page)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, respPag)
@@ -46,7 +46,7 @@ func (handler *RoleManagementHandler) GetAllPermission(c echo.Context) error {
 
 	res, err := handler.RoleUseCase.GetAllPermission(c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	respPermission := []dto.RespPermission{}
@@ -68,12 +68,12 @@ func (handler *RoleManagementHandler) GetPermissionByID(c echo.Context) error {
 	// validate id
 	err := uuid.Validate(id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.ErrorUUIDNotRecognized})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.ErrorUUIDNotRecognized))
 	}
 
 	res, err := handler.RoleUseCase.GetPermissionByID(c, id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	resResp := dto.ToRespPermissionDetail(*res)
@@ -86,13 +86,13 @@ func (handler *RoleManagementHandler) GetPermissionByID(c echo.Context) error {
 func (handler *RoleManagementHandler) GetDuplicatedPermission(c echo.Context) error {
 	req := new(dto.ReqCheckDuplicatedPermission)
 	if err := c.Bind(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// validate input
 	// validate request
 	if err := c.Validate(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// initialize uid
@@ -107,11 +107,11 @@ func (handler *RoleManagementHandler) GetDuplicatedPermission(c echo.Context) er
 
 	// if name havent been uses by existing account info, return not found error
 	if res == nil {
-		return c.JSON(http.StatusNotFound, ResponseError{Message: "Permission Info with such name is not found"})
+		return c.JSON(http.StatusNotFound, response.SetErrorResponse(http.StatusNotFound, "Permission Info with such name is not found"))
 	}
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// if name already uses by existing account info, return Permission object

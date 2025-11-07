@@ -24,26 +24,26 @@ import (
 // @Param			file	formData	file	true	"Excel file (.xlsx or .xls) with columns: email, full_name, username, nik, role_name"
 // @Success		200		{object}	response.NonPaginationResponse{data=dto.ResImportUsers}	"Successfully imported all users"
 // @Failure		400		{object}	response.NonPaginationResponse{data=dto.ResImportUsers}	"Bad request - one or more rows failed validation. Response contains details for each row including row number, username, status, and error message"
-// @Failure		401		{object}	ResponseError	"Unauthorized"
-// @Failure		500		{object}	ResponseError	"Internal server error"
+// @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
+// @Failure		500		{object}	response.NonPaginationResponse	"Internal server error"
 // @Router			/v1/user-management/user/import [post]
 func (handler *UserManagementHandler) ImportUsersFromExcel(c echo.Context) error {
 	// Get uploaded file
 	file, err := c.FormFile("file")
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.UserImportFileNotFound})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.UserImportFileNotFound))
 	}
 
 	// Validate file extension
 	ext := filepath.Ext(file.Filename)
 	if ext != ".xlsx" && ext != ".xls" {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.UserImportInvalidFileFormat})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.UserImportInvalidFileFormat))
 	}
 
 	// Open uploaded file
 	src, err := file.Open()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{Message: fmt.Sprintf("%s: %v", constants.UserImportFileOpenFailed, err)})
+		return c.JSON(http.StatusInternalServerError, response.SetErrorResponse(http.StatusInternalServerError, fmt.Sprintf("%s: %v", constants.UserImportFileOpenFailed, err)))
 	}
 	defer src.Close()
 
@@ -55,7 +55,7 @@ func (handler *UserManagementHandler) ImportUsersFromExcel(c echo.Context) error
 	// Create temporary file
 	dst, err := os.Create(tempFilePath)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{Message: fmt.Sprintf("%s: %v", constants.UserImportTempFileCreateFailed, err)})
+		return c.JSON(http.StatusInternalServerError, response.SetErrorResponse(http.StatusInternalServerError, fmt.Sprintf("%s: %v", constants.UserImportTempFileCreateFailed, err)))
 	}
 	defer dst.Close()
 	defer os.Remove(tempFilePath) // Clean up temporary file
@@ -63,13 +63,13 @@ func (handler *UserManagementHandler) ImportUsersFromExcel(c echo.Context) error
 	// Copy uploaded file to temporary file
 	_, err = io.Copy(dst, src)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{Message: fmt.Sprintf("%s: %v", constants.UserImportFileSaveFailed, err)})
+		return c.JSON(http.StatusInternalServerError, response.SetErrorResponse(http.StatusInternalServerError, fmt.Sprintf("%s: %v", constants.UserImportFileSaveFailed, err)))
 	}
 
 	// Process Excel file
 	res, err := handler.UserUseCase.ImportUsersFromExcel(c, tempFilePath)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// If there are failed rows, return HTTP 400 with error details
@@ -93,9 +93,9 @@ func (handler *UserManagementHandler) ImportUsersFromExcel(c echo.Context) error
 // @Produce		application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 // @Security		BearerAuth
 // @Success		200	{file}		file	"Excel template file"
-// @Failure		400	{object}	ResponseError	"Bad request"
-// @Failure		401	{object}	ResponseError	"Unauthorized"
-// @Failure		500	{object}	ResponseError	"Internal server error"
+// @Failure		400	{object}	response.NonPaginationResponse	"Bad request"
+// @Failure		401	{object}	response.NonPaginationResponse	"Unauthorized"
+// @Failure		500	{object}	response.NonPaginationResponse	"Internal server error"
 // @Router			/v1/user-management/user/import/template [get]
 func (handler *UserManagementHandler) DownloadUserImportTemplate(c echo.Context) error {
 	// Create new Excel file
@@ -154,9 +154,8 @@ func (handler *UserManagementHandler) DownloadUserImportTemplate(c echo.Context)
 	// Write Excel file to response
 	err = f.Write(c.Response().Writer)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{Message: fmt.Sprintf("%s: %v", constants.UserImportTemplateCreateFailed, err)})
+		return c.JSON(http.StatusInternalServerError, response.SetErrorResponse(http.StatusInternalServerError, fmt.Sprintf("%s: %v", constants.UserImportTemplateCreateFailed, err)))
 	}
 
 	return nil
 }
-

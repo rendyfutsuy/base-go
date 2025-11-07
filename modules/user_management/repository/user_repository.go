@@ -41,6 +41,7 @@ func (repo *userRepository) CreateUser(ctx context.Context, userReq dto.ToDBCrea
 		CreatedAt:         now,
 		UpdatedAt:         now,
 		PasswordExpiredAt: expiredAt,
+		IsFirstTimeLogin:  true, // Explicitly set to true for new users
 	}
 
 	// Create user - GORM will insert all fields from struct
@@ -206,6 +207,7 @@ func (repo *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, userRe
 	err = repo.DB.WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ? AND deleted_at IS NULL", id).
+		Omit("is_first_time_login").
 		Updates(updates).
 		Select("id", "full_name", "created_at", "updated_at", "deleted_at").
 		First(userRes).Error
@@ -637,6 +639,7 @@ func (repo *userRepository) BulkCreateUsers(ctx context.Context, usersReq []dto.
 			CreatedAt:         now,
 			UpdatedAt:         now,
 			PasswordExpiredAt: expiredAt,
+			IsFirstTimeLogin:  true, // Explicitly set to true for new users
 		}
 	}
 

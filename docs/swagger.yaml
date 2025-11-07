@@ -23,10 +23,10 @@ definitions:
     properties:
       excluded_role_info_id:
         type: string
-      name:
+      role_name:
         type: string
     required:
-    - name
+    - role_name
     type: object
   dto.ReqCheckDuplicatedUser:
     properties:
@@ -44,30 +44,116 @@ definitions:
     required:
     - password
     type: object
-  dto.ReqCreateRole:
+  dto.ReqCreateCity:
     properties:
-      description:
+      name:
+        maxLength: 255
+        type: string
+      province_id:
+        type: string
+    required:
+    - name
+    - province_id
+    type: object
+  dto.ReqCreateDistrict:
+    properties:
+      city_id:
         type: string
       name:
-        maxLength: 80
+        maxLength: 255
         type: string
-      permission_groups:
+    required:
+    - city_id
+    - name
+    type: object
+  dto.ReqCreateGroup:
+    properties:
+      name:
+        maxLength: 255
+        type: string
+    required:
+    - name
+    type: object
+  dto.ReqCreateParameter:
+    properties:
+      code:
+        maxLength: 255
+        type: string
+      desc:
+        type: string
+      name:
+        maxLength: 255
+        type: string
+      type:
+        type: string
+      value:
+        type: string
+    required:
+    - code
+    - name
+    type: object
+  dto.ReqCreateProvince:
+    properties:
+      name:
+        maxLength: 100
+        type: string
+    required:
+    - name
+    type: object
+  dto.ReqCreateRole:
+    properties:
+      accesses:
         items:
           type: string
         minItems: 1
         type: array
+      description:
+        type: string
+      role_name:
+        maxLength: 80
+        type: string
+    required:
+    - accesses
+    - role_name
+    type: object
+  dto.ReqCreateSubGroup:
+    properties:
+      goods_group_id:
+        type: string
+      name:
+        maxLength: 255
+        type: string
+    required:
+    - goods_group_id
+    - name
+    type: object
+  dto.ReqCreateSubdistrict:
+    properties:
+      district_id:
+        type: string
+      name:
+        maxLength: 255
+        type: string
+    required:
+    - district_id
+    - name
+    type: object
+  dto.ReqCreateType:
+    properties:
+      name:
+        maxLength: 255
+        type: string
+      subgroup_id:
+        type: string
     required:
     - name
-    - permission_groups
+    - subgroup_id
     type: object
   dto.ReqCreateUser:
     properties:
       email:
         type: string
       gender:
-        enum:
-        - male
-        - female
         type: string
       is_active:
         type: boolean
@@ -75,6 +161,7 @@ definitions:
         maxLength: 80
         type: string
       password:
+        minLength: 8
         type: string
       password_confirmation:
         type: string
@@ -83,32 +170,59 @@ definitions:
       username:
         type: string
     required:
-    - email
-    - gender
     - name
     - password
     - password_confirmation
     - role_id
     - username
     type: object
-  dto.ReqResetPassword:
+  dto.ReqUpdateCity:
     properties:
-      password:
-        maxLength: 25
-        minLength: 8
+      name:
+        maxLength: 255
         type: string
-      password_confirmation:
+      province_id:
         type: string
     required:
-    - password
-    - password_confirmation
+    - name
+    - province_id
     type: object
-  dto.ReqResetPasswordRequest:
+  dto.ReqUpdateDistrict:
     properties:
-      email:
+      city_id:
+        type: string
+      name:
+        maxLength: 255
         type: string
     required:
-    - email
+    - city_id
+    - name
+    type: object
+  dto.ReqUpdateGroup:
+    properties:
+      name:
+        maxLength: 255
+        type: string
+    required:
+    - name
+    type: object
+  dto.ReqUpdateParameter:
+    properties:
+      code:
+        maxLength: 255
+        type: string
+      desc:
+        type: string
+      name:
+        maxLength: 255
+        type: string
+      type:
+        type: string
+      value:
+        type: string
+    required:
+    - code
+    - name
     type: object
   dto.ReqUpdatePassword:
     properties:
@@ -123,54 +237,81 @@ definitions:
     - old_password
     - password_confirmation
     type: object
-  dto.ReqUpdateProfile:
+  dto.ReqUpdateProvince:
     properties:
       name:
+        maxLength: 100
         type: string
     required:
     - name
     type: object
   dto.ReqUpdateRole:
     properties:
-      cobs:
+      accesses:
         items:
           type: string
         minItems: 1
         type: array
       description:
         type: string
-      name:
+      role_name:
         maxLength: 80
         type: string
-      permission_groups:
-        items:
-          type: string
-        minItems: 1
-        type: array
     required:
-    - cobs
+    - accesses
+    - role_name
+    type: object
+  dto.ReqUpdateSubGroup:
+    properties:
+      goods_group_id:
+        type: string
+      name:
+        maxLength: 255
+        type: string
+    required:
+    - goods_group_id
     - name
-    - permission_groups
+    type: object
+  dto.ReqUpdateSubdistrict:
+    properties:
+      district_id:
+        type: string
+      name:
+        maxLength: 255
+        type: string
+    required:
+    - district_id
+    - name
+    type: object
+  dto.ReqUpdateType:
+    properties:
+      name:
+        maxLength: 255
+        type: string
+      subgroup_id:
+        type: string
+    required:
+    - name
+    - subgroup_id
     type: object
   dto.ReqUpdateUser:
     properties:
       email:
         type: string
       gender:
-        enum:
-        - male
-        - female
         type: string
       is_active:
         type: boolean
       name:
         maxLength: 80
         type: string
+      password:
+        type: string
+      password_confirmation:
+        type: string
       role_id:
         type: string
     required:
-    - email
-    - gender
     - name
     - role_id
     type: object
@@ -215,6 +356,125 @@ definitions:
       total_rows:
         type: integer
     type: object
+  dto.RespCity:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      province:
+        $ref: '#/definitions/dto.RespProvince'
+      province_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.RespCityIndex:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      province_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.RespDistrict:
+    properties:
+      city:
+        $ref: '#/definitions/dto.RespCity'
+      city_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.RespDistrictIndex:
+    properties:
+      city_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.RespGroup:
+    properties:
+      created_at:
+        type: string
+      group_code:
+        description: omit when creating new group
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.RespGroupIndex:
+    properties:
+      created_at:
+        type: string
+      group_code:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.RespParameter:
+    properties:
+      code:
+        type: string
+      created_at:
+        type: string
+      desc:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+      value:
+        type: string
+    type: object
+  dto.RespParameterIndex:
+    properties:
+      code:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+      value:
+        type: string
+    type: object
   dto.RespPermissionGroup:
     properties:
       id:
@@ -226,20 +486,33 @@ definitions:
     type: object
   dto.RespPermissionGroupByModule:
     properties:
-      name:
-        $ref: '#/definitions/utils.NullString'
-      permission_groups:
+      accesses:
         items:
           $ref: '#/definitions/dto.RespPermissionGroup'
         type: array
+      name:
+        $ref: '#/definitions/utils.NullString'
     type: object
-  dto.RespPermissionGroupRoleDetail:
+  dto.RespProvince:
     properties:
+      created_at:
+        type: string
       id:
         type: string
-      module:
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.RespProvinceIndex:
+    properties:
+      created_at:
+        type: string
+      id:
         type: string
       name:
+        type: string
+      updated_at:
         type: string
     type: object
   dto.RespRole:
@@ -259,14 +532,10 @@ definitions:
         type: string
       modules:
         items:
-          $ref: '#/definitions/utils.NullString'
+          $ref: '#/definitions/dto.RespPermissionGroupByModule'
         type: array
-      name:
+      role_name:
         type: string
-      permission_groups:
-        items:
-          $ref: '#/definitions/dto.RespPermissionGroupRoleDetail'
-        type: array
       total_user:
         type: integer
       updated_at:
@@ -282,12 +551,116 @@ definitions:
         items:
           $ref: '#/definitions/utils.NullString'
         type: array
-      name:
+      role_name:
         type: string
       total_user:
         type: integer
       updated_at:
         $ref: '#/definitions/utils.NullTime'
+    type: object
+  dto.RespSubGroup:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      goods_group_id:
+        type: string
+      goods_group_name:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      subgroup_code:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+    type: object
+  dto.RespSubGroupIndex:
+    properties:
+      created_at:
+        type: string
+      goods_group_id:
+        type: string
+      goods_group_name:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      subgroup_code:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.RespSubdistrict:
+    properties:
+      created_at:
+        type: string
+      district:
+        $ref: '#/definitions/dto.RespDistrict'
+      district_id:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.RespSubdistrictIndex:
+    properties:
+      created_at:
+        type: string
+      district_id:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.RespType:
+    properties:
+      created_at:
+        type: string
+      goods_group_id:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      subgroup_id:
+        type: string
+      subgroup_name:
+        type: string
+      type_code:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.RespTypeIndex:
+    properties:
+      created_at:
+        type: string
+      goods_group_name:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      subgroup_id:
+        type: string
+      subgroup_name:
+        type: string
+      type_code:
+        type: string
+      updated_at:
+        type: string
     type: object
   dto.RespUser:
     properties:
@@ -300,6 +673,8 @@ definitions:
     properties:
       active_status:
         $ref: '#/definitions/utils.NullString'
+      created_at:
+        type: string
       email:
         type: string
       gender:
@@ -316,11 +691,15 @@ definitions:
         type: string
       role_name:
         type: string
+      updated_at:
+        type: string
     type: object
   dto.RespUserIndex:
     properties:
       active_status:
         $ref: '#/definitions/utils.NullString'
+      created_at:
+        type: string
       email:
         type: string
       gender:
@@ -335,57 +714,42 @@ definitions:
         type: string
       role_name:
         type: string
+      updated_at:
+        type: string
     type: object
   dto.UserProfile:
     properties:
       email:
         type: string
-      gender:
+      id:
         type: string
-      modules:
-        items:
-          type: string
-        type: array
+      is_first_time_login:
+        type: boolean
       name:
         type: string
-      permission_groups:
-        items:
-          type: string
-        type: array
       permissions:
         items:
           type: string
         type: array
       role:
         $ref: '#/definitions/utils.NullString'
-      status:
-        type: string
-      user_id:
-        type: string
-    type: object
-  github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError:
-    properties:
-      message:
-        type: string
-    type: object
-  github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError:
-    properties:
-      message:
-        type: string
-    type: object
-  http.GeneralResponse:
-    properties:
-      message:
+      username:
         type: string
     type: object
   http.ResponseAuth:
     properties:
       access_token:
         type: string
+      is_first_time_login:
+        type: boolean
     type: object
   response.NonPaginationResponse:
     properties:
       data: {}
+      message:
+        type: string
+      status:
+        type: integer
     type: object
   response.PaginationMeta:
     properties:
@@ -405,8 +769,12 @@ definitions:
   response.PaginationResponse:
     properties:
       data: {}
+      message:
+        type: string
       meta:
         $ref: '#/definitions/response.PaginationMeta'
+      status:
+        type: integer
     type: object
   utils.NullString:
     properties:
@@ -438,7 +806,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Authenticates a user and returns an access token
+      description: Authenticates a user and returns an access token and is_first_time_login
+        status
       parameters:
       - description: User login and password
         in: body
@@ -452,15 +821,16 @@ paths:
         "200":
           description: Successfully authenticated
           schema:
-            $ref: '#/definitions/http.ResponseAuth'
-        "400":
-          description: Invalid request
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.ResponseAuth'
+              type: object
+        "401":
+          description: Unauthorized - invalid credentials or user not found
           schema:
-            $ref: '#/definitions/http.GeneralResponse'
-        "419":
-          description: User password expired
-          schema:
-            $ref: '#/definitions/http.GeneralResponse'
+            $ref: '#/definitions/response.NonPaginationResponse'
       summary: Authenticate user
       tags:
       - Authentication
@@ -475,15 +845,11 @@ paths:
         "200":
           description: Successfully logged out
           schema:
-            $ref: '#/definitions/http.GeneralResponse'
-        "400":
-          description: Logout failed
-          schema:
-            $ref: '#/definitions/http.GeneralResponse'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/http.GeneralResponse'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Sign out user
@@ -507,15 +873,11 @@ paths:
         "200":
           description: Successfully updated password
           schema:
-            $ref: '#/definitions/http.GeneralResponse'
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/http.GeneralResponse'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/http.GeneralResponse'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Update user password
@@ -532,49 +894,19 @@ paths:
         "200":
           description: User profile data
           schema:
-            $ref: '#/definitions/dto.UserProfile'
-        "400":
-          description: Failed to get profile
-          schema:
-            $ref: '#/definitions/http.GeneralResponse'
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserProfile'
+              type: object
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/http.GeneralResponse'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Get user profile
-      tags:
-      - Authentication
-    put:
-      consumes:
-      - application/json
-      description: Updates the profile information of the authenticated user
-      parameters:
-      - description: Updated user profile data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.ReqUpdateProfile'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully updated profile
-          schema:
-            $ref: '#/definitions/http.GeneralResponse'
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/http.GeneralResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/http.GeneralResponse'
-      security:
-      - BearerAuth: []
-      summary: Update user profile
       tags:
       - Authentication
   /v1/auth/refresh-token:
@@ -582,153 +914,1261 @@ paths:
       consumes:
       - application/json
       description: Generates a new access token based on the provided bearer token.
-        If the token is revoked, returns an error.
+        Access tokens that have expired can still be refreshed as long as the Redis
+        session (TTL) has not expired. If the token is revoked or the Redis session
+        has expired, returns an error.
       produces:
       - application/json
       responses:
         "200":
           description: Successfully refreshed token
           schema:
-            $ref: '#/definitions/http.ResponseAuth'
-        "400":
-          description: Token is revoked or invalid request
-          schema:
             allOf:
-            - $ref: '#/definitions/http.GeneralResponse'
+            - $ref: '#/definitions/response.NonPaginationResponse'
             - properties:
-                message:
-                  type: string
+                data:
+                  $ref: '#/definitions/http.ResponseAuth'
               type: object
         "401":
-          description: Unauthorized
+          description: Unauthorized - token is revoked, invalid, or Redis session
+            expired
           schema:
-            allOf:
-            - $ref: '#/definitions/http.GeneralResponse'
-            - properties:
-                message:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Refresh access token
       tags:
       - Authentication
-  /v1/auth/reset-password/request:
-    post:
-      consumes:
-      - application/json
-      description: Sends a password reset email to the provided email address
-      parameters:
-      - description: Reset Password Request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.ReqResetPasswordRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Send Reset Email Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/http.GeneralResponse'
-            - properties:
-                message:
-                  type: string
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/http.GeneralResponse'
-            - properties:
-                message:
-                  type: string
-              type: object
-      summary: Request a password reset email
-      tags:
-      - Authentication
-  /v1/auth/reset-password/request/{token}:
-    post:
-      consumes:
-      - application/json
-      description: Resets the user password using a valid token
-      parameters:
-      - description: Password Reset Token
-        in: path
-        name: token
-        required: true
-        type: string
-      - description: Reset User Password
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.ReqResetPassword'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully Reset Password
-          schema:
-            allOf:
-            - $ref: '#/definitions/http.GeneralResponse'
-            - properties:
-                message:
-                  type: string
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/http.GeneralResponse'
-            - properties:
-                message:
-                  type: string
-              type: object
-      summary: Reset user password
-      tags:
-      - Authentication
-  /v1/role-management/permission-group/all/by-module:
+  /v1/city:
     get:
       consumes:
       - application/json
-      description: Retrieve all permission groups organized by module. Returns permission
-        groups with a value field indicating if the permission group is assigned to
-        the specified role. The role_id query parameter is optional.
+      description: Retrieve a paginated list of cities with optional filters
       parameters:
-      - description: Optional role ID to check permission group assignment
+      - description: Page number
         in: query
-        name: role_id
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      - description: Filter by province_id
+        in: query
+        name: province_id
+        type: string
+      - description: Search keyword for filtering by name
+        in: query
+        name: search
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved permission groups by module
+          description: Successfully retrieved cities
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.PaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespCityIndex'
+                  type: array
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get list of cities with pagination
+      tags:
+      - Regency - City
+    post:
+      consumes:
+      - application/json
+      description: Create a new city with provided province_id and name
+      parameters:
+      - description: City creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCreateCity'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created city
           schema:
             allOf:
             - $ref: '#/definitions/response.NonPaginationResponse'
             - properties:
                 data:
-                  items:
-                    $ref: '#/definitions/dto.RespPermissionGroupByModule'
-                  type: array
+                  $ref: '#/definitions/dto.RespCity'
               type: object
         "400":
-          description: Bad request - validation error or role not found
+          description: Bad request - validation error
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
-      summary: Get all permission groups grouped by module
+      summary: Create a new city
       tags:
-      - Role Management
+      - Regency - City
+  /v1/city/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing city by ID
+      parameters:
+      - description: City UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted city
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: City not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete city
+      tags:
+      - Regency - City
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single city by its ID
+      parameters:
+      - description: City UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved city
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespCity'
+              type: object
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: City not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get city by ID
+      tags:
+      - Regency - City
+    put:
+      consumes:
+      - application/json
+      description: Update an existing city's information
+      parameters:
+      - description: City UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated city data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqUpdateCity'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated city
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespCity'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: City not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Update city
+      tags:
+      - Regency - City
+  /v1/city/export:
+    get:
+      consumes:
+      - application/json
+      description: Export cities to Excel file (.xlsx) with optional search and filter
+      parameters:
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      - description: Filter by province_id
+        in: query
+        name: province_id
+        type: string
+      - description: Search keyword for filtering by name
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: Excel file with cities data
+          schema:
+            type: file
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Export cities to Excel
+      tags:
+      - Regency - City
+  /v1/district:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of districts with optional filters
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      - description: Filter by city_id
+        in: query
+        name: city_id
+        type: string
+      - description: Search keyword for filtering by name
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved districts
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.PaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespDistrictIndex'
+                  type: array
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get list of districts with pagination
+      tags:
+      - Regency - District
+    post:
+      consumes:
+      - application/json
+      description: Create a new district with provided city_id and name
+      parameters:
+      - description: District creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCreateDistrict'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created district
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespDistrict'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new district
+      tags:
+      - Regency - District
+  /v1/district/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing district by ID
+      parameters:
+      - description: District UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted district
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: District not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete district
+      tags:
+      - Regency - District
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single district by its ID
+      parameters:
+      - description: District UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved district
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespDistrict'
+              type: object
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: District not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get district by ID
+      tags:
+      - Regency - District
+    put:
+      consumes:
+      - application/json
+      description: Update an existing district's information
+      parameters:
+      - description: District UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated district data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqUpdateDistrict'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated district
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespDistrict'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: District not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Update district
+      tags:
+      - Regency - District
+  /v1/district/export:
+    get:
+      consumes:
+      - application/json
+      description: Export districts to Excel file (.xlsx) with optional search and
+        filter
+      parameters:
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      - description: Filter by city_id
+        in: query
+        name: city_id
+        type: string
+      - description: Search keyword for filtering by name
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: Excel file with districts data
+          schema:
+            type: file
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Export districts to Excel
+      tags:
+      - Regency - District
+  /v1/group:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of goods groups with optional filters
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      - description: Search keyword for filtering by name and group_code
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved groups
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.PaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespGroupIndex'
+                  type: array
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get list of groups with pagination
+      tags:
+      - Golongan
+    post:
+      consumes:
+      - application/json
+      description: Create a new goods group with provided name
+      parameters:
+      - description: Group creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCreateGroup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created group
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespGroup'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new group
+      tags:
+      - Golongan
+  /v1/group/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing goods group by ID
+      parameters:
+      - description: Group UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted group
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete group
+      tags:
+      - Golongan
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single goods group by its ID
+      parameters:
+      - description: Group UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved group
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespGroup'
+              type: object
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get group by ID
+      tags:
+      - Golongan
+    put:
+      consumes:
+      - application/json
+      description: Update an existing goods group's information
+      parameters:
+      - description: Group UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated group data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqUpdateGroup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated group
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespGroup'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Update group
+      tags:
+      - Golongan
+  /v1/group/export:
+    get:
+      consumes:
+      - application/json
+      description: Export goods groups to Excel file (.xlsx) with optional search
+        and filter. Same search and filter logic as index but without pagination.
+      parameters:
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      - description: Search keyword for filtering by name and group_code
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: Excel file with groups data
+          schema:
+            type: file
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Export groups to Excel
+      tags:
+      - Golongan
+  /v1/parameter:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of parameters with optional filters
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      - collectionFormat: csv
+        description: Filter by parameter types (array)
+        in: query
+        items:
+          type: string
+        name: types
+        type: array
+      - collectionFormat: csv
+        description: Filter by parameter names (array)
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved parameters
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.PaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespParameterIndex'
+                  type: array
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get list of parameters with pagination
+      tags:
+      - Parameter
+    post:
+      consumes:
+      - application/json
+      description: Create a new parameter with provided code, name, value, and description
+      parameters:
+      - description: Parameter creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCreateParameter'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created parameter
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespParameter'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new parameter
+      tags:
+      - Parameter
+  /v1/parameter/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing parameter by ID
+      parameters:
+      - description: Parameter UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted parameter
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Parameter not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete parameter
+      tags:
+      - Parameter
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single parameter by its ID
+      parameters:
+      - description: Parameter UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved parameter
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespParameter'
+              type: object
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Parameter not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get parameter by ID
+      tags:
+      - Parameter
+    put:
+      consumes:
+      - application/json
+      description: Update an existing parameter's information
+      parameters:
+      - description: Parameter UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated parameter data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqUpdateParameter'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated parameter
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespParameter'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Parameter not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Update parameter
+      tags:
+      - Parameter
+  /v1/parameter/export:
+    get:
+      consumes:
+      - application/json
+      description: Export parameters to Excel file (.xlsx) with optional search and
+        filter. Same search and filter logic as index but without pagination.
+      parameters:
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      - collectionFormat: csv
+        description: Filter by parameter types (array)
+        in: query
+        items:
+          type: string
+        name: types
+        type: array
+      - collectionFormat: csv
+        description: Filter by parameter names (array)
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: Excel file with parameters data
+          schema:
+            type: file
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Export parameters to Excel
+      tags:
+      - Parameter
+  /v1/province:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of provinces with optional filters
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      - description: Search keyword for filtering by name
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved provinces
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.PaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespProvinceIndex'
+                  type: array
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get list of provinces with pagination
+      tags:
+      - Regency - Province
+    post:
+      consumes:
+      - application/json
+      description: Create a new province with provided name
+      parameters:
+      - description: Province creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCreateProvince'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created province
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespProvince'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new province
+      tags:
+      - Regency - Province
+  /v1/province/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing province by ID
+      parameters:
+      - description: Province UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted province
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Province not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete province
+      tags:
+      - Regency - Province
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single province by its ID
+      parameters:
+      - description: Province UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved province
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespProvince'
+              type: object
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Province not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get province by ID
+      tags:
+      - Regency - Province
+    put:
+      consumes:
+      - application/json
+      description: Update an existing province's information
+      parameters:
+      - description: Province UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated province data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqUpdateProvince'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated province
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespProvince'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Province not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Update province
+      tags:
+      - Regency - Province
+  /v1/province/export:
+    get:
+      consumes:
+      - application/json
+      description: Export provinces to Excel file (.xlsx) with optional search and
+        filter
+      parameters:
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      - description: Search keyword for filtering by name
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: Excel file with provinces data
+          schema:
+            type: file
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Export provinces to Excel
+      tags:
+      - Regency - Province
   /v1/role-management/role:
     get:
       consumes:
@@ -774,11 +2214,11 @@ paths:
         "400":
           description: Bad request
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Get paginated list of roles
@@ -810,11 +2250,11 @@ paths:
         "400":
           description: Bad request - validation error
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Create a new role
@@ -846,15 +2286,15 @@ paths:
         "400":
           description: Bad request - invalid UUID
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "404":
           description: Role not found
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Delete role (soft delete)
@@ -885,15 +2325,15 @@ paths:
         "400":
           description: Bad request - invalid UUID
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "404":
           description: Role not found
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Get role by ID
@@ -930,15 +2370,15 @@ paths:
         "400":
           description: Bad request - validation error
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "404":
           description: Role not found
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Update role
@@ -966,11 +2406,11 @@ paths:
         "400":
           description: Bad request
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Get all roles
@@ -1003,20 +2443,954 @@ paths:
         "400":
           description: Bad request
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "404":
           description: Role with such name is not found
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_role_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Check if role name is duplicated
       tags:
       - Role Management
+  /v1/role-management/role/module-access:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all permission groups organized by module. Returns permission
+        groups with a value field indicating if the permission group is assigned to
+        the specified role. The role_id query parameter is optional.
+      parameters:
+      - description: Optional role ID to check permission group assignment
+        in: query
+        name: role_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved permission groups by module
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespPermissionGroupByModule'
+                  type: array
+              type: object
+        "400":
+          description: Bad request - validation error or role not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all permission groups grouped by module
+      tags:
+      - Role Management
+  /v1/sub-group:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of sub-groups with optional search and
+        filters. Supports multiple filter values for subgroup_code, name, and goods_group_id.
+        Subgroup codes are in 2-digit string format (e.g., "01", "02", "05", "10").
+        Only returns non-deleted sub-groups.
+      parameters:
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Items per page (default: 10)'
+        in: query
+        name: per_page
+        type: integer
+      - description: 'Sort column (allowed: id, goods_group_id, subgroup_code, name,
+          created_at, updated_at)'
+        in: query
+        name: sort_by
+        type: string
+      - description: 'Sort order: asc or desc (default: desc)'
+        in: query
+        name: sort_order
+        type: string
+      - description: Search keyword (searches in subgroup_code and name)
+        in: query
+        name: search
+        type: string
+      - collectionFormat: csv
+        description: 'Filter by subgroup codes (multiple values, format: '
+        in: query
+        items:
+          type: string
+        name: subgroup_codes
+        type: array
+      - collectionFormat: csv
+        description: Filter by names (multiple values)
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
+      - collectionFormat: csv
+        description: Filter by goods group IDs (multiple values, UUIDs)
+        in: query
+        items:
+          type: string
+        name: goods_group_ids
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved sub-groups
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.PaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespSubGroupIndex'
+                  type: array
+              type: object
+        "400":
+          description: Bad request - invalid query parameters
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get list of sub-groups with pagination
+      tags:
+      - Sub Golongan
+    post:
+      consumes:
+      - application/json
+      description: Create a new sub-group with provided goods_group_id and name. Name
+        must be unique within the same goods_group. Subgroup code is automatically
+        generated by the database trigger with 2-digit format (e.g., "01", "02", "05",
+        "10"). The code is generated sequentially based on the sequence.
+      parameters:
+      - description: 'Sub-group creation data. Fields: goods_group_id (required, UUID),
+          name (required, max 255 chars, uppercase letters only)'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCreateSubGroup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created sub-group with auto-generated subgroup_code
+            in 2-digit format
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespSubGroup'
+              type: object
+        "400":
+          description: Bad request - validation error or duplicate name in goods_group
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new sub-group
+      tags:
+      - Sub Golongan
+  /v1/sub-group/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete an existing sub-group by ID. The sub-group will be
+        marked as deleted (deleted_at is set) but remains in the database. Requires
+        'api.master-data.sub-group.delete' permission.
+      parameters:
+      - description: Sub-group UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully soft deleted sub-group
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Sub-group not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Soft delete sub-group
+      tags:
+      - Sub Golongan
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single sub-group by its UUID. The response includes
+        subgroup_code in 2-digit string format (e.g., "01", "02", "05", "10") and
+        goods_group_name to identify which goods group this sub-group belongs to.
+        Only returns non-deleted sub-groups.
+      parameters:
+      - description: Sub-group UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved sub-group with subgroup_code in 2-digit
+            format and goods_group_name
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespSubGroup'
+              type: object
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Sub-group not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get sub-group by ID
+      tags:
+      - Sub Golongan
+    put:
+      consumes:
+      - application/json
+      description: Update an existing sub-group's information. Name must be unique
+        within the same goods_group. Subgroup code cannot be updated as it is auto-generated.
+        The response includes the current subgroup_code in 2-digit format.
+      parameters:
+      - description: Sub-group UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 'Updated sub-group data. Fields: goods_group_id (required, UUID),
+          name (required, max 255 chars, uppercase letters only). Note: subgroup_code
+          is read-only and cannot be updated.'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqUpdateSubGroup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated sub-group with subgroup_code in 2-digit
+            format
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespSubGroup'
+              type: object
+        "400":
+          description: Bad request - validation error or duplicate name in goods_group
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Sub-group not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Update sub-group
+      tags:
+      - Sub Golongan
+  /v1/sub-group/export:
+    get:
+      consumes:
+      - application/json
+      description: 'Export sub-groups to Excel file (.xlsx) with optional search and
+        filter. Same search and filter logic as index but without pagination. Supports
+        multiple filter values for each field. Only exports non-deleted sub-groups.
+        Excel file includes: Kode Sub Golongan (2-digit format like "01", "02"), Nama
+        Sub Golongan, Goods Group ID, Update Date. Requires ''api.master-data.sub-group.export''
+        permission.'
+      parameters:
+      - description: Search keyword (searches in subgroup_code and name)
+        in: query
+        name: search
+        type: string
+      - collectionFormat: csv
+        description: 'Filter by subgroup codes (multiple values, format: '
+        in: query
+        items:
+          type: string
+        name: subgroup_codes
+        type: array
+      - collectionFormat: csv
+        description: Filter by names (multiple values)
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
+      - collectionFormat: csv
+        description: Filter by goods group IDs (multiple values, UUIDs)
+        in: query
+        items:
+          type: string
+        name: goods_group_ids
+        type: array
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: Excel file (sub-groups.xlsx) with sub-groups data including
+            subgroup_code in 2-digit format
+          schema:
+            type: file
+        "400":
+          description: Bad request - invalid query parameters
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Export sub-groups to Excel
+      tags:
+      - Sub Golongan
+  /v1/subdistrict:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of subdistricts with optional filters
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      - description: Filter by district_id
+        in: query
+        name: district_id
+        type: string
+      - description: Search keyword for filtering by name
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved subdistricts
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.PaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespSubdistrictIndex'
+                  type: array
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get list of subdistricts with pagination
+      tags:
+      - Regency - Subdistrict
+    post:
+      consumes:
+      - application/json
+      description: Create a new subdistrict with provided district_id and name
+      parameters:
+      - description: Subdistrict creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCreateSubdistrict'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created subdistrict
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespSubdistrict'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new subdistrict
+      tags:
+      - Regency - Subdistrict
+  /v1/subdistrict/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing subdistrict by ID
+      parameters:
+      - description: Subdistrict UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted subdistrict
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Subdistrict not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete subdistrict
+      tags:
+      - Regency - Subdistrict
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single subdistrict by its ID
+      parameters:
+      - description: Subdistrict UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved subdistrict
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespSubdistrict'
+              type: object
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Subdistrict not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get subdistrict by ID
+      tags:
+      - Regency - Subdistrict
+    put:
+      consumes:
+      - application/json
+      description: Update an existing subdistrict's information
+      parameters:
+      - description: Subdistrict UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated subdistrict data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqUpdateSubdistrict'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated subdistrict
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespSubdistrict'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Subdistrict not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Update subdistrict
+      tags:
+      - Regency - Subdistrict
+  /v1/subdistrict/export:
+    get:
+      consumes:
+      - application/json
+      description: Export subdistricts to Excel file (.xlsx) with optional search
+        and filter
+      parameters:
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      - description: Filter by district_id
+        in: query
+        name: district_id
+        type: string
+      - description: Search keyword for filtering by name
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: Excel file with subdistricts data
+          schema:
+            type: file
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Export subdistricts to Excel
+      tags:
+      - Regency - Subdistrict
+  /v1/type:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of types with optional search and filters.
+        Supports multiple filter values for type_code, subgroup_id, and name. Only
+        returns non-deleted types. Requires 'api.master-data.type.view' permission.
+      parameters:
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Items per page (default: 10)'
+        in: query
+        name: per_page
+        type: integer
+      - description: 'Sort column (allowed: id, subgroup_id, type_code, name, created_at,
+          updated_at)'
+        in: query
+        name: sort_by
+        type: string
+      - description: 'Sort order: asc or desc (default: desc)'
+        in: query
+        name: sort_order
+        type: string
+      - description: Search keyword (searches in type_code and name)
+        in: query
+        name: search
+        type: string
+      - collectionFormat: csv
+        description: Filter by type codes (multiple values)
+        in: query
+        items:
+          type: string
+        name: type_codes
+        type: array
+      - collectionFormat: csv
+        description: Filter by subgroup IDs (multiple values, UUIDs)
+        in: query
+        items:
+          type: string
+        name: subgroup_ids
+        type: array
+      - collectionFormat: csv
+        description: Filter by names (multiple values)
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved types
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.PaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespTypeIndex'
+                  type: array
+              type: object
+        "400":
+          description: Bad request - invalid query parameters
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get list of types with pagination
+      tags:
+      - Jenis
+    post:
+      consumes:
+      - application/json
+      description: Create a new type with provided data. Type code is automatically
+        generated by the system. Requires 'api.master-data.type.create' permission.
+      parameters:
+      - description: 'Type creation data. Fields: subgroup_id (required, UUID), name
+          (required, max 255 chars)'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCreateType'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created type with auto-generated type_code
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespType'
+              type: object
+        "400":
+          description: Bad request - validation error or duplicate name in subgroup
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new type
+      tags:
+      - Jenis
+  /v1/type/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete an existing type by ID. The type will be marked as
+        deleted (deleted_at is set) but remains in the database. Requires 'api.master-data.type.delete'
+        permission.
+      parameters:
+      - description: Type UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully soft deleted type
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Type not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Soft delete type
+      tags:
+      - Jenis
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single type by its UUID. The response includes subgroup_name
+        to identify which sub-group this type belongs to. Only returns non-deleted
+        types. Requires 'api.master-data.type.view' permission.
+      parameters:
+      - description: Type UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved type with subgroup_name
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespType'
+              type: object
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Type not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get type by ID
+      tags:
+      - Jenis
+    put:
+      consumes:
+      - application/json
+      description: Update an existing type's information. Type code cannot be updated.
+        Requires 'api.master-data.type.update' permission.
+      parameters:
+      - description: Type UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 'Updated type data. Fields: subgroup_id (required, UUID), name
+          (required, max 255 chars)'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqUpdateType'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated type
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespType'
+              type: object
+        "400":
+          description: Bad request - validation error or duplicate name in subgroup
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Type not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Update type
+      tags:
+      - Jenis
+  /v1/type/export:
+    get:
+      consumes:
+      - application/json
+      description: Export types to Excel file (.xlsx) with optional search and filter.
+        Same search and filter logic as index but without pagination. Supports multiple
+        filter values for type_code, subgroup_id, and name. Requires 'api.master-data.type.export'
+        permission.
+      parameters:
+      - description: Search keyword (searches in type_code and name)
+        in: query
+        name: search
+        type: string
+      - collectionFormat: csv
+        description: Filter by type codes (multiple values)
+        in: query
+        items:
+          type: string
+        name: type_codes
+        type: array
+      - collectionFormat: csv
+        description: Filter by subgroup IDs (multiple values, UUIDs)
+        in: query
+        items:
+          type: string
+        name: subgroup_ids
+        type: array
+      - collectionFormat: csv
+        description: Filter by names (multiple values)
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: Excel file (types.xlsx) with types data
+          schema:
+            type: file
+        "400":
+          description: Bad request - invalid query parameters
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Export types to Excel
+      tags:
+      - Jenis
   /v1/user-management/user:
     get:
       consumes:
@@ -1071,11 +3445,11 @@ paths:
         "400":
           description: Bad request
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Get paginated list of users
@@ -1107,17 +3481,62 @@ paths:
         "400":
           description: Bad request - validation error
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Create a new user
       tags:
       - User Management
   /v1/user-management/user/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete a user account by setting deleted_at timestamp. The
+        user will be marked as deleted but remain in the database. Requires 'api.user-management.user.delete'
+        permission.
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully soft deleted user
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespUser'
+              type: object
+        "400":
+          description: Bad request - invalid UUID or user not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Soft delete a user
+      tags:
+      - User Management
     get:
       consumes:
       - application/json
@@ -1143,15 +3562,15 @@ paths:
         "400":
           description: Bad request - invalid UUID
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "404":
           description: User not found
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Get user by ID
@@ -1188,15 +3607,15 @@ paths:
         "400":
           description: Bad request - validation error
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "404":
           description: User not found
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Update user
@@ -1234,15 +3653,15 @@ paths:
         "400":
           description: Bad request
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "404":
           description: User not found
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Activate a user
@@ -1280,15 +3699,15 @@ paths:
         "400":
           description: Bad request
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "404":
           description: User not found
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Block a user
@@ -1326,15 +3745,15 @@ paths:
         "400":
           description: Bad request - validation error
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "404":
           description: User not found
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Update user password
@@ -1362,11 +3781,11 @@ paths:
         "400":
           description: Bad request
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Get all users
@@ -1399,15 +3818,15 @@ paths:
         "400":
           description: Bad request
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "404":
           description: User with such name is not found
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Check if user name is duplicated
@@ -1454,11 +3873,11 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Import users from Excel file
@@ -1480,15 +3899,15 @@ paths:
         "400":
           description: Bad request
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Download user import Excel template
@@ -1521,11 +3940,11 @@ paths:
         "400":
           description: Bad request - invalid password
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_rendyfutsuy_base-go_modules_user_management_delivery_http.ResponseError'
+            $ref: '#/definitions/response.NonPaginationResponse'
       security:
       - BearerAuth: []
       summary: Confirm current user password

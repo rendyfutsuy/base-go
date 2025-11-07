@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users(
    username VARCHAR(80),
    full_name VARCHAR(80) NOT NULL,
    email VARCHAR(80) NOT NULL UNIQUE,
+   is_first_time_login BOOLEAN NOT NULL DEFAULT TRUE,
    password VARCHAR(225) NOT NULL,
    -- new column BEGIN --
    is_active BOOLEAN NOT NULL DEFAULT TRUE,

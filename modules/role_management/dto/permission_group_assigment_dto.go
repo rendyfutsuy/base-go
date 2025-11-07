@@ -7,7 +7,7 @@ import (
 
 type RespPermissionGroupByModule struct {
 	Name             utils.NullString      `json:"name"`
-	PermissionGroups []RespPermissionGroup `json:"permission_groups"`
+	PermissionGroups []RespPermissionGroup `json:"accesses"`
 }
 
 // to get role info for compact use

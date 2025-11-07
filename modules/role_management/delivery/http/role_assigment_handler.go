@@ -20,26 +20,40 @@ func (handler *RoleManagementHandler) ReAssignPermissionByGroup(c echo.Context) 
 	// validate id
 	err := uuid.Validate(id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.ErrorUUIDNotRecognized})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.ErrorUUIDNotRecognized))
 	}
 
 	req := new(dto.ReqUpdatePermissionGroupAssignmentToRole)
 	if err := c.Bind(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// validate request
 	if err := c.Validate(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// Re-assign Permission groups to role
 	res, err := handler.RoleUseCase.ReAssignPermissionByGroup(c, id, req)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	resResp := dto.ToRespRoleDetail(*res)
+	// if name already uses by existing account info, return Role object
+	modules := []dto.RespPermissionGroupByModule{}
+
+	modules, err = handler.buildPermissionGroupsByModule(c, id)
+	if err != nil {
+		// Handle specific error for UUID parsing
+		if id != "" {
+			if _, parseErr := uuid.Parse(id); parseErr != nil {
+				return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.ErrorUUIDNotRecognized))
+			}
+		}
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	resResp := dto.ToRespRoleDetail(*res, modules)
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(resResp)
 
@@ -52,26 +66,29 @@ func (handler *RoleManagementHandler) AssignUsersToRole(c echo.Context) error {
 	// validate id
 	err := uuid.Validate(id)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: constants.ErrorUUIDNotRecognized})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.ErrorUUIDNotRecognized))
 	}
 
 	req := new(dto.ReqUpdateAssignUsersToRole)
 	if err := c.Bind(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// validate request
 	if err := c.Validate(req); err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// Re-assign Permission groups to role
 	res, err := handler.RoleUseCase.AssignUsersToRole(c, id, req)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	resResp := dto.ToRespRoleDetail(*res)
+	// if name already uses by existing account info, return Role object
+	modules := []dto.RespPermissionGroupByModule{}
+
+	resResp := dto.ToRespRoleDetail(*res, modules)
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(resResp)
 

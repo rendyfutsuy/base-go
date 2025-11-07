@@ -14,12 +14,12 @@ type AuthClaims struct {
 }
 
 type authUsecase struct {
-	authRepo          auth.Repository
+	authRepo           auth.Repository
 	roleManagementRepo roleManagement.Repository
-	contextTimeout    time.Duration
-	hashSalt          string
-	signingKey        []byte
-	expireDuration    time.Duration
+	contextTimeout     time.Duration
+	hashSalt           string
+	signingKey         []byte
+	expireDuration     time.Duration
 }
 
 func NewAuthUsecase(r auth.Repository, rm roleManagement.Repository, timeout time.Duration, hashSalt string, signingKey []byte) auth.Usecase {
@@ -39,11 +39,11 @@ func NewAuthUsecase(r auth.Repository, rm roleManagement.Repository, timeout tim
 	// Expire Time Calculation END
 
 	return &authUsecase{
-		authRepo:          r,
+		authRepo:           r,
 		roleManagementRepo: rm,
-		contextTimeout:    timeout,
-		hashSalt:          hashSalt,
-		signingKey:        signingKey,
-		expireDuration:    expireDuration,
+		contextTimeout:     timeout,
+		hashSalt:           hashSalt,
+		signingKey:         signingKey,
+		expireDuration:     expireDuration,
 	}
 }

@@ -84,6 +84,17 @@ func (u *authUsecase) UpdateMyPassword(ctx context.Context, passwordChunks dto.R
 		return err
 	}
 
+	// Check if current user has already changed password (is_first_time_login = false)
+	isFirstTimeLogin, err := u.authRepo.GetIsFirstTimeLogin(ctx, userUUID)
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		return err
+	}
+
+	if !isFirstTimeLogin {
+		return errors.New(constants.AuthPasswordAlreadyChanged)
+	}
+
 	// assert old password given is same with saved password
 	isPasswordRight, err := u.authRepo.AssertPasswordRight(ctx, passwordChunks.OldPassword, userUUID)
 

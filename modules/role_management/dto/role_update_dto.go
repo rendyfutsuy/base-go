@@ -3,9 +3,9 @@ package dto
 import "github.com/google/uuid"
 
 type ReqUpdateRole struct {
-	Name             string      `json:"name" validate:"required,max=80"`
-	Description      string      `json:"description"`
-	PermissionGroups []uuid.UUID `json:"permission_groups" validate:"required,min=1"`
+	Name             string      `form:"role_name" json:"role_name" validate:"required,max=80,uppercase_letters"`
+	Description      string      `form:"description" json:"description"`
+	PermissionGroups []uuid.UUID `form:"accesses" json:"accesses" validate:"required,min=1"`
 }
 
 func (r *ReqUpdateRole) ToDBUpdateRole(authId string) ToDBUpdateRole {
@@ -16,7 +16,7 @@ func (r *ReqUpdateRole) ToDBUpdateRole(authId string) ToDBUpdateRole {
 }
 
 type ToDBUpdateRole struct {
-	Name             string      `json:"name"`
+	Name             string      `json:"role_name"`
 	Description      string      `json:"description"`
-	PermissionGroups []uuid.UUID `json:"permission_groups"`
+	PermissionGroups []uuid.UUID `json:"accesses"`
 }

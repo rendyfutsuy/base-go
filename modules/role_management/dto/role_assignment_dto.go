@@ -4,7 +4,7 @@ import "github.com/google/uuid"
 
 // Permission Assignment
 type ReqUpdatePermissionGroupAssignmentToRole struct {
-	PermissionGroupIds []uuid.UUID `json:"permission_groups" validate:"required,min=1"`
+	PermissionGroupIds []uuid.UUID `form:"permission_groups" json:"permission_groups" validate:"required,min=1"`
 }
 
 func (r *ReqUpdatePermissionGroupAssignmentToRole) ToDBUpdatePermissionGroupAssignmentToRole() ToDBUpdatePermissionGroupAssignmentToRole {
@@ -19,7 +19,7 @@ type ToDBUpdatePermissionGroupAssignmentToRole struct {
 
 // User Assignment
 type ReqUpdateAssignUsersToRole struct {
-	UserIds []uuid.UUID `json:"users" validate:"required,min=1"`
+	UserIds []uuid.UUID `form:"users" json:"users" validate:"required,min=1"`
 }
 
 func (r *ReqUpdateAssignUsersToRole) ToDBUpdateAssignUsersToRole() ToDBUpdateAssignUsersToRole {
