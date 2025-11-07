@@ -250,7 +250,7 @@ func (handler *AuthHandler) UpdateProfile(c echo.Context) error {
 // @Param			request	body		dto.ReqUpdatePassword	true	"New password data"
 // @Success		200		{object}	response.NonPaginationResponse	"Successfully updated password"
 // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
-// @Router			/v1/auth/password [put]
+// @Router			/v1/auth/profile/my-password [put]
 func (handler *AuthHandler) UpdateMyPassword(c echo.Context) error {
 	ctx := c.Request().Context()
 

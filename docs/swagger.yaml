@@ -176,6 +176,25 @@ definitions:
     - role_id
     - username
     type: object
+  dto.ReqResetPassword:
+    properties:
+      password:
+        maxLength: 25
+        minLength: 8
+        type: string
+      password_confirmation:
+        type: string
+    required:
+    - password
+    - password_confirmation
+    type: object
+  dto.ReqResetPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
   dto.ReqUpdateCity:
     properties:
       name:
@@ -236,6 +255,13 @@ definitions:
     - new_password
     - old_password
     - password_confirmation
+    type: object
+  dto.ReqUpdateProfile:
+    properties:
+      name:
+        type: string
+    required:
+    - name
     type: object
   dto.ReqUpdateProvince:
     properties:
@@ -736,6 +762,11 @@ definitions:
       username:
         type: string
     type: object
+  http.GeneralResponse:
+    properties:
+      message:
+        type: string
+    type: object
   http.ResponseAuth:
     properties:
       access_token:
@@ -855,7 +886,64 @@ paths:
       summary: Sign out user
       tags:
       - Authentication
-  /v1/auth/password:
+  /v1/auth/profile:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the profile of the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User profile data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserProfile'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - Authentication
+    put:
+      consumes:
+      - application/json
+      description: Updates the profile information of the authenticated user
+      parameters:
+      - description: Updated user profile data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqUpdateProfile'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated profile
+          schema:
+            $ref: '#/definitions/http.GeneralResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/http.GeneralResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.GeneralResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user profile
+      tags:
+      - Authentication
+  /v1/auth/profile/my-password:
     put:
       consumes:
       - application/json
@@ -881,32 +969,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Update user password
-      tags:
-      - Authentication
-  /v1/auth/profile:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves the profile of the authenticated user
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: User profile data
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.NonPaginationResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.UserProfile'
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.NonPaginationResponse'
-      security:
-      - BearerAuth: []
-      summary: Get user profile
       tags:
       - Authentication
   /v1/auth/refresh-token:
@@ -937,6 +999,63 @@ paths:
       security:
       - BearerAuth: []
       summary: Refresh access token
+      tags:
+      - Authentication
+  /v1/auth/reset-password/request:
+    post:
+      consumes:
+      - application/json
+      description: Sends a password reset email to the provided email address
+      parameters:
+      - description: Reset Password Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Send Reset Email Request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      summary: Request a password reset email
+      tags:
+      - Authentication
+  /v1/auth/reset-password/request/{token}:
+    post:
+      consumes:
+      - application/json
+      description: Resets the user password using a valid token
+      parameters:
+      - description: Password Reset Token
+        in: path
+        name: token
+        required: true
+        type: string
+      - description: Reset User Password
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqResetPassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Reset Password
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      summary: Reset user password
       tags:
       - Authentication
   /v1/city:
