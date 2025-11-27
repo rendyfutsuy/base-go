@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,6 +14,7 @@ import (
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -24,24 +26,34 @@ func (repo *userRepository) CreateUser(ctx context.Context, userReq dto.ToDBCrea
 	expiredAt := now.AddDate(0, 3, 0)
 
 	// Get password template from config (default to "temp" if not configured)
-	passwordTemplate := "temp"
-	if utils.ConfigVars.Exists("user.default_password_template") {
-		passwordTemplate = utils.ConfigVars.String("user.default_password_template")
+	myPassword := ""
+	initialPassword := userReq.Password
+	if initialPassword == "" {
+		myPassword = utils.ConfigVars.String("user.default_password_template")
 	}
 
+	// Hash the new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(initialPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	myPassword = string(hashedPassword)
+
 	userRes = &models.User{
-		FullName:          userReq.FullName,
-		Username:          userReq.Username,
-		Email:             userReq.Email,
-		RoleId:            userReq.RoleId,
-		Nik:               userReq.Nik,
-		IsActive:          userReq.IsActive,
-		Gender:            userReq.Gender,
-		Password:          passwordTemplate,
+		FullName: userReq.FullName,
+		Username: userReq.Username,
+		// Email:    userReq.Email,
+		RoleId: userReq.RoleId,
+		// Nik:               userReq.Nik,
+		// IsActive:          userReq.IsActive,
+		// Gender:            userReq.Gender,
+		Password:          myPassword,
 		CreatedAt:         now,
 		UpdatedAt:         now,
 		PasswordExpiredAt: expiredAt,
 		IsFirstTimeLogin:  true, // Explicitly set to true for new users
+		Deletable:         true, // Explicitly set to true for new users
 	}
 
 	// Create user - GORM will insert all fields from struct
@@ -75,6 +87,7 @@ func (repo *userRepository) GetUserByID(ctx context.Context, id uuid.UUID) (user
 		Select(`
 			usr.id,
 			usr.full_name,
+			usr.username,
 			usr.email,
 			usr.created_at,
 			usr.updated_at,
@@ -83,6 +96,7 @@ func (repo *userRepository) GetUserByID(ctx context.Context, id uuid.UUID) (user
 			usr.is_active,
 			rl.name AS role_name,
 			usr.gender,
+			usr.deletable,
 			CASE 
 				WHEN usr.is_active THEN 'active'
 				ELSE 'inactive'
@@ -117,6 +131,7 @@ func (repo *userRepository) GetIndexUser(ctx context.Context, req request.PageRe
 		Select(`
 			usr.id,
 			usr.full_name,
+			usr.username,
 			usr.email,
 			usr.gender,
 			usr.is_active,
@@ -124,6 +139,7 @@ func (repo *userRepository) GetIndexUser(ctx context.Context, req request.PageRe
 			usr.created_at,
 			usr.updated_at,
 			usr.deleted_at,
+			usr.deletable,
 			CASE 
 				WHEN usr.is_active THEN 'active'
 				ELSE 'inactive'
@@ -143,6 +159,7 @@ func (repo *userRepository) GetIndexUser(ctx context.Context, req request.PageRe
 		"usr.gender",
 		"usr.email",
 		"rl.name",
+		"usr.username",
 	})
 
 	// Apply role IDs filter
@@ -157,10 +174,11 @@ func (repo *userRepository) GetIndexUser(ctx context.Context, req request.PageRe
 
 	// Apply pagination using generic function
 	config := request.PaginationConfig{
-		DefaultSortBy:    "usr.created_at",
-		DefaultSortOrder: "DESC",
-		MaxPerPage:       100,
-		SortMapping:      repo.SortColumnMapping,
+		DefaultSortBy:      "usr.created_at",
+		DefaultSortOrder:   "DESC",
+		MaxPerPage:         100,
+		SortMapping:        repo.SortColumnMapping,
+		NaturalSortColumns: []string{"usr.full_name", "usr.username", "rl.name"}, // Enable natural sorting for usr.full_name
 	}
 
 	total, err = request.ApplyPagination(query, req, config, &users)
@@ -195,12 +213,17 @@ func (repo *userRepository) GetAllUser(ctx context.Context) ([]models.User, erro
 // It returns an User pointer and an error.
 func (repo *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, userReq dto.ToDBUpdateUser) (userRes *models.User, err error) {
 	updates := map[string]interface{}{
-		"full_name":  userReq.FullName,
-		"email":      userReq.Email,
-		"gender":     userReq.Gender,
-		"is_active":  userReq.IsActive,
+		"full_name": userReq.FullName,
+		// "email":     userReq.Email,
+		// "gender":    userReq.Gender,
+		// "is_active":  userReq.IsActive,
 		"role_id":    userReq.RoleId,
 		"updated_at": time.Now().UTC(),
+	}
+
+	// Update username if provided
+	if userReq.Username != "" {
+		updates["username"] = userReq.Username
 	}
 
 	userRes = &models.User{}
@@ -415,8 +438,8 @@ func (repo *userRepository) GetDuplicatedUser(ctx context.Context, name string, 
 	user = &models.User{}
 
 	query := repo.DB.WithContext(ctx).
-		Select("id", "full_name", "created_at", "updated_at").
-		Where("full_name = ? AND deleted_at IS NULL", name)
+		Select("id", "full_name", "username", "created_at", "updated_at").
+		Where("username = ? AND deleted_at IS NULL", name)
 
 	if excludedId != uuid.Nil {
 		query = query.Where("id <> ?", excludedId)
@@ -640,6 +663,7 @@ func (repo *userRepository) BulkCreateUsers(ctx context.Context, usersReq []dto.
 			UpdatedAt:         now,
 			PasswordExpiredAt: expiredAt,
 			IsFirstTimeLogin:  true, // Explicitly set to true for new users
+			Deletable:         true, // Explicitly set to true for new users
 		}
 	}
 
@@ -653,56 +677,28 @@ func (repo *userRepository) BulkCreateUsers(ctx context.Context, usersReq []dto.
 }
 
 func (repo *userRepository) SortColumnMapping(selectedSortLabel string) string {
-	response := ""
-	sortLabels := map[string][]string{
-		"id": {
-			"id",
-		},
-		"full_name": {
-			"full_name",
-			"name",
-		},
-		"email": {
-			"email",
-		},
-		"gender": {
-			"gender",
-		},
-		"is_active": {
-			"is_active",
-		},
-		"counter": {
-			"counter",
-		},
-		"created_at": {
-			"created_at",
-		},
-		"updated_at": {
-			"updated_at",
-		},
-		"deleted_at": {
-			"deleted_at",
-		},
-		"active_status": {
-			"active_status",
-		},
-		"is_blocked": {
-			"is_blocked",
-		},
-		"role_name": {
-			"role_name",
-		},
+	normalized := strings.ToLower(strings.TrimSpace(selectedSortLabel))
+	if normalized == "" {
+		return ""
+	}
+	normalized = strings.ReplaceAll(normalized, "-", "_")
+	normalized = strings.ReplaceAll(normalized, " ", "_")
+
+	mapping := map[string]string{
+		"id":            "usr.id",
+		"user_id":       "usr.id",
+		"full_name":     "usr.full_name",
+		"name":          "usr.full_name",
+		"username":      "usr.username",
+		"email":         "usr.email",
+		"gender":        "usr.gender",
+		"is_active":     "usr.is_active",
+		"active_status": "active_status",
+		"is_blocked":    "is_blocked",
+		"role_name":     "rl.name",
+		"created_at":    "usr.created_at",
+		"updated_at":    "usr.updated_at",
 	}
 
-	// Loop through the map
-	for DBcolumn, labels := range sortLabels {
-		for _, sortLabel := range labels {
-			// Check if the current sort label matches the selected sort label
-			if sortLabel == selectedSortLabel {
-				response = DBcolumn
-			}
-		}
-	}
-
-	return response
+	return mapping[normalized]
 }

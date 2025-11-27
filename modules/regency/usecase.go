@@ -25,6 +25,7 @@ type Usecase interface {
 	GetCityIndex(c echo.Context, req request.PageRequest, filter dto.ReqCityIndexFilter) ([]models.City, int, error)
 	GetAllCity(c echo.Context, filter dto.ReqCityIndexFilter) ([]models.City, error)
 	ExportCity(c echo.Context, filter dto.ReqCityIndexFilter) ([]byte, error)
+	GetCityAreaCodes(c echo.Context, search string) ([]string, error)
 
 	// District
 	CreateDistrict(c echo.Context, req *dto.ReqCreateDistrict, authId string) (*models.District, error)

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -91,11 +92,12 @@ func (r *regencyRepository) GetProvinceIndex(ctx context.Context, req request.Pa
 	query = request.ApplySearchCondition(query, searchQuery, []string{"p.name"})
 
 	total, err := request.ApplyPagination(query, req, request.PaginationConfig{
-		DefaultSortBy:    "p.created_at",
-		DefaultSortOrder: "DESC",
-		AllowedColumns:   []string{"id", "name", "created_at", "updated_at"},
-		ColumnPrefix:     "p.",
-		MaxPerPage:       100,
+		DefaultSortBy:      "p.created_at",
+		DefaultSortOrder:   "DESC",
+		AllowedColumns:     []string{"id", "name", "created_at", "updated_at"},
+		ColumnPrefix:       "p.",
+		MaxPerPage:         100,
+		NaturalSortColumns: []string{"p.name"}, // Enable natural sorting for p.name
 	}, &provinces)
 	if err != nil {
 		return nil, 0, err
@@ -117,11 +119,12 @@ func (r *regencyRepository) GetAllProvince(ctx context.Context, filter dto.ReqPr
 }
 
 // City Repository Implementation
-func (r *regencyRepository) CreateCity(ctx context.Context, provinceID uuid.UUID, name string) (*models.City, error) {
+func (r *regencyRepository) CreateCity(ctx context.Context, provinceID uuid.UUID, name string, areaCode *string) (*models.City, error) {
 	now := time.Now().UTC()
 	c := &models.City{
 		ProvinceID: provinceID,
 		Name:       name,
+		AreaCode:   areaCode,
 		CreatedAt:  now,
 		UpdatedAt:  now,
 	}
@@ -134,11 +137,14 @@ func (r *regencyRepository) CreateCity(ctx context.Context, provinceID uuid.UUID
 	return c, nil
 }
 
-func (r *regencyRepository) UpdateCity(ctx context.Context, id uuid.UUID, provinceID uuid.UUID, name string) (*models.City, error) {
+func (r *regencyRepository) UpdateCity(ctx context.Context, id uuid.UUID, provinceID uuid.UUID, name string, areaCode *string) (*models.City, error) {
 	updates := map[string]interface{}{
 		"province_id": provinceID,
 		"name":        name,
 		"updated_at":  time.Now().UTC(),
+	}
+	if areaCode != nil {
+		updates["area_code"] = areaCode
 	}
 	c := &models.City{}
 	err := r.DB.WithContext(ctx).Model(&models.City{}).
@@ -180,22 +186,22 @@ func (r *regencyRepository) ExistsCityByName(ctx context.Context, provinceID uui
 
 func (r *regencyRepository) GetCityIndex(ctx context.Context, req request.PageRequest, filter dto.ReqCityIndexFilter) ([]models.City, int, error) {
 	var cities []models.City
-	query := r.DB.WithContext(ctx).Table("city c").Select("c.id, c.province_id, c.name, c.created_at, c.updated_at").
+	query := r.DB.WithContext(ctx).Table("city c").Select("c.id, c.province_id, c.name, c.area_code, c.created_at, c.updated_at").
 		Where("c.deleted_at IS NULL")
 
 	searchQuery := req.Search
-	query = request.ApplySearchCondition(query, searchQuery, []string{"c.name"})
+	query = request.ApplySearchCondition(query, searchQuery, []string{"c.name", "c.area_code"})
 
-	if filter.ProvinceID != uuid.Nil {
-		query = query.Where("c.province_id = ?", filter.ProvinceID)
-	}
+	// Apply filters with multiple values support
+	query = r.ApplyFilters(query, filter)
 
 	total, err := request.ApplyPagination(query, req, request.PaginationConfig{
-		DefaultSortBy:    "c.created_at",
-		DefaultSortOrder: "DESC",
-		AllowedColumns:   []string{"id", "province_id", "name", "created_at", "updated_at"},
-		ColumnPrefix:     "c.",
-		MaxPerPage:       100,
+		DefaultSortBy:      "c.created_at",
+		DefaultSortOrder:   "DESC",
+		AllowedColumns:     []string{"id", "province_id", "name", "area_code", "created_at", "updated_at"},
+		ColumnPrefix:       "c.",
+		MaxPerPage:         100,
+		NaturalSortColumns: []string{"c.name"}, // Enable natural sorting for c.name
 	}, &cities)
 	if err != nil {
 		return nil, 0, err
@@ -205,19 +211,38 @@ func (r *regencyRepository) GetCityIndex(ctx context.Context, req request.PageRe
 
 func (r *regencyRepository) GetAllCity(ctx context.Context, filter dto.ReqCityIndexFilter) ([]models.City, error) {
 	var cities []models.City
-	query := r.DB.WithContext(ctx).Table("city c").Select("c.id, c.province_id, c.name, c.created_at, c.updated_at").
+	query := r.DB.WithContext(ctx).Table("city c").Select("c.id, c.province_id, c.name, c.area_code, c.created_at, c.updated_at").
 		Where("c.deleted_at IS NULL")
 
 	query = request.ApplySearchCondition(query, filter.Search, []string{"c.name"})
 
-	if filter.ProvinceID != uuid.Nil {
-		query = query.Where("c.province_id = ?", filter.ProvinceID)
-	}
+	// Apply filters with multiple values support
+	query = r.ApplyFilters(query, filter)
 
 	if err := query.Order("c.created_at DESC").Find(&cities).Error; err != nil {
 		return nil, err
 	}
 	return cities, nil
+}
+
+func (r *regencyRepository) GetCityAreaCodes(ctx context.Context, search string) ([]string, error) {
+	var areaCodes []string
+
+	query := r.DB.WithContext(ctx).Table("city c").
+		Where("c.deleted_at IS NULL").
+		Where("c.area_code IS NOT NULL AND c.area_code <> ''")
+
+	if search != "" {
+		query = query.Where("LOWER(c.area_code) LIKE ?", "%"+strings.ToLower(search)+"%")
+	}
+
+	if err := query.Distinct("c.area_code").
+		Order("c.area_code ASC").
+		Pluck("c.area_code", &areaCodes).Error; err != nil {
+		return nil, err
+	}
+
+	return areaCodes, nil
 }
 
 // District Repository Implementation
@@ -290,16 +315,16 @@ func (r *regencyRepository) GetDistrictIndex(ctx context.Context, req request.Pa
 	searchQuery := req.Search
 	query = request.ApplySearchCondition(query, searchQuery, []string{"d.name"})
 
-	if filter.CityID != uuid.Nil {
-		query = query.Where("d.city_id = ?", filter.CityID)
-	}
+	// Apply filters with multiple values support
+	query = r.ApplyFilters(query, filter)
 
 	total, err := request.ApplyPagination(query, req, request.PaginationConfig{
-		DefaultSortBy:    "d.created_at",
-		DefaultSortOrder: "DESC",
-		AllowedColumns:   []string{"id", "city_id", "name", "created_at", "updated_at"},
-		ColumnPrefix:     "d.",
-		MaxPerPage:       100,
+		DefaultSortBy:      "d.created_at",
+		DefaultSortOrder:   "DESC",
+		AllowedColumns:     []string{"id", "city_id", "name", "created_at", "updated_at"},
+		ColumnPrefix:       "d.",
+		MaxPerPage:         100,
+		NaturalSortColumns: []string{"d.name"}, // Enable natural sorting for d.name
 	}, &districts)
 	if err != nil {
 		return nil, 0, err
@@ -314,9 +339,8 @@ func (r *regencyRepository) GetAllDistrict(ctx context.Context, filter dto.ReqDi
 
 	query = request.ApplySearchCondition(query, filter.Search, []string{"d.name"})
 
-	if filter.CityID != uuid.Nil {
-		query = query.Where("d.city_id = ?", filter.CityID)
-	}
+	// Apply filters with multiple values support
+	query = r.ApplyFilters(query, filter)
 
 	if err := query.Order("d.created_at DESC").Find(&districts).Error; err != nil {
 		return nil, err
@@ -394,16 +418,16 @@ func (r *regencyRepository) GetSubdistrictIndex(ctx context.Context, req request
 	searchQuery := req.Search
 	query = request.ApplySearchCondition(query, searchQuery, []string{"s.name"})
 
-	if filter.DistrictID != uuid.Nil {
-		query = query.Where("s.district_id = ?", filter.DistrictID)
-	}
+	// Apply filters with multiple values support
+	query = r.ApplyFilters(query, filter)
 
 	total, err := request.ApplyPagination(query, req, request.PaginationConfig{
-		DefaultSortBy:    "s.created_at",
-		DefaultSortOrder: "DESC",
-		AllowedColumns:   []string{"id", "district_id", "name", "created_at", "updated_at"},
-		ColumnPrefix:     "s.",
-		MaxPerPage:       100,
+		DefaultSortBy:      "s.created_at",
+		DefaultSortOrder:   "DESC",
+		AllowedColumns:     []string{"id", "district_id", "name", "created_at", "updated_at"},
+		ColumnPrefix:       "s.",
+		MaxPerPage:         100,
+		NaturalSortColumns: []string{"s.name"}, // Enable natural sorting for s.name
 	}, &subdistricts)
 	if err != nil {
 		return nil, 0, err
@@ -418,9 +442,8 @@ func (r *regencyRepository) GetAllSubdistrict(ctx context.Context, filter dto.Re
 
 	query = request.ApplySearchCondition(query, filter.Search, []string{"s.name"})
 
-	if filter.DistrictID != uuid.Nil {
-		query = query.Where("s.district_id = ?", filter.DistrictID)
-	}
+	// Apply filters with multiple values support
+	query = r.ApplyFilters(query, filter)
 
 	if err := query.Order("s.created_at DESC").Find(&subdistricts).Error; err != nil {
 		return nil, err

@@ -33,56 +33,62 @@ type RegencyHandler struct {
 func NewRegencyHandler(e *echo.Echo, uc regency.Usecase, mwP _reqContext.IMiddlewarePageRequest, auth middleware.IMiddlewareAuth, middlewarePermission middleware.IMiddlewarePermission) {
 	h := &RegencyHandler{Usecase: uc, validator: validator.New(), mwPageRequest: mwP, middlewareAuth: auth, middlewarePermission: middlewarePermission}
 
-	// Province routes
-	provinceGroup := e.Group("/v1/province")
-	provinceGroup.Use(h.middlewareAuth.AuthorizationCheck)
-
 	// Permissions (shared for all regency entities)
 	// View:   province.view
 	// Create: province.create
 	// Update: province.update
 	// Delete: province.delete
 	// Export: province.export
+	permissionToView := []string{"province.view"}
+	permissionToCreate := []string{"province.create"}
+	permissionToUpdate := []string{"province.update"}
+	permissionToDelete := []string{"province.delete"}
+	permissionToExport := []string{"province.export"}
 
-	provinceGroup.GET("", h.GetProvinceIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation([]string{"province.view"}))
-	provinceGroup.GET("/export", h.ExportProvince, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.export"}))
-	provinceGroup.GET("/:id", h.GetProvinceByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.view"}))
-	provinceGroup.POST("", h.CreateProvince, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.create"}))
-	provinceGroup.PUT("/:id", h.UpdateProvince, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.update"}))
-	provinceGroup.DELETE("/:id", h.DeleteProvince, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.delete"}))
+	// Province routes
+	provinceGroup := e.Group("/v1/province")
+	provinceGroup.Use(h.middlewareAuth.AuthorizationCheck)
+
+	provinceGroup.GET("", h.GetProvinceIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation(permissionToView))
+	provinceGroup.GET("/export", h.ExportProvince, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToExport))
+	provinceGroup.GET("/:id", h.GetProvinceByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToView))
+	provinceGroup.POST("", h.CreateProvince, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToCreate))
+	provinceGroup.PUT("/:id", h.UpdateProvince, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToUpdate))
+	provinceGroup.DELETE("/:id", h.DeleteProvince, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToDelete))
 
 	// City routes
 	cityGroup := e.Group("/v1/city")
 	cityGroup.Use(h.middlewareAuth.AuthorizationCheck)
 
-	cityGroup.GET("", h.GetCityIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation([]string{"province.view"}))
-	cityGroup.GET("/export", h.ExportCity, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.export"}))
-	cityGroup.GET("/:id", h.GetCityByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.view"}))
-	cityGroup.POST("", h.CreateCity, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.create"}))
-	cityGroup.PUT("/:id", h.UpdateCity, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.update"}))
-	cityGroup.DELETE("/:id", h.DeleteCity, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.delete"}))
+	cityGroup.GET("", h.GetCityIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation(permissionToView))
+	cityGroup.GET("/area-codes", h.GetCityAreaCodes, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToView))
+	cityGroup.GET("/export", h.ExportCity, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToExport))
+	cityGroup.GET("/:id", h.GetCityByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToView))
+	cityGroup.POST("", h.CreateCity, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToCreate))
+	cityGroup.PUT("/:id", h.UpdateCity, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToUpdate))
+	cityGroup.DELETE("/:id", h.DeleteCity, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToDelete))
 
 	// District routes
 	districtGroup := e.Group("/v1/district")
 	districtGroup.Use(h.middlewareAuth.AuthorizationCheck)
 
-	districtGroup.GET("", h.GetDistrictIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation([]string{"province.view"}))
-	districtGroup.GET("/export", h.ExportDistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.export"}))
-	districtGroup.GET("/:id", h.GetDistrictByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.view"}))
-	districtGroup.POST("", h.CreateDistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.create"}))
-	districtGroup.PUT("/:id", h.UpdateDistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.update"}))
-	districtGroup.DELETE("/:id", h.DeleteDistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.delete"}))
+	districtGroup.GET("", h.GetDistrictIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation(permissionToView))
+	districtGroup.GET("/export", h.ExportDistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToExport))
+	districtGroup.GET("/:id", h.GetDistrictByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToView))
+	districtGroup.POST("", h.CreateDistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToCreate))
+	districtGroup.PUT("/:id", h.UpdateDistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToUpdate))
+	districtGroup.DELETE("/:id", h.DeleteDistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToDelete))
 
 	// Subdistrict routes
 	subdistrictGroup := e.Group("/v1/subdistrict")
 	subdistrictGroup.Use(h.middlewareAuth.AuthorizationCheck)
 
-	subdistrictGroup.GET("", h.GetSubdistrictIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation([]string{"province.view"}))
-	subdistrictGroup.GET("/export", h.ExportSubdistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.export"}))
-	subdistrictGroup.GET("/:id", h.GetSubdistrictByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.view"}))
-	subdistrictGroup.POST("", h.CreateSubdistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.create"}))
-	subdistrictGroup.PUT("/:id", h.UpdateSubdistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.update"}))
-	subdistrictGroup.DELETE("/:id", h.DeleteSubdistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"province.delete"}))
+	subdistrictGroup.GET("", h.GetSubdistrictIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation(permissionToView))
+	subdistrictGroup.GET("/export", h.ExportSubdistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToExport))
+	subdistrictGroup.GET("/:id", h.GetSubdistrictByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToView))
+	subdistrictGroup.POST("", h.CreateSubdistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToCreate))
+	subdistrictGroup.PUT("/:id", h.UpdateSubdistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToUpdate))
+	subdistrictGroup.DELETE("/:id", h.DeleteSubdistrict, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToDelete))
 }
 
 // Province Handlers
@@ -260,16 +266,16 @@ func (h *RegencyHandler) ExportProvince(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	c.Response().Header().Set(echo.HeaderContentType, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Response().Header().Set("Content-Disposition", "attachment; filename=provinces.xlsx")
-	return c.Blob(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelBytes)
+	c.Response().Header().Set(echo.HeaderContentType, constants.ExcelContent)
+	c.Response().Header().Set(constants.FieldContentDisposition, constants.ExcelContentDisposition("provinces.xlsx"))
+	return c.Blob(http.StatusOK, constants.ExcelContent, excelBytes)
 }
 
 // City Handlers
 
 // CreateCity godoc
 // @Summary		Create a new city
-// @Description	Create a new city with provided province_id and name
+// @Description	Create a new city with provided province_id, name, dan optional area_code
 // @Tags			Regency - City
 // @Accept			json
 // @Produce		json
@@ -298,7 +304,7 @@ func (h *RegencyHandler) CreateCity(c echo.Context) error {
 
 // UpdateCity godoc
 // @Summary		Update city
-// @Description	Update an existing city's information
+// @Description	Update an existing city's information termasuk area_code
 // @Tags			Regency - City
 // @Accept			json
 // @Produce		json
@@ -391,6 +397,35 @@ func (h *RegencyHandler) GetCityIndex(c echo.Context) error {
 	return c.JSON(http.StatusOK, respPag)
 }
 
+// GetCityAreaCodes godoc
+// @Summary		Get distinct city area codes
+// @Description	Retrieve distinct area_code values from city table with optional search by area_code
+// @Tags			Regency - City
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			search	query		string	false	"Search area_code"
+// @Success		200		{object}	response.NonPaginationResponse{data=[]dto.RespCityAreaCode}	"Successfully retrieved area codes"
+// @Failure		400		{object}	response.NonPaginationResponse	"Bad request"
+// @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
+// @Router			/v1/city/area-codes [get]
+func (h *RegencyHandler) GetCityAreaCodes(c echo.Context) error {
+	search := c.QueryParam("search")
+	res, err := h.Usecase.GetCityAreaCodes(c, search)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	respData := make([]dto.RespCityAreaCode, 0, len(res))
+	for _, code := range res {
+		respData = append(respData, dto.RespCityAreaCode{AreaCode: code})
+	}
+
+	resp := response.NonPaginationResponse{}
+	resp, _ = resp.SetResponse(respData)
+	return c.JSON(http.StatusOK, resp)
+}
+
 // GetCityByID godoc
 // @Summary		Get city by ID
 // @Description	Retrieve a single city by its ID
@@ -440,9 +475,9 @@ func (h *RegencyHandler) ExportCity(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	c.Response().Header().Set(echo.HeaderContentType, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Response().Header().Set("Content-Disposition", "attachment; filename=cities.xlsx")
-	return c.Blob(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelBytes)
+	c.Response().Header().Set(echo.HeaderContentType, constants.ExcelContent)
+	c.Response().Header().Set(constants.FieldContentDisposition, constants.ExcelContentDisposition("cities.xlsx"))
+	return c.Blob(http.StatusOK, constants.ExcelContent, excelBytes)
 }
 
 // District Handlers
@@ -620,9 +655,9 @@ func (h *RegencyHandler) ExportDistrict(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	c.Response().Header().Set(echo.HeaderContentType, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Response().Header().Set("Content-Disposition", "attachment; filename=districts.xlsx")
-	return c.Blob(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelBytes)
+	c.Response().Header().Set(echo.HeaderContentType, constants.ExcelContent)
+	c.Response().Header().Set(constants.FieldContentDisposition, constants.ExcelContentDisposition("districts.xlsx"))
+	return c.Blob(http.StatusOK, constants.ExcelContent, excelBytes)
 }
 
 // Subdistrict Handlers
@@ -800,7 +835,7 @@ func (h *RegencyHandler) ExportSubdistrict(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	c.Response().Header().Set(echo.HeaderContentType, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Response().Header().Set("Content-Disposition", "attachment; filename=subdistricts.xlsx")
-	return c.Blob(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelBytes)
+	c.Response().Header().Set(echo.HeaderContentType, constants.ExcelContent)
+	c.Response().Header().Set(constants.FieldContentDisposition, constants.ExcelContentDisposition("subdistricts.xlsx"))
+	return c.Blob(http.StatusOK, constants.ExcelContent, excelBytes)
 }

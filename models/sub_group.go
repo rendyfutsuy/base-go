@@ -22,6 +22,9 @@ type SubGroup struct {
 	
 	// Read-only field from join (not stored in database)
 	GoodsGroupName string `gorm:"column:goods_group_name;<-:false" json:"goods_group_name"`
+	
+	// Mutator field for deletable status (not stored in database)
+	Deletable bool `gorm:"column:deletable;<-:false" json:"deletable"`
 }
 
 func (SubGroup) TableName() string {

@@ -15,13 +15,21 @@ const (
 	ErrorJson = "Error decoding JSON : "
 
 	ExcelContent = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
 
+// ExcelContentDisposition returns Content-Disposition header value for Excel file download
+func ExcelContentDisposition(filename string) string {
+	return "attachment; filename=" + filename
+}
+
+const (
 	// TIME
 	FormatDate                           = "2006-01-02"
 	FormatDateTime                       = "2006-01-02 15:04:05"
 	FormatDateTime12H                    = "02-01-2006 03:04:05 PM"
 	FormatDateTime12HFull                = "02 January 2006 03:04:05 PM"
 	FormatTimezone                       = "2006-01-02T15:04:05.999Z07:00"
+	FormatDateTimeISO8601                = "2006-01-02T15:04:05Z07:00" // ISO 8601 format with timezone offset
 	FormatTimestamp                      = "2006-01-02 15:04:05.999999999"
 	FormatFullTimestamp                  = "2006-01-02 15:04:05.000000 +0000 +0000"
 	FormatFullTimestampGMT7              = "2006-01-02 15:04:05.999999999 -0700 -0700"

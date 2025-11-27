@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -97,7 +98,14 @@ func (u *typeUsecase) Update(c echo.Context, id string, reqBody *dto.ReqUpdateTy
 	if exists {
 		return nil, errors.New(constants.TypeNameAlreadyExists)
 	}
-	return u.repo.Update(ctx, tid, reqBody.SubgroupID, reqBody.Name, userID)
+	res, err := u.repo.Update(ctx, tid, reqBody.SubgroupID, reqBody.Name, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf(constants.TypeNotFound, id)
+		}
+		return nil, err
+	}
+	return res, nil
 }
 
 func (u *typeUsecase) Delete(c echo.Context, id string, authId string) error {
@@ -106,6 +114,16 @@ func (u *typeUsecase) Delete(c echo.Context, id string, authId string) error {
 	if err != nil {
 		return err
 	}
+
+	// Check if type is still used in backings
+	exists, err := u.repo.ExistsInBackings(ctx, tid)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return errors.New(constants.TypeStillUsedInBackings)
+	}
+
 	user := c.Get("user")
 	userID := ""
 	if user != nil {
@@ -151,17 +169,61 @@ func (u *typeUsecase) Export(c echo.Context, filter dto.ReqTypeIndexFilter) ([]b
 
 	// Header
 	f.SetCellValue(sheet, "A1", "Kode Jenis")
-	f.SetCellValue(sheet, "B1", "Nama Sub Golongan")
-	f.SetCellValue(sheet, "C1", "Nama Jenis")
-	f.SetCellValue(sheet, "D1", "Update Date")
+	f.SetCellValue(sheet, "B1", "Nama Jenis")
+	f.SetCellValue(sheet, "C1", "Nama Sub Golongan")
+	f.SetCellValue(sheet, "D1", "Nama Golongan")
+	f.SetCellValue(sheet, "E1", "Updated Date")
 
 	// Rows
 	for i, t := range list {
 		row := i + 2
 		f.SetCellValue(sheet, "A"+strconv.Itoa(row), t.TypeCode)
-		f.SetCellValue(sheet, "B"+strconv.Itoa(row), t.SubgroupName)
-		f.SetCellValue(sheet, "C"+strconv.Itoa(row), t.Name)
-		f.SetCellValue(sheet, "D"+strconv.Itoa(row), t.UpdatedAt.Local().Format("2006/01/02"))
+		f.SetCellValue(sheet, "B"+strconv.Itoa(row), t.Name)
+		f.SetCellValue(sheet, "C"+strconv.Itoa(row), t.SubgroupName)
+		f.SetCellValue(sheet, "D"+strconv.Itoa(row), t.GoodsGroupName)
+		f.SetCellValue(sheet, "E"+strconv.Itoa(row), t.UpdatedAt.Local().Format("2006/01/02"))
+	}
+
+	// Calculate total rows for border styling
+	totalRows := len(list) + 1 // 1 header row + data rows
+
+	// Define border configuration
+	borderDefinition := []excelize.Border{
+		{Type: "left", Color: "000000", Style: 1},
+		{Type: "top", Color: "000000", Style: 1},
+		{Type: "bottom", Color: "000000", Style: 1},
+		{Type: "right", Color: "000000", Style: 1},
+	}
+
+	// Create border style
+	borderStyle, err := f.NewStyle(&excelize.Style{
+		Border: borderDefinition,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply border style to all cells
+	startCell := "A1"
+	endCell := "E" + strconv.Itoa(totalRows)
+	if err := f.SetCellStyle(sheet, startCell, endCell, borderStyle); err != nil {
+		return nil, err
+	}
+
+	// Create header style with bold font and border
+	headerStyle, err := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+		},
+		Border: borderDefinition,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply header style to header row
+	if err := f.SetCellStyle(sheet, "A1", "E1", headerStyle); err != nil {
+		return nil, err
 	}
 
 	// Write to buffer and return bytes

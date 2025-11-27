@@ -20,6 +20,7 @@ type ReqActivateUser struct {
 
 type ReqUpdateUser struct {
 	FullName             string    `form:"name" json:"name" validate:"required,max=80,uppercase_letters"`
+	Username             string    `form:"username" json:"username" validate:"uppercase_letters"`
 	RoleId               uuid.UUID `form:"role_id" json:"role_id" validate:"required"`
 	Email                string    `form:"email" json:"email"`
 	IsActive             bool      `form:"is_active" json:"is_active"`
@@ -31,6 +32,7 @@ type ReqUpdateUser struct {
 func (r *ReqUpdateUser) ToDBUpdateUser(authId string) ToDBUpdateUser {
 	return ToDBUpdateUser{
 		FullName: r.FullName,
+		Username: r.Username,
 		RoleId:   r.RoleId,
 		Email:    r.Email,
 		IsActive: r.IsActive,
@@ -40,6 +42,7 @@ func (r *ReqUpdateUser) ToDBUpdateUser(authId string) ToDBUpdateUser {
 
 type ToDBUpdateUser struct {
 	FullName string    `json:"name"`
+	Username string    `json:"username"`
 	RoleId   uuid.UUID `json:"role_id"`
 	Email    string    `json:"email"`
 	IsActive bool      `json:"is_active"`

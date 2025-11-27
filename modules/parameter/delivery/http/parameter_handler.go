@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/middleware"
 	_reqContext "github.com/rendyfutsuy/base-go/helpers/middleware/request"
 	"github.com/rendyfutsuy/base-go/helpers/request"
@@ -41,24 +42,29 @@ func NewParameterHandler(e *echo.Echo, uc parameter.Usecase, mwP _reqContext.IMi
 	// Update: parameter.update
 	// Delete: parameter.delete
 	// Export: parameter.export
+	permissionToView := []string{"parameter.view"}
+	permissionToCreate := []string{"parameter.create"}
+	permissionToUpdate := []string{"parameter.update"}
+	permissionToDelete := []string{"parameter.delete"}
+	permissionToExport := []string{"parameter.export"}
 
 	// Index with pagination + search
-	r.GET("", h.GetIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation([]string{"parameter.view"}))
+	r.GET("", h.GetIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation(permissionToView))
 
 	// Export (no pagination, same filters) - must be before /:id to avoid route conflict
-	r.GET("/export", h.Export, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"parameter.export"}))
+	r.GET("/export", h.Export, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToExport))
 
 	// Get by ID (detail) - must be after /export to avoid route conflict
-	r.GET("/:id", h.GetByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"parameter.view"}))
+	r.GET("/:id", h.GetByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToView))
 
 	// Create
-	r.POST("", h.Create, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"parameter.create"}))
+	r.POST("", h.Create, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToCreate))
 
 	// Update
-	r.PUT("/:id", h.Update, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"parameter.update"}))
+	r.PUT("/:id", h.Update, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToUpdate))
 
 	// Delete
-	r.DELETE("/:id", h.Delete, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"parameter.delete"}))
+	r.DELETE("/:id", h.Delete, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToDelete))
 }
 
 // Create godoc
@@ -260,7 +266,7 @@ func (h *ParameterHandler) Export(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	c.Response().Header().Set(echo.HeaderContentType, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Response().Header().Set("Content-Disposition", "attachment; filename=parameters.xlsx")
-	return c.Blob(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelBytes)
+	c.Response().Header().Set(echo.HeaderContentType, constants.ExcelContent)
+	c.Response().Header().Set(constants.FieldContentDisposition, constants.ExcelContentDisposition("parameters.xlsx"))
+	return c.Blob(http.StatusOK, constants.ExcelContent, excelBytes)
 }

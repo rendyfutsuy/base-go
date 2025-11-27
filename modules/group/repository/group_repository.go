@@ -21,12 +21,14 @@ func NewGroupRepository(db *gorm.DB) *groupRepository {
 	return &groupRepository{DB: db}
 }
 
-func (r *groupRepository) Create(ctx context.Context, name string) (*models.GoodsGroup, error) {
+func (r *groupRepository) Create(ctx context.Context, name string, createdBy string) (*models.GoodsGroup, error) {
 	now := time.Now().UTC()
 	gg := &models.GoodsGroup{
 		Name:      name,
 		CreatedAt: now,
+		CreatedBy: createdBy,
 		UpdatedAt: now,
+		UpdatedBy: createdBy,
 	}
 	// Omit group_code to let database generate it using DEFAULT generate_group_code()
 	if err := r.DB.WithContext(ctx).Omit("group_code").Create(gg).Error; err != nil {
@@ -39,32 +41,71 @@ func (r *groupRepository) Create(ctx context.Context, name string) (*models.Good
 	return gg, nil
 }
 
-func (r *groupRepository) Update(ctx context.Context, id uuid.UUID, name string) (*models.GoodsGroup, error) {
+func (r *groupRepository) Update(ctx context.Context, id uuid.UUID, name string, updatedBy string) (*models.GoodsGroup, error) {
 	updates := map[string]interface{}{
 		"name":       name,
 		"updated_at": time.Now().UTC(),
+		"updated_by": updatedBy,
 	}
-	gg := &models.GoodsGroup{}
 	err := r.DB.WithContext(ctx).Model(&models.GoodsGroup{}).
 		Where("id = ? AND deleted_at IS NULL", id).
-		Updates(updates).
+		Updates(updates).Error
+	if err != nil {
+		return nil, err
+	}
+	// Get updated group with deletable status
+	gg := &models.GoodsGroup{}
+	err = r.DB.WithContext(ctx).Table("goods_group gg").
+		Select(`
+			gg.id, 
+			gg.group_code, 
+			gg.name, 
+			gg.created_at, 
+			gg.updated_at,
+			NOT EXISTS (
+				SELECT 1 
+				FROM sub_groups sg 
+				WHERE sg.goods_group_id = gg.id 
+				AND sg.deleted_at IS NULL
+			) as deletable
+		`).
+		Where("gg.id = ? AND gg.deleted_at IS NULL", id).
 		First(gg).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
-		}
 		return nil, err
 	}
 	return gg, nil
 }
 
-func (r *groupRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	return r.DB.WithContext(ctx).Where("id = ? AND deleted_at IS NULL", id).Delete(&models.GoodsGroup{}).Error
+func (r *groupRepository) Delete(ctx context.Context, id uuid.UUID, deletedBy string) error {
+	updates := map[string]interface{}{
+		"deleted_at": time.Now().UTC(),
+		"deleted_by": deletedBy,
+	}
+	return r.DB.WithContext(ctx).Model(&models.GoodsGroup{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Updates(updates).Error
 }
 
 func (r *groupRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.GoodsGroup, error) {
 	gg := &models.GoodsGroup{}
-	if err := r.DB.WithContext(ctx).Where("id = ? AND deleted_at IS NULL", id).First(gg).Error; err != nil {
+	err := r.DB.WithContext(ctx).Table("goods_group gg").
+		Select(`
+			gg.id, 
+			gg.group_code, 
+			gg.name, 
+			gg.created_at, 
+			gg.updated_at,
+			NOT EXISTS (
+				SELECT 1 
+				FROM sub_groups sg 
+				WHERE sg.goods_group_id = gg.id 
+				AND sg.deleted_at IS NULL
+			) as deletable
+		`).
+		Where("gg.id = ? AND gg.deleted_at IS NULL", id).
+		First(gg).Error
+	if err != nil {
 		return nil, err
 	}
 	return gg, nil
@@ -84,7 +125,20 @@ func (r *groupRepository) ExistsByName(ctx context.Context, name string, exclude
 
 func (r *groupRepository) GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqGroupIndexFilter) ([]models.GoodsGroup, int, error) {
 	var groups []models.GoodsGroup
-	query := r.DB.WithContext(ctx).Table("goods_group gg").Select("gg.id, gg.group_code, gg.name, gg.created_at, gg.updated_at").
+	query := r.DB.WithContext(ctx).Table("goods_group gg").
+		Select(`
+			gg.id, 
+			gg.group_code, 
+			gg.name, 
+			gg.created_at, 
+			gg.updated_at,
+			NOT EXISTS (
+				SELECT 1 
+				FROM sub_groups sg 
+				WHERE sg.goods_group_id = gg.id 
+				AND sg.deleted_at IS NULL
+			) as deletable
+		`).
 		Where("gg.deleted_at IS NULL")
 
 	// Apply search from PageRequest
@@ -96,11 +150,11 @@ func (r *groupRepository) GetIndex(ctx context.Context, req request.PageRequest,
 
 	// Pagination
 	total, err := request.ApplyPagination(query, req, request.PaginationConfig{
-		DefaultSortBy:    "gg.created_at",
-		DefaultSortOrder: "DESC",
-		AllowedColumns:   []string{"id", "group_code", "name", "created_at", "updated_at"},
-		ColumnPrefix:     "gg.",
-		MaxPerPage:       100,
+		DefaultSortBy:      "gg.created_at",
+		DefaultSortOrder:   "DESC",
+		MaxPerPage:         100,
+		SortMapping:        mapGroupIndexSortColumn,
+		NaturalSortColumns: []string{"gg.name"}, // Enable natural sorting for gg.name
 	}, &groups)
 	if err != nil {
 		return nil, 0, err
@@ -119,9 +173,31 @@ func (r *groupRepository) GetAll(ctx context.Context, filter dto.ReqGroupIndexFi
 	// Apply filter conditions (can be extended in the future)
 	// Example: if len(filter.GroupCodes) > 0 { query = query.Where("gg.group_code IN (?)", filter.GroupCodes) }
 
-	// Order by created_at DESC (no pagination)
-	if err := query.Order("gg.created_at DESC").Find(&groups).Error; err != nil {
+	// Determine sorting with natural sorting support
+	sortExpression := request.BuildSortExpressionForExport(
+		filter.SortBy,
+		filter.SortOrder,
+		"gg.created_at",
+		"DESC",
+		mapGroupIndexSortColumn,
+		[]string{"gg.name"}, // Enable natural sorting for group name
+	)
+
+	// Order results
+	if err := query.Order(sortExpression).Find(&groups).Error; err != nil {
 		return nil, err
 	}
 	return groups, nil
+}
+
+func (r *groupRepository) ExistsInSubGroups(ctx context.Context, groupID uuid.UUID) (bool, error) {
+	var count int64
+	err := r.DB.WithContext(ctx).
+		Model(&models.SubGroup{}).
+		Where("goods_group_id = ? AND deleted_at IS NULL", groupID).
+		Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }

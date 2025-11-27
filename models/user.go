@@ -25,6 +25,7 @@ type User struct {
 	Gender            string         `gorm:"column:gender;type:varchar(20)" json:"gender"`
 	Counter           int            `gorm:"column:counter;default:0" json:"counter"`
 	IsFirstTimeLogin  bool           `gorm:"column:is_first_time_login;default:true" json:"is_first_time_login"`
+	Deletable         bool           `gorm:"column:deletable;default:true;not null" json:"deletable"`
 
 	// mutator - not stored in DB
 	ActiveStatus     utils.NullString `gorm:"column:active_status;<-:false" json:"active_status"` // Read-only: used for fetch, ignored on insert/update

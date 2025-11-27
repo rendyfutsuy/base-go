@@ -33,8 +33,13 @@ func NewUserManagementHandler(e *echo.Echo, us user_management.Usecase, mwP _req
 
 	r.Use(handler.middlewareAuth.AuthorizationCheck)
 
+	// Permissions
+	permissionToCreate := []string{"user.create"}
+	permissionToUpdate := []string{"user.update"}
+	permissionToDelete := []string{"user.delete"}
+
 	// user scope
-	r.POST("/user", handler.CreateUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.create"}))
+	r.POST("/user", handler.CreateUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(permissionToCreate))
 
 	// user index eligible permission
 	indexUser := []string{
@@ -55,20 +60,22 @@ func NewUserManagementHandler(e *echo.Echo, us user_management.Usecase, mwP _req
 	r.GET("/user/:id", handler.GetUserByID, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(showUser))
 
 	// user update
-	r.PUT("/user/:id", handler.UpdateUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.update"}))
+	r.PUT("/user/:id", handler.UpdateUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(permissionToUpdate))
 
 	// user delete
-	r.DELETE("/user/:id", handler.DeleteUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.delete"}))
+	r.DELETE("/user/:id", handler.DeleteUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(permissionToDelete))
 
 	// user check name	eligible permission
 	checkUserName := append(showUser, "user.check-name")
-	r.GET("/user/check-name", handler.GetDuplicatedUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(checkUserName))
+	r.POST("/user/check-name", handler.GetDuplicatedUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(checkUserName))
 
+	// 2025/11/04: unused - commented first
 	// user block
-	r.PATCH("/user/:id/block", handler.BlockUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.block"}))
+	// r.PATCH("/user/:id/block", handler.BlockUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.block"}))
 
+	// 2025/11/11: unused - commented first
 	// user activate
-	r.PATCH("/user/:id/assign-status", handler.ActivateUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.activate"}))
+	// r.PATCH("/user/:id/assign-status", handler.ActivateUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.activate"}))
 
 	// user update password
 	// Allow password update without RequireActivatedUser so user can activate themselves
@@ -79,7 +86,7 @@ func NewUserManagementHandler(e *echo.Echo, us user_management.Usecase, mwP _req
 	r.POST("/user/password-confirmation", handler.ConfirmCurrentUserPassword)
 
 	// user import from Excel
-	r.GET("/user/import/template", handler.DownloadUserImportTemplate, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.create"}))
-	r.POST("/user/import", handler.ImportUsersFromExcel, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation([]string{"user.create"}))
+	r.GET("/user/import/template", handler.DownloadUserImportTemplate, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(permissionToCreate))
+	r.POST("/user/import", handler.ImportUsersFromExcel, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(permissionToCreate))
 
 }

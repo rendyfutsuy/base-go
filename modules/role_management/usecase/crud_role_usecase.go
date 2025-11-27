@@ -16,15 +16,20 @@ import (
 
 func (u *roleUsecase) CreateRole(c echo.Context, req *dto.ReqCreateRole, authId string) (roleRes *models.Role, err error) {
 	ctx := c.Request().Context()
+	isSuperAdminRole := isSuperAdminRoleName(req.Name)
 
 	// assert each Permission group exists
 	for _, permissionGroupId := range req.PermissionGroups {
 		// check permission availability on DB
-		_, err := u.roleRepo.GetPermissionGroupByID(ctx, permissionGroupId)
+		permissionGroup, err := u.roleRepo.GetPermissionGroupByID(ctx, permissionGroupId)
 
 		// return error if any permission group not valid one.
 		if err != nil {
 			return nil, errors.New(fmt.Sprintf(constants.PermissionGroupNotFoundWithID, permissionGroupId))
+		}
+
+		if !isSuperAdminRole && isRestrictedUserPermissionGroup(permissionGroup) {
+			return nil, errors.New(constants.UserRestrictedPermissionGroupError)
 		}
 	}
 
@@ -81,15 +86,20 @@ func (u *roleUsecase) GetAllRole(c echo.Context) (role_infos []models.Role, err 
 
 func (u *roleUsecase) UpdateRole(c echo.Context, id string, req *dto.ReqUpdateRole, authId string) (roleRes *models.Role, err error) {
 	ctx := c.Request().Context()
+	isSuperAdminRole := isSuperAdminRoleName(req.Name)
 
 	// assert each Permission group exists
 	for _, permissionGroupId := range req.PermissionGroups {
 		// check permission availability on DB
-		_, err := u.roleRepo.GetPermissionGroupByID(ctx, permissionGroupId)
+		permissionGroup, err := u.roleRepo.GetPermissionGroupByID(ctx, permissionGroupId)
 
 		// return error if any permission group not valid one.
 		if err != nil {
 			return nil, errors.New(fmt.Sprintf(constants.PermissionGroupNotFoundWithID, permissionGroupId))
+		}
+
+		if !isSuperAdminRole && isRestrictedUserPermissionGroup(permissionGroup) {
+			return nil, errors.New(constants.UserRestrictedPermissionGroupError)
 		}
 	}
 

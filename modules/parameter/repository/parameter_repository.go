@@ -120,21 +120,16 @@ func (r *parameterRepository) GetIndex(ctx context.Context, req request.PageRequ
 	searchQuery := req.Search
 	query = request.ApplySearchCondition(query, searchQuery, []string{"p.name", "p.code"})
 
-	// Apply filter conditions
-	if len(filter.Types) > 0 {
-		query = query.Where("p.type IN ?", filter.Types)
-	}
-	if len(filter.Names) > 0 {
-		query = query.Where("p.name IN ?", filter.Names)
-	}
+	// Apply filters with multiple values support
+	query = r.ApplyFilters(query, filter)
 
 	// Pagination
 	total, err := request.ApplyPagination(query, req, request.PaginationConfig{
-		DefaultSortBy:    "p.created_at",
-		DefaultSortOrder: "DESC",
-		AllowedColumns:   []string{"id", "code", "name", "value", "type", "created_at", "updated_at"},
-		ColumnPrefix:     "p.",
-		MaxPerPage:       100,
+		DefaultSortBy:      "p.created_at",
+		DefaultSortOrder:   "DESC",
+		MaxPerPage:         100,
+		SortMapping:        mapParameterIndexSortColumn,
+		NaturalSortColumns: []string{"p.name"}, // Enable natural sorting for p.name
 	}, &parameters)
 	if err != nil {
 		return nil, 0, err
@@ -150,16 +145,22 @@ func (r *parameterRepository) GetAll(ctx context.Context, filter dto.ReqParamete
 	// Apply search from filter
 	query = request.ApplySearchCondition(query, filter.Search, []string{"p.name", "p.code"})
 
-	// Apply filter conditions
-	if len(filter.Types) > 0 {
-		query = query.Where("p.type IN ?", filter.Types)
-	}
-	if len(filter.Names) > 0 {
-		query = query.Where("p.name IN ?", filter.Names)
+	// Apply filters with multiple values support
+	query = r.ApplyFilters(query, filter)
+
+	// Determine sorting
+	sortBy := "p.created_at"
+	if mapped := mapParameterIndexSortColumn(filter.SortBy); mapped != "" {
+		sortBy = mapped
 	}
 
-	// Order by created_at DESC (no pagination)
-	if err := query.Order("p.created_at DESC").Find(&parameters).Error; err != nil {
+	sortOrder := request.ValidateAndSanitizeSortOrder(filter.SortOrder)
+	if sortOrder == "" {
+		sortOrder = "DESC"
+	}
+
+	// Order results
+	if err := query.Order(sortBy + " " + sortOrder).Find(&parameters).Error; err != nil {
 		return nil, err
 	}
 	return parameters, nil

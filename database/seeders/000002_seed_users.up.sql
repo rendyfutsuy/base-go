@@ -34,4 +34,25 @@ INSERT INTO users (
     0,
     '3175091206980001',
     false
+),
+(
+    -- User
+    -- password: password123
+    -- role: Super Admin
+    -- password expired at: now + 90 days
+    -- status active
+    uuid_generate_v7(),
+    NOW(),
+    NOW(),
+    NOW() + INTERVAL '90 days',
+    'user@mailinator.com',
+    'normal.user',
+    '$2y$10$GViZu3GONfwoswHMagB0sOh.ZlKeK9WrSyhwbvmiheeGGihz2vBSm',
+    '0199dc4e-6455-7b8d-b48b-409dbece678b',
+    'User - System',
+    TRUE,
+    'male',
+    0,
+    '3175091206980001',
+    true
 )

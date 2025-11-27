@@ -10,7 +10,7 @@ import (
 
 type RespRole struct {
 	ID   uuid.UUID `json:"id"`
-	Name string    `json:"name"`
+	Name string    `json:"role_name"`
 }
 
 type RespRoleIndex struct {
@@ -20,6 +20,7 @@ type RespRoleIndex struct {
 	CreatedAt time.Time          `json:"created_at"`
 	UpdatedAt utils.NullTime     `json:"updated_at"`
 	Modules   []utils.NullString `json:"modules"`
+	Deletable bool               `json:"deletable"`
 }
 
 type RespPermissionGroupRoleDetail struct {
@@ -36,6 +37,7 @@ type RespRoleDetail struct {
 	CreatedAt   time.Time                     `json:"created_at"`
 	UpdatedAt   utils.NullTime                `json:"updated_at"`
 	Description utils.NullString              `json:"description"`
+	Deletable   bool                          `json:"deletable"`
 }
 
 // to get role info for compact use
@@ -70,6 +72,14 @@ func ToRespRoleIndex(roleDb models.Role) RespRoleIndex {
 		}
 	}
 
+	// mapping permission group to show at Role Detail
+	deletable := roleDb.Deletable
+
+	// if total user > 0, set deletable to false
+	if roleDb.TotalUser > 0 {
+		deletable = false
+	}
+
 	return RespRoleIndex{
 		ID:        roleDb.ID,
 		Name:      roleDb.Name,
@@ -77,6 +87,7 @@ func ToRespRoleIndex(roleDb models.Role) RespRoleIndex {
 		CreatedAt: roleDb.CreatedAt,
 		UpdatedAt: roleDb.UpdatedAt,
 		Modules:   Modules,
+		Deletable: deletable,
 	}
 
 }
@@ -94,6 +105,14 @@ func ToRespRoleDetail(roleDb models.Role, modules []RespPermissionGroupByModule)
 		})
 	}
 
+	// mapping permission group to show at Role Detail
+	deletable := roleDb.Deletable
+
+	// if total user > 0, set deletable to false
+	if roleDb.TotalUser > 0 {
+		deletable = false
+	}
+
 	return RespRoleDetail{
 		ID:          roleDb.ID,
 		Name:        roleDb.Name,
@@ -102,5 +121,6 @@ func ToRespRoleDetail(roleDb models.Role, modules []RespPermissionGroupByModule)
 		CreatedAt:   roleDb.CreatedAt,
 		UpdatedAt:   roleDb.UpdatedAt,
 		Description: roleDb.Description,
+		Deletable:   deletable,
 	}
 }

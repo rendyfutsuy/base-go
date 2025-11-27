@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -230,17 +231,11 @@ func (handler *UserManagementHandler) UpdateUser(c echo.Context) error {
 	// update user password, only if you are super admin.
 	// if not skip this process entirely.
 	if req.Password != "" &&
-		user.(models.User).RoleName == constants.AuthRoleSuperAdmin {
-
+		strings.EqualFold(user.(models.User).RoleName, constants.AuthRoleSuperAdmin) {
 		// apped password to update password validation
 		reqPassword := new(dto.ReqUpdateUserPassword)
 		reqPassword.NewPassword = req.Password
 		reqPassword.PasswordConfirmation = req.PasswordConfirmation
-
-		// validate request
-		if err := c.Validate(reqPassword); err != nil {
-			return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
-		}
 
 		// update Update User Password By Passed ID
 		err = handler.UserUseCase.UpdateUserPasswordNoCheckRequired(c, id, reqPassword)
@@ -267,8 +262,8 @@ func (handler *UserManagementHandler) UpdateUser(c echo.Context) error {
 // @Success		200		{object}	response.NonPaginationResponse{data=dto.RespUser}	"User with such name exists"
 // @Failure		400		{object}	response.NonPaginationResponse	"Bad request"
 // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
-// @Failure		404		{object}	response.NonPaginationResponse	"User with such name is not found"
-// @Router			/v1/user-management/user/check-name [get]
+// @Failure		200		{object}	response.NonPaginationResponse	"User with such name is not found"
+// @Router			/v1/user-management/user/check-name [post]
 func (handler *UserManagementHandler) GetDuplicatedUser(c echo.Context) error {
 	req := new(dto.ReqCheckDuplicatedUser)
 	if err := c.Bind(req); err != nil {
@@ -289,11 +284,11 @@ func (handler *UserManagementHandler) GetDuplicatedUser(c echo.Context) error {
 		uid = req.ExcludedUserId
 	}
 
-	res, err := handler.UserUseCase.UserNameIsNotDuplicated(c, req.FullName, uid)
+	res, err := handler.UserUseCase.UserNameIsNotDuplicated(c, req.UserName, uid)
 
 	// if name havent been uses by existing account info, return not found error
 	if res == nil {
-		return c.JSON(http.StatusNotFound, response.SetErrorResponse(http.StatusNotFound, "User Info with such name is not found"))
+		return c.JSON(http.StatusOK, response.SetErrorResponse(http.StatusOK, "User Info with such name is not found"))
 	}
 
 	if err != nil {
@@ -304,24 +299,26 @@ func (handler *UserManagementHandler) GetDuplicatedUser(c echo.Context) error {
 	resResp := dto.ToRespUser(*res)
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(resResp)
+	resp.Status = http.StatusConflict
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusConflict, resp)
 }
 
-// BlockUser godoc
-// @Summary		Block a user
-// @Description	Block a user account and revoke all their tokens
-// @Tags			User Management
-// @Accept			json
-// @Produce		json
-// @Security		BearerAuth
-// @Param			id		path	string				true	"User UUID"
-// @Param			request	body	dto.ReqBlockUser	true	"Block user request"
-// @Success		200		{object}	response.NonPaginationResponse{data=dto.RespUserDetail}	"Successfully blocked user"
-// @Failure		400		{object}	response.NonPaginationResponse	"Bad request"
-// @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
-// @Failure		404		{object}	response.NonPaginationResponse	"User not found"
-// @Router			/v1/user-management/user/{id}/block [patch]
+// 2025/11/04: unused - commented first
+// // BlockUser godoc
+// // @Summary		Block a user
+// // @Description	Block a user account and revoke all their tokens
+// // @Tags			User Management
+// // @Accept			json
+// // @Produce		json
+// // @Security		BearerAuth
+// // @Param			id		path	string				true	"User UUID"
+// // @Param			request	body	dto.ReqBlockUser	true	"Block user request"
+// // @Success		200		{object}	response.NonPaginationResponse{data=dto.RespUserDetail}	"Successfully blocked user"
+// // @Failure		400		{object}	response.NonPaginationResponse	"Bad request"
+// // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
+// // @Failure		404		{object}	response.NonPaginationResponse	"User not found"
+// // @Router			/v1/user-management/user/{id}/block [patch]
 func (handler *UserManagementHandler) BlockUser(c echo.Context) error {
 	req := new(dto.ReqBlockUser)
 	if err := c.Bind(req); err != nil {
@@ -357,20 +354,21 @@ func (handler *UserManagementHandler) BlockUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-// ActivateUser godoc
-// @Summary		Activate a user
-// @Description	Activate or update status of a user account
-// @Tags			User Management
-// @Accept			json
-// @Produce		json
-// @Security		BearerAuth
-// @Param			id		path	string				true	"User UUID"
-// @Param			request	body	dto.ReqActivateUser	true	"Activate user request"
-// @Success		200		{object}	response.NonPaginationResponse{data=dto.RespUserDetail}	"Successfully activated user"
-// @Failure		400		{object}	response.NonPaginationResponse	"Bad request"
-// @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
-// @Failure		404		{object}	response.NonPaginationResponse	"User not found"
-// @Router			/v1/user-management/user/{id}/assign-status [patch]
+// 2025/11/04: unused - commented first
+// // ActivateUser godoc
+// // @Summary		Activate a user
+// // @Description	Activate or update status of a user account
+// // @Tags			User Management
+// // @Accept			json
+// // @Produce		json
+// // @Security		BearerAuth
+// // @Param			id		path	string				true	"User UUID"
+// // @Param			request	body	dto.ReqActivateUser	true	"Activate user request"
+// // @Success		200		{object}	response.NonPaginationResponse{data=dto.RespUserDetail}	"Successfully activated user"
+// // @Failure		400		{object}	response.NonPaginationResponse	"Bad request"
+// // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
+// // @Failure		404		{object}	response.NonPaginationResponse	"User not found"
+// // @Router			/v1/user-management/user/{id}/assign-status [patch]
 func (handler *UserManagementHandler) ActivateUser(c echo.Context) error {
 	req := new(dto.ReqActivateUser)
 	if err := c.Bind(req); err != nil {

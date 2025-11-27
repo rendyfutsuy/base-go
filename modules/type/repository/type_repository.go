@@ -53,18 +53,14 @@ func (r *typeRepository) Update(ctx context.Context, id uuid.UUID, subgroupID uu
 		"updated_at":  time.Now().UTC(),
 		"updated_by":  updatedBy,
 	}
-	t := &models.Type{}
 	err := r.DB.WithContext(ctx).Model(&models.Type{}).
 		Where("id = ? AND deleted_at IS NULL", id).
-		Updates(updates).
-		First(t).Error
+		Updates(updates).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
-		}
 		return nil, err
 	}
-	return t, nil
+	// Re-fetch with deletable status
+	return r.GetByID(ctx, id)
 }
 
 func (r *typeRepository) Delete(ctx context.Context, id uuid.UUID, deletedBy string) error {
@@ -92,7 +88,11 @@ func (r *typeRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Typ
 			t.updated_by,
 			sg.name as subgroup_name,
 			sg.goods_group_id as goods_group_id,
-			gg.name as goods_group_name
+			gg.name as goods_group_name,
+			NOT EXISTS (
+				SELECT 1 FROM backings b
+				WHERE b.type_id = t.id AND b.deleted_at IS NULL
+			) as deletable
 		`).
 		Joins("LEFT JOIN sub_groups sg ON t.subgroup_id = sg.id AND sg.deleted_at IS NULL").
 		Joins("LEFT JOIN goods_group gg ON sg.goods_group_id = gg.id AND gg.deleted_at IS NULL").
@@ -121,6 +121,18 @@ func (r *typeRepository) ExistsByNameInSubgroup(ctx context.Context, subgroupID 
 	return count > 0, nil
 }
 
+func (r *typeRepository) ExistsInBackings(ctx context.Context, typeID uuid.UUID) (bool, error) {
+	var count int64
+	err := r.DB.WithContext(ctx).
+		Model(&models.Backing{}).
+		Where("type_id = ? AND deleted_at IS NULL", typeID).
+		Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (r *typeRepository) GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqTypeIndexFilter) ([]models.Type, int, error) {
 	var types []models.Type
 	query := r.DB.WithContext(ctx).
@@ -133,44 +145,30 @@ func (r *typeRepository) GetIndex(ctx context.Context, req request.PageRequest, 
 			t.created_at,
 			t.updated_at,
 			sg.name as subgroup_name,
-			gg.name as goods_group_name
+			gg.name as goods_group_name,
+			NOT EXISTS (
+				SELECT 1 FROM backings b
+				WHERE b.type_id = t.id AND b.deleted_at IS NULL
+			) as deletable
 		`).
 		Joins("LEFT JOIN sub_groups sg ON t.subgroup_id = sg.id AND sg.deleted_at IS NULL").
 		Joins("LEFT JOIN goods_group gg ON sg.goods_group_id = gg.id AND gg.deleted_at IS NULL").
 		Where("t.deleted_at IS NULL")
 
 	// Apply search from PageRequest
-	searchQuery := req.Search
-	query = request.ApplySearchCondition(query, searchQuery, []string{"t.type_code", "t.name"})
+	query = request.ApplySearchConditionWithSubqueriesFromInterface(query, req.Search, r)
 
 	// Apply filters with multiple values support
-	if len(filter.TypeCodes) > 0 {
-		query = query.Where("t.type_code IN (?)", filter.TypeCodes)
-	}
-	if len(filter.Names) > 0 {
-		query = query.Where("t.name IN (?)", filter.Names)
-	}
-	if len(filter.SubgroupIDs) > 0 {
-		// Convert string UUIDs to uuid.UUID for query
-		subgroupUUIDs := make([]uuid.UUID, 0, len(filter.SubgroupIDs))
-		for _, idStr := range filter.SubgroupIDs {
-			if id, err := uuid.Parse(idStr); err == nil {
-				subgroupUUIDs = append(subgroupUUIDs, id)
-			}
-		}
-		if len(subgroupUUIDs) > 0 {
-			query = query.Where("t.subgroup_id IN (?)", subgroupUUIDs)
-		}
-	}
+	query = r.ApplyFilters(query, filter)
 
 	// Pagination
 	// Use Scan() for JOIN queries with custom SELECT
 	total, err := request.ApplyPagination(query, req, request.PaginationConfig{
-		DefaultSortBy:    "t.created_at",
-		DefaultSortOrder: "DESC",
-		AllowedColumns:   []string{"id", "subgroup_id", "type_code", "name", "created_at", "updated_at"},
-		ColumnPrefix:     "t.",
-		MaxPerPage:       100,
+		DefaultSortBy:      "t.created_at",
+		DefaultSortOrder:   "DESC",
+		MaxPerPage:         100,
+		SortMapping:        mapTypeIndexSortColumn,
+		NaturalSortColumns: []string{"t.name"}, // Enable natural sorting for t.name
 	}, &types)
 	if err != nil {
 		return nil, 0, err
@@ -190,7 +188,11 @@ func (r *typeRepository) GetAll(ctx context.Context, filter dto.ReqTypeIndexFilt
 			t.created_at,
 			t.updated_at,
 			sg.name as subgroup_name,
-			gg.name as goods_group_name
+			gg.name as goods_group_name,
+			NOT EXISTS (
+				SELECT 1 FROM backings b
+				WHERE b.type_id = t.id AND b.deleted_at IS NULL
+			) as deletable
 		`).
 		Joins("LEFT JOIN sub_groups sg ON t.subgroup_id = sg.id AND sg.deleted_at IS NULL").
 		Joins("LEFT JOIN goods_group gg ON sg.goods_group_id = gg.id AND gg.deleted_at IS NULL").
@@ -200,29 +202,49 @@ func (r *typeRepository) GetAll(ctx context.Context, filter dto.ReqTypeIndexFilt
 	query = request.ApplySearchCondition(query, filter.Search, []string{"t.type_code", "t.name"})
 
 	// Apply filters with multiple values support
-	if len(filter.TypeCodes) > 0 {
-		query = query.Where("t.type_code IN (?)", filter.TypeCodes)
-	}
-	if len(filter.Names) > 0 {
-		query = query.Where("t.name IN (?)", filter.Names)
-	}
-	if len(filter.SubgroupIDs) > 0 {
-		// Convert string UUIDs to uuid.UUID for query
-		subgroupUUIDs := make([]uuid.UUID, 0, len(filter.SubgroupIDs))
-		for _, idStr := range filter.SubgroupIDs {
-			if id, err := uuid.Parse(idStr); err == nil {
-				subgroupUUIDs = append(subgroupUUIDs, id)
-			}
-		}
-		if len(subgroupUUIDs) > 0 {
-			query = query.Where("t.subgroup_id IN (?)", subgroupUUIDs)
-		}
+	query = r.ApplyFilters(query, filter)
+
+	// Determine sorting
+	sortBy := "t.created_at"
+	if mapped := mapTypeIndexSortColumn(filter.SortBy); mapped != "" {
+		sortBy = mapped
 	}
 
-	// Order by created_at DESC (no pagination)
+	// Determine sorting with natural sorting support
+	sortExpression := request.BuildSortExpressionForExport(
+		sortBy,
+		filter.SortOrder,
+		"t.created_at",
+		"DESC",
+		mapTypeIndexSortColumn,
+		[]string{"t.name"}, // Enable natural sorting for type name
+	)
+
+	// Order results
 	// Use Scan() for JOIN queries with custom SELECT
-	if err := query.Order("t.created_at DESC").Scan(&types).Error; err != nil {
+	if err := query.Order(sortExpression).Scan(&types).Error; err != nil {
 		return nil, err
 	}
 	return types, nil
 }
+
+// GetSearchColumns returns the list of direct column names for type search
+// Implements NeedSubqueryPredefine interface
+func (r *typeRepository) GetSearchColumns() []string {
+	return []string{
+		"t.type_code",
+		"t.name",
+	}
+}
+
+// GetSearchExistsSubqueries returns the list of EXISTS subqueries for type search
+// Implements NeedSubqueryPredefine interface
+func (r *typeRepository) GetSearchExistsSubqueries() []string {
+	return []string{
+		"EXISTS (SELECT 1 FROM sub_groups sg WHERE sg.id = t.subgroup_id AND sg.deleted_at IS NULL AND REPLACE(sg.name, ' ', '') ILIKE ?)",
+		"EXISTS (SELECT 1 FROM goods_group gg JOIN sub_groups sg2 ON gg.id = sg2.goods_group_id WHERE sg2.id = t.subgroup_id AND gg.deleted_at IS NULL AND sg2.deleted_at IS NULL AND REPLACE(gg.name, ' ', '') ILIKE ?)",
+	}
+}
+
+// Compile-time check to ensure typeRepository implements NeedSubqueryPredefine interface
+var _ request.NeedSubqueryPredefine = (*typeRepository)(nil)

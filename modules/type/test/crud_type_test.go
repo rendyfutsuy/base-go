@@ -75,6 +75,11 @@ func (m *MockTypeRepository) ExistsByNameInSubgroup(ctx context.Context, subgrou
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockTypeRepository) ExistsInBackings(ctx context.Context, typeID uuid.UUID) (bool, error) {
+	args := m.Called(ctx, typeID)
+	return args.Bool(0), args.Error(1)
+}
+
 // MockSubGroupRepository is a mock implementation of sub_group.Repository
 type MockSubGroupRepository struct {
 	mock.Mock
@@ -127,6 +132,11 @@ func (m *MockSubGroupRepository) GetAll(ctx context.Context, filter subGroupDto.
 
 func (m *MockSubGroupRepository) ExistsByName(ctx context.Context, goodsGroupID uuid.UUID, name string, excludeID uuid.UUID) (bool, error) {
 	args := m.Called(ctx, goodsGroupID, name, excludeID)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockSubGroupRepository) ExistsInTypes(ctx context.Context, subGroupID uuid.UUID) (bool, error) {
+	args := m.Called(ctx, subGroupID)
 	return args.Bool(0), args.Error(1)
 }
 
@@ -433,6 +443,7 @@ func TestDeleteType(t *testing.T) {
 			id:     validID.String(),
 			authId: "test-auth-id",
 			setupMock: func(m *MockTypeRepository, msg *MockSubGroupRepository) {
+				m.On("ExistsInBackings", ctx, validID).Return(false, nil).Once()
 				m.On("Delete", ctx, validID, testUserID.String()).Return(nil).Once()
 			},
 			expectedError: nil,
@@ -451,6 +462,7 @@ func TestDeleteType(t *testing.T) {
 			id:     validID.String(),
 			authId: "test-auth-id",
 			setupMock: func(m *MockTypeRepository, msg *MockSubGroupRepository) {
+				m.On("ExistsInBackings", ctx, validID).Return(false, nil).Once()
 				m.On("Delete", ctx, validID, testUserID.String()).Return(errors.New("delete failed")).Once()
 			},
 			expectedError: errors.New("delete failed"),

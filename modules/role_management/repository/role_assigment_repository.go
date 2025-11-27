@@ -64,9 +64,10 @@ func (repo *roleRepository) GetTotalUser(ctx context.Context, id uuid.UUID) (tot
 func (repo *roleRepository) GetPermissionFromRoleId(ctx context.Context, id uuid.UUID) (permissions []models.Permission, err error) {
 	err = repo.DB.WithContext(ctx).
 		Table("permissions ps").
-		Select("DISTINCT ps.id", "ps.name").
+		Select("DISTINCT ps.id", "ps.name", "pg.module AS module").
 		Joins("JOIN permissions_modules ppg ON ps.id = ppg.permission_id").
-		Joins("JOIN modules_roles pgr ON ppg.permission_group_id = pgr.permission_group_id").
+		Joins("JOIN permission_groups pg ON ppg.permission_group_id = pg.id").
+		Joins("JOIN modules_roles pgr ON pg.id = pgr.permission_group_id").
 		Where("ps.deleted_at IS NULL AND pgr.role_id = ?", id).
 		Find(&permissions).Error
 

@@ -1,7 +1,9 @@
 package usecase
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -13,6 +15,7 @@ import (
 	"github.com/rendyfutsuy/base-go/modules/group/dto"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/xuri/excelize/v2"
+	"gorm.io/gorm"
 )
 
 type groupUsecase struct {
@@ -32,7 +35,17 @@ func (u *groupUsecase) Create(c echo.Context, reqBody *dto.ReqCreateGroup, authI
 	if exists {
 		return nil, errors.New(constants.GroupNameAlreadyExists)
 	}
-	return u.repo.Create(ctx, reqBody.Name)
+
+	// Get user ID from context
+	user := c.Get("user")
+	userID := ""
+	if user != nil {
+		if userModel, ok := user.(models.User); ok {
+			userID = userModel.ID.String()
+		}
+	}
+
+	return u.repo.Create(ctx, reqBody.Name, userID)
 }
 
 func (u *groupUsecase) Update(c echo.Context, id string, reqBody *dto.ReqUpdateGroup, authId string) (*models.GoodsGroup, error) {
@@ -48,7 +61,24 @@ func (u *groupUsecase) Update(c echo.Context, id string, reqBody *dto.ReqUpdateG
 	if exists {
 		return nil, errors.New(constants.GroupNameAlreadyExists)
 	}
-	return u.repo.Update(ctx, gid, reqBody.Name)
+
+	// Get user ID from context
+	user := c.Get("user")
+	userID := ""
+	if user != nil {
+		if userModel, ok := user.(models.User); ok {
+			userID = userModel.ID.String()
+		}
+	}
+
+	res, err := u.repo.Update(ctx, gid, reqBody.Name, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf(constants.GroupNotFound, id)
+		}
+		return nil, err
+	}
+	return res, nil
 }
 
 func (u *groupUsecase) Delete(c echo.Context, id string, authId string) error {
@@ -57,7 +87,26 @@ func (u *groupUsecase) Delete(c echo.Context, id string, authId string) error {
 	if err != nil {
 		return err
 	}
-	return u.repo.Delete(ctx, gid)
+
+	// Check if group is still used in sub-groups (not deleted)
+	exists, err := u.repo.ExistsInSubGroups(ctx, gid)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return errors.New(constants.GroupStillUsedInSubGroups)
+	}
+
+	// Get user ID from context
+	user := c.Get("user")
+	userID := ""
+	if user != nil {
+		if userModel, ok := user.(models.User); ok {
+			userID = userModel.ID.String()
+		}
+	}
+
+	return u.repo.Delete(ctx, gid, userID)
 }
 
 func (u *groupUsecase) GetByID(c echo.Context, id string) (*models.GoodsGroup, error) {
@@ -107,10 +156,56 @@ func (u *groupUsecase) Export(c echo.Context, filter dto.ReqGroupIndexFilter) ([
 		f.SetCellValue(sheet, "C"+strconv.Itoa(row), g.UpdatedAt.Local().Format("2006/01/02"))
 	}
 
+	// Calculate total rows for border styling
+	totalRows := len(list) + 1 // 1 header row + data rows
+
+	// Define border configuration
+	borderDefinition := []excelize.Border{
+		{Type: "left", Color: "000000", Style: 1},
+		{Type: "top", Color: "000000", Style: 1},
+		{Type: "bottom", Color: "000000", Style: 1},
+		{Type: "right", Color: "000000", Style: 1},
+	}
+
+	// Create border style
+	borderStyle, err := f.NewStyle(&excelize.Style{
+		Border: borderDefinition,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply border style to all cells
+	startCell := "A1"
+	endCell := "C" + strconv.Itoa(totalRows)
+	if err := f.SetCellStyle(sheet, startCell, endCell, borderStyle); err != nil {
+		return nil, err
+	}
+
+	// Create header style with bold font and border
+	headerStyle, err := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+		},
+		Border: borderDefinition,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply header style to header row
+	if err := f.SetCellStyle(sheet, "A1", "C1", headerStyle); err != nil {
+		return nil, err
+	}
+
 	// Write to buffer and return bytes
 	buf, err := f.WriteToBuffer()
 	if err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func (u *groupUsecase) ExistsInSubGroups(ctx context.Context, groupID uuid.UUID) (bool, error) {
+	return u.repo.ExistsInSubGroups(ctx, groupID)
 }

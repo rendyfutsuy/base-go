@@ -85,7 +85,7 @@ func NewRoleManagementHandler(e *echo.Echo, us role_management.Usecase, mwP _req
 		"role.get", // index Role API
 		"role.all", // all Role API
 	)
-	r.GET("/role/check-name", handler.GetDuplicatedRole, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(showRoles))
+	r.POST("/role/check-name", handler.GetDuplicatedRole, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(showRoles))
 
 	r.GET("/role/module-access", handler.GetAllPermissionGroupByModule, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(showRoles))
 

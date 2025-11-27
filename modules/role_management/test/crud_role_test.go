@@ -354,6 +354,11 @@ func (m *MockAuthRepository) DestroyAllResetPasswordToken(ctx context.Context, u
 	return args.Error(0)
 }
 
+func (m *MockAuthRepository) UpdateLastLogin(ctx context.Context, userId uuid.UUID) error {
+	args := m.Called(ctx, userId)
+	return args.Error(0)
+}
+
 // Helper function to create Echo context
 func createEchoContext() echo.Context {
 	e := echo.New()

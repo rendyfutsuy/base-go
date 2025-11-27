@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -15,34 +16,74 @@ import (
 	"gorm.io/gorm"
 )
 
+// validateRole checks if the role exists and is valid
+func (u *userUsecase) validateRole(ctx context.Context, roleId uuid.UUID) error {
+	if roleId == uuid.Nil {
+		return nil
+	}
+
+	roleObject, err := u.roleManagement.GetRoleByID(ctx, roleId)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New(constants.UserRoleNotFound)
+		}
+		return err
+	}
+
+	if roleObject == nil || roleObject.ID == uuid.Nil {
+		return errors.New(constants.UserRoleNotFound)
+	}
+
+	return nil
+}
+
+// validateUsernameNotDuplicated checks if username is not duplicated
+func (u *userUsecase) validateUsernameNotDuplicated(ctx context.Context, username string, excludedId uuid.UUID) error {
+	if username == "" {
+		return nil
+	}
+
+	result, err := u.userRepo.UsernameIsNotDuplicated(ctx, username, excludedId)
+	if err != nil {
+		return err
+	}
+
+	if !result {
+		utils.Logger.Error(constants.UserUsernameAlreadyExistsID)
+		return errors.New(constants.UserUsernameAlreadyExistsID)
+	}
+
+	return nil
+}
+
+// validateEmailNotDuplicated checks if email is not duplicated
+func (u *userUsecase) validateEmailNotDuplicated(ctx context.Context, email string, excludedId uuid.UUID) error {
+	if email == "" {
+		return nil
+	}
+
+	result, err := u.userRepo.EmailIsNotDuplicated(ctx, email, excludedId)
+	if err != nil {
+		return err
+	}
+
+	if !result {
+		utils.Logger.Error(constants.UserEmailAlreadyExists)
+		return errors.New(constants.UserEmailAlreadyExists)
+	}
+
+	return nil
+}
+
 func (u *userUsecase) CreateUser(c echo.Context, req *dto.ReqCreateUser, authId string) (userRes *models.User, err error) {
 	ctx := c.Request().Context()
 
-	// Check if role_id exists
-	if req.RoleId != uuid.Nil {
-		roleObject, err := u.roleManagement.GetRoleByID(ctx, req.RoleId)
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, errors.New(constants.UserRoleNotFound)
-			}
-			return nil, err
-		}
-		// Additional check: ensure roleObject is valid
-		if roleObject == nil || roleObject.ID == uuid.Nil {
-			return nil, errors.New(constants.UserRoleNotFound)
-		}
-	}
-
-	// assert email is not duplicated
-	result, err := u.userRepo.EmailIsNotDuplicated(ctx, req.Email, uuid.Nil)
-
-	if err != nil {
+	if err := u.validateRole(ctx, req.RoleId); err != nil {
 		return nil, err
 	}
 
-	if result == false {
-		utils.Logger.Error(constants.UserEmailAlreadyExists)
-		return nil, errors.New(constants.UserEmailAlreadyExists)
+	if err := u.validateUsernameNotDuplicated(ctx, req.Username, uuid.Nil); err != nil {
+		return nil, err
 	}
 
 	count, err := u.userRepo.CountUser(ctx)
@@ -51,21 +92,11 @@ func (u *userUsecase) CreateUser(c echo.Context, req *dto.ReqCreateUser, authId 
 	}
 
 	formatCount := fmt.Sprintf("%07d", *count+1)
-
 	userDb := req.ToDBCreateUser(formatCount, authId)
 
 	userRes, err = u.userRepo.CreateUser(ctx, userDb)
 	if err != nil {
 		return nil, err
-	}
-
-	// Create New Password
-	// update password
-	// update user password bases on new_password
-	_, err = u.auth.UpdatePasswordById(ctx, req.Password, userRes.ID)
-
-	if err != nil {
-		return userRes, err
 	}
 
 	return userRes, err
@@ -96,43 +127,27 @@ func (u *userUsecase) GetAllUser(c echo.Context) (user_infos []models.User, err 
 func (u *userUsecase) UpdateUser(c echo.Context, id string, req *dto.ReqUpdateUser, authId string) (userRes *models.User, err error) {
 	ctx := c.Request().Context()
 
-	// parsing UUID
 	uId, err := utils.StringToUUID(id)
 	if err != nil {
 		utils.Logger.Error(err.Error())
 		return nil, err
 	}
 
-	// Check if role_id exists
-	if req.RoleId != uuid.Nil {
-		roleObject, err := u.roleManagement.GetRoleByID(ctx, req.RoleId)
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, errors.New(constants.UserRoleNotFound)
-			}
-			return nil, err
-		}
-		// Additional check: ensure roleObject is valid
-		if roleObject == nil || roleObject.ID == uuid.Nil {
-			return nil, errors.New(constants.UserRoleNotFound)
-		}
-	}
-
-	// assert email is not duplicated
-	result, err := u.userRepo.EmailIsNotDuplicated(ctx, req.Email, uId)
-
-	if err != nil {
+	if err := u.validateRole(ctx, req.RoleId); err != nil {
 		return nil, err
 	}
 
-	if result == false {
-		utils.Logger.Error(constants.UserEmailAlreadyExists)
-		return nil, errors.New(constants.UserEmailAlreadyExists)
+	if err := u.validateUsernameNotDuplicated(ctx, req.Username, uId); err != nil {
+		return nil, err
 	}
 
-	// Mapping Input to DB
+	if err := u.validateEmailNotDuplicated(ctx, req.Email, uId); err != nil {
+		return nil, err
+	}
+
 	userDb := dto.ToDBUpdateUser{
 		FullName: req.FullName,
+		Username: req.Username,
 		Email:    req.Email,
 		IsActive: req.IsActive,
 		RoleId:   req.RoleId,
@@ -150,6 +165,14 @@ func (u *userUsecase) SoftDeleteUser(c echo.Context, id string, authId string) (
 	if err != nil {
 		return nil, errors.New(constants.UserNotFound)
 	}
+
+	// Check if user is deletable
+	if !user.Deletable {
+		return nil, errors.New(constants.UserCannotDelete)
+	}
+
+	// TBA there would be more
+	// but the other condition would integrate in another occasion
 
 	userDb := dto.ToDBDeleteUser{}
 

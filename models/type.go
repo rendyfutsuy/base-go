@@ -24,6 +24,9 @@ type Type struct {
 	SubgroupName   string    `gorm:"column:subgroup_name;<-:false" json:"subgroup_name"`
 	GoodsGroupID   uuid.UUID `gorm:"column:goods_group_id;<-:false" json:"goods_group_id"`
 	GoodsGroupName string    `gorm:"column:goods_group_name;<-:false" json:"goods_group_name"`
+	
+	// Mutator field for deletable status (not stored in database)
+	Deletable bool `gorm:"column:deletable;<-:false" json:"deletable"`
 }
 
 func (Type) TableName() string {
