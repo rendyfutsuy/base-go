@@ -42,24 +42,29 @@ func NewGroupHandler(e *echo.Echo, uc group.Usecase, mwP _reqContext.IMiddleware
 	// Update: group.update
 	// Delete: group.delete
 	// Export: group.export
+	permissionToView := []string{"group.view"}
+	permissionToCreate := []string{"group.create"}
+	permissionToUpdate := []string{"group.update"}
+	permissionToDelete := []string{"group.delete"}
+	permissionToExport := []string{"group.export"}
 
 	// Index with pagination + search
-	r.GET("", h.GetIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation([]string{"group.view"}))
+	r.GET("", h.GetIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation(permissionToView))
 
 	// Export (no pagination, same filters) - must be before /:id to avoid route conflict
-	r.GET("/export", h.Export, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"group.export"}))
+	r.GET("/export", h.Export, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToExport))
 
 	// Get by ID (detail) - must be after /export to avoid route conflict
-	r.GET("/:id", h.GetByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"group.view"}))
+	r.GET("/:id", h.GetByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToView))
 
 	// Create
-	r.POST("", h.Create, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"group.create"}))
+	r.POST("", h.Create, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToCreate))
 
 	// Update
-	r.PUT("/:id", h.Update, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"group.update"}))
+	r.PUT("/:id", h.Update, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToUpdate))
 
 	// Delete
-	r.DELETE("/:id", h.Delete, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"group.delete"}))
+	r.DELETE("/:id", h.Delete, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToDelete))
 }
 
 // Create godoc
@@ -89,6 +94,9 @@ func (h *GroupHandler) Create(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 	resp := response.NonPaginationResponse{}
+	// Newly created group is always deletable (not used in any sub-group yet)
+	// Set Deletable to true since it's not included in Create query
+	res.Deletable = true
 	resp, _ = resp.SetResponse(dto.ToRespGroup(*res))
 	return c.JSON(http.StatusOK, resp)
 }
@@ -120,6 +128,7 @@ func (h *GroupHandler) Update(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
+	// deletable is already included in query
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(dto.ToRespGroup(*res))
 	return c.JSON(http.StatusOK, resp)
@@ -188,6 +197,7 @@ func (h *GroupHandler) GetIndex(c echo.Context) error {
 
 	respGroup := []dto.RespGroupIndex{}
 
+	// Map groups to response with deletable status (deletable is already included in query)
 	for _, v := range res {
 		respGroup = append(respGroup, dto.ToRespGroupIndex(v))
 	}
@@ -221,6 +231,7 @@ func (h *GroupHandler) GetByID(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
+	// deletable is already included in query
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(dto.ToRespGroup(*res))
 	return c.JSON(http.StatusOK, resp)
@@ -233,7 +244,6 @@ func (h *GroupHandler) GetByID(c echo.Context) error {
 // @Accept			json
 // @Produce		application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 // @Security		BearerAuth
-// @Param			search		query		string					false	"Search keyword"
 // @Param			filter		query		dto.ReqGroupIndexFilter	false	"Filter options"
 // @Success		200			{file}		binary	"Excel file with groups data"
 // @Failure		400			{object}	response.NonPaginationResponse	"Bad request"
@@ -259,7 +269,7 @@ func (h *GroupHandler) Export(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	c.Response().Header().Set(echo.HeaderContentType, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Response().Header().Set("Content-Disposition", "attachment; filename=groups.xlsx")
-	return c.Blob(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelBytes)
+	c.Response().Header().Set(echo.HeaderContentType, constants.ExcelContent)
+	c.Response().Header().Set(constants.FieldContentDisposition, constants.ExcelContentDisposition("groups.xlsx"))
+	return c.Blob(http.StatusOK, constants.ExcelContent, excelBytes)
 }

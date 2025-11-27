@@ -283,11 +283,11 @@ func (handler *RoleManagementHandler) DeleteRole(c echo.Context) error {
 // @Produce		json
 // @Security		BearerAuth
 // @Param			request	body	dto.ReqCheckDuplicatedRole	true	"Check duplicated role request"
-// @Success		200		{object}	response.NonPaginationResponse{data=dto.RespRole}	"Role with such name exists"
+// @Success		409		{object}	response.NonPaginationResponse{data=dto.RespRole}	"Role with such name exists"
 // @Failure		400		{object}	response.NonPaginationResponse	"Bad request"
 // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
-// @Failure		404		{object}	response.NonPaginationResponse	"Role with such name is not found"
-// @Router			/v1/role-management/role/check-name [get]
+// @Failure		200		{object}	response.NonPaginationResponse	"Role with such name is not found"
+// @Router			/v1/role-management/role/check-name [post]
 func (handler *RoleManagementHandler) GetDuplicatedRole(c echo.Context) error {
 	req := new(dto.ReqCheckDuplicatedRole)
 	if err := c.Bind(req); err != nil {
@@ -312,7 +312,7 @@ func (handler *RoleManagementHandler) GetDuplicatedRole(c echo.Context) error {
 
 	// if name havent been uses by existing account info, return not found error
 	if res == nil {
-		return c.JSON(http.StatusNotFound, response.SetErrorResponse(http.StatusNotFound, "Role Info with such name is not found"))
+		return c.JSON(http.StatusOK, response.SetErrorResponse(http.StatusOK, "Role Info with such name is not found"))
 	}
 
 	if err != nil {
@@ -323,8 +323,9 @@ func (handler *RoleManagementHandler) GetDuplicatedRole(c echo.Context) error {
 	resResp := dto.ToRespRole(*res)
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(resResp)
+	resp.Status = http.StatusConflict
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusConflict, resp)
 }
 
 func (handler *RoleManagementHandler) GetMyPermissions(c echo.Context) error {

@@ -17,4 +17,5 @@ type Repository interface {
 	GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, int, error)
 	GetAll(ctx context.Context, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, error)
 	ExistsByName(ctx context.Context, goodsGroupID uuid.UUID, name string, excludeID uuid.UUID) (bool, error)
+	ExistsInTypes(ctx context.Context, subGroupID uuid.UUID) (bool, error)
 }

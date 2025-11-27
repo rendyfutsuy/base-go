@@ -14,22 +14,32 @@ import (
 func (u *roleUsecase) ReAssignPermissionByGroup(c echo.Context, roleId string, req *dto.ReqUpdatePermissionGroupAssignmentToRole) (roleRes *models.Role, err error) {
 	ctx := c.Request().Context()
 
-	// assert each Permission group exists
-	for _, permissionGroupId := range req.PermissionGroupIds {
-		// check permission availability on DB
-		_, err := u.roleRepo.GetPermissionGroupByID(ctx, permissionGroupId)
-
-		// return error if any permission group not valid one.
-		if err != nil {
-			return nil, errors.New(fmt.Sprintf(constants.PermissionGroupNotFoundWithIDAlt, permissionGroupId))
-		}
-	}
-
 	// parsing UUID
 	uId, err := utils.StringToUUID(roleId)
 	if err != nil {
 		utils.Logger.Error(err.Error())
 		return nil, err
+	}
+
+	currentRole, err := u.roleRepo.GetRoleByID(ctx, uId)
+	if err != nil {
+		return nil, err
+	}
+	isSuperAdminRole := isSuperAdminRoleName(currentRole.Name)
+
+	// assert each Permission group exists
+	for _, permissionGroupId := range req.PermissionGroupIds {
+		// check permission availability on DB
+		permissionGroup, err := u.roleRepo.GetPermissionGroupByID(ctx, permissionGroupId)
+
+		// return error if any permission group not valid one.
+		if err != nil {
+			return nil, errors.New(fmt.Sprintf(constants.PermissionGroupNotFoundWithIDAlt, permissionGroupId))
+		}
+
+		if !isSuperAdminRole && isRestrictedUserPermissionGroup(permissionGroup) {
+			return nil, errors.New(constants.UserRestrictedPermissionGroupError)
+		}
 	}
 
 	// Mapping Input to DB

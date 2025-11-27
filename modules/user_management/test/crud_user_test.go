@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	authDto "github.com/rendyfutsuy/base-go/modules/auth/dto"
@@ -19,6 +20,7 @@ import (
 	"github.com/rendyfutsuy/base-go/modules/user_management/usecase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gorm.io/gorm"
 )
 
 // MockUserRepository is a mock implementation of user_management.Repository
@@ -283,6 +285,11 @@ func (m *MockAuthRepository) DestroyAllResetPasswordToken(ctx context.Context, u
 	return args.Error(0)
 }
 
+func (m *MockAuthRepository) UpdateLastLogin(ctx context.Context, userId uuid.UUID) error {
+	args := m.Called(ctx, userId)
+	return args.Error(0)
+}
+
 // MockRoleRepository is a mock implementation of roleManagement.Repository
 type MockRoleRepository struct {
 	mock.Mock
@@ -541,10 +548,8 @@ func TestCreateUser(t *testing.T) {
 
 	validReq := &userDto.ReqCreateUser{
 		FullName:             "Test User",
+		Username:             "TESTUSER",
 		RoleId:               validRoleID,
-		Email:                "test@example.com",
-		IsActive:             true,
-		Gender:               "male",
 		Password:             "password123",
 		PasswordConfirmation: "password123",
 	}
@@ -573,69 +578,23 @@ func TestCreateUser(t *testing.T) {
 					ID:   validRoleID,
 					Name: "Test Role",
 				}, nil).Once()
-				mockUserRepo.On("EmailIsNotDuplicated", ctx, validReq.Email, uuid.Nil).Return(true, nil).Once()
+				mockUserRepo.On("UsernameIsNotDuplicated", ctx, validReq.Username, uuid.Nil).Return(true, nil).Once()
 				mockUserRepo.On("CountUser", ctx).Return(&validCount, nil).Once()
 				mockUserRepo.On("CreateUser", ctx, mock.Anything).Return(expectedUser, nil).Once()
-				mockAuthRepo.On("UpdatePasswordById", ctx, validReq.Password, expectedUser.ID).Return(true, nil).Once()
 			},
 			expectedError: false,
 			description:   "Valid request should create user successfully",
 		},
 		{
-			name:   "Negative case - duplicate email",
+			name:   "Negative case - invalid role",
 			req:    validReq,
 			authId: validAuthID,
 			setupMock: func() {
-				mockRoleRepo.On("GetRoleByID", ctx, validReq.RoleId).Return(&models.Role{
-					ID:   validReq.RoleId,
-					Name: "Test Role",
-				}, nil).Once()
-				mockUserRepo.On("EmailIsNotDuplicated", ctx, validReq.Email, uuid.Nil).Return(false, nil).Once()
+				mockRoleRepo.On("GetRoleByID", ctx, validReq.RoleId).Return(nil, gorm.ErrRecordNotFound).Once()
 			},
 			expectedError:  true,
-			expectedErrMsg: "User Email already exists",
-			description:    "Duplicate email should return error",
-		},
-		{
-			name:   "Negative case - database error on email check",
-			req:    validReq,
-			authId: validAuthID,
-			setupMock: func() {
-				mockRoleRepo.On("GetRoleByID", ctx, validReq.RoleId).Return(&models.Role{
-					ID:   validReq.RoleId,
-					Name: "Test Role",
-				}, nil).Once()
-				mockUserRepo.On("EmailIsNotDuplicated", ctx, validReq.Email, uuid.Nil).Return(false, errors.New("database error")).Once()
-			},
-			expectedError:  true,
-			expectedErrMsg: "database error",
-			description:    "Database error should be returned",
-		},
-		{
-			name: "Negative-Positive case - SQL injection attempt in email",
-			req: &userDto.ReqCreateUser{
-				FullName:             "Test User",
-				RoleId:               validRoleID,
-				Email:                "'; DROP TABLE users; --",
-				IsActive:             true,
-				Gender:               "male",
-				Password:             "password123",
-				PasswordConfirmation: "password123",
-			},
-			authId: validAuthID,
-			setupMock: func() {
-				mockRoleRepo.On("GetRoleByID", ctx, validRoleID).Return(&models.Role{
-					ID:   validRoleID,
-					Name: "Test Role",
-				}, nil).Once()
-				// Email should be validated and treated as normal string
-				mockUserRepo.On("EmailIsNotDuplicated", ctx, "'; DROP TABLE users; --", uuid.Nil).Return(true, nil).Once()
-				mockUserRepo.On("CountUser", ctx).Return(&validCount, nil).Once()
-				mockUserRepo.On("CreateUser", ctx, mock.Anything).Return(expectedUser, nil).Once()
-				mockAuthRepo.On("UpdatePasswordById", ctx, "password123", expectedUser.ID).Return(true, nil).Once()
-			},
-			expectedError: false,
-			description:   "SQL injection attempt in email should be treated as normal string",
+			expectedErrMsg: "Role not found",
+			description:    "Invalid role should return error",
 		},
 	}
 
@@ -965,9 +924,6 @@ func TestUpdateUser(t *testing.T) {
 	validReq := &userDto.ReqUpdateUser{
 		FullName: "Updated User",
 		RoleId:   validRoleID,
-		Email:    "updated@example.com",
-		IsActive: true,
-		Gender:   "female",
 	}
 
 	expectedUser := &models.User{
@@ -996,7 +952,6 @@ func TestUpdateUser(t *testing.T) {
 					ID:   validReq.RoleId,
 					Name: "Test Role",
 				}, nil).Once()
-				mockUserRepo.On("EmailIsNotDuplicated", ctx, validReq.Email, validID).Return(true, nil).Once()
 				mockUserRepo.On("UpdateUser", ctx, validID, mock.Anything).Return(expectedUser, nil).Once()
 			},
 			expectedError: false,
@@ -1015,22 +970,6 @@ func TestUpdateUser(t *testing.T) {
 			description:    "Invalid UUID should return error",
 		},
 		{
-			name:   "Negative case - duplicate email",
-			id:     validIDString,
-			req:    validReq,
-			authId: validAuthID,
-			setupMock: func() {
-				mockRoleRepo.On("GetRoleByID", ctx, validReq.RoleId).Return(&models.Role{
-					ID:   validReq.RoleId,
-					Name: "Test Role",
-				}, nil).Once()
-				mockUserRepo.On("EmailIsNotDuplicated", ctx, validReq.Email, validID).Return(false, nil).Once()
-			},
-			expectedError:  true,
-			expectedErrMsg: "User Email already exists",
-			description:    "Duplicate email should return error",
-		},
-		{
 			name:   "Negative case - database error",
 			id:     validIDString,
 			req:    validReq,
@@ -1040,7 +979,6 @@ func TestUpdateUser(t *testing.T) {
 					ID:   validReq.RoleId,
 					Name: "Test Role",
 				}, nil).Once()
-				mockUserRepo.On("EmailIsNotDuplicated", ctx, validReq.Email, validID).Return(true, nil).Once()
 				mockUserRepo.On("UpdateUser", ctx, validID, mock.Anything).Return(nil, errors.New("database error")).Once()
 			},
 			expectedError:  true,
@@ -1048,26 +986,16 @@ func TestUpdateUser(t *testing.T) {
 			description:    "Database error should be returned",
 		},
 		{
-			name: "Negative-Positive case - SQL injection attempt in email",
-			id:   validIDString,
-			req: &userDto.ReqUpdateUser{
-				FullName: "Updated User",
-				RoleId:   validRoleID,
-				Email:    "'; DROP TABLE users; --",
-				IsActive: true,
-				Gender:   "female",
-			},
+			name:   "Negative case - invalid role",
+			id:     validIDString,
+			req:    validReq,
 			authId: validAuthID,
 			setupMock: func() {
-				mockRoleRepo.On("GetRoleByID", ctx, validRoleID).Return(&models.Role{
-					ID:   validRoleID,
-					Name: "Test Role",
-				}, nil).Once()
-				mockUserRepo.On("EmailIsNotDuplicated", ctx, "'; DROP TABLE users; --", validID).Return(true, nil).Once()
-				mockUserRepo.On("UpdateUser", ctx, validID, mock.Anything).Return(expectedUser, nil).Once()
+				mockRoleRepo.On("GetRoleByID", ctx, validReq.RoleId).Return(nil, gorm.ErrRecordNotFound).Once()
 			},
-			expectedError: false,
-			description:   "SQL injection attempt in email should be treated as normal string",
+			expectedError:  true,
+			expectedErrMsg: "Role not found",
+			description:    "Invalid role should return error",
 		},
 	}
 
@@ -1110,9 +1038,10 @@ func TestSoftDeleteUser(t *testing.T) {
 	testUserID := uuid.New()
 
 	existingUser := &models.User{
-		ID:       validID,
-		FullName: "Test User",
-		Email:    "test@example.com",
+		ID:        validID,
+		FullName:  "Test User",
+		Email:     "test@example.com",
+		Deletable: true,
 	}
 
 	deletedUser := &models.User{
@@ -1151,6 +1080,23 @@ func TestSoftDeleteUser(t *testing.T) {
 			expectedError:  true,
 			expectedErrMsg: "User Not Found",
 			description:    "Non-existent user should return error",
+		},
+		{
+			name:   "Negative case - user not deletable",
+			id:     validIDString,
+			authId: testUserID.String(),
+			setupMock: func() {
+				nonDeletableUser := &models.User{
+					ID:        validID,
+					FullName:  "Test User",
+					Email:     "test@example.com",
+					Deletable: false,
+				}
+				mockUserRepo.On("GetUserByID", ctx, validID).Return(nonDeletableUser, nil).Once()
+			},
+			expectedError:  true,
+			expectedErrMsg: constants.UserCannotDelete,
+			description:    "User with deletable=false should return error",
 		},
 		{
 			name:   "Negative case - database error on delete",

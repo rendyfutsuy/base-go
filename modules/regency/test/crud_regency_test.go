@@ -76,16 +76,16 @@ func (m *MockRegencyRepository) ExistsProvinceByName(ctx context.Context, name s
 }
 
 // City methods
-func (m *MockRegencyRepository) CreateCity(ctx context.Context, provinceID uuid.UUID, name string) (*models.City, error) {
-	args := m.Called(ctx, provinceID, name)
+func (m *MockRegencyRepository) CreateCity(ctx context.Context, provinceID uuid.UUID, name string, areaCode *string) (*models.City, error) {
+	args := m.Called(ctx, provinceID, name, areaCode)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.City), args.Error(1)
 }
 
-func (m *MockRegencyRepository) UpdateCity(ctx context.Context, id uuid.UUID, provinceID uuid.UUID, name string) (*models.City, error) {
-	args := m.Called(ctx, id, provinceID, name)
+func (m *MockRegencyRepository) UpdateCity(ctx context.Context, id uuid.UUID, provinceID uuid.UUID, name string, areaCode *string) (*models.City, error) {
+	args := m.Called(ctx, id, provinceID, name, areaCode)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -124,6 +124,14 @@ func (m *MockRegencyRepository) GetAllCity(ctx context.Context, filter regencyDt
 func (m *MockRegencyRepository) ExistsCityByName(ctx context.Context, provinceID uuid.UUID, name string, excludeID uuid.UUID) (bool, error) {
 	args := m.Called(ctx, provinceID, name, excludeID)
 	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockRegencyRepository) GetCityAreaCodes(ctx context.Context, search string) ([]string, error) {
+	args := m.Called(ctx, search)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]string), args.Error(1)
 }
 
 // District methods
@@ -681,6 +689,7 @@ func TestCreateCity(t *testing.T) {
 	e := echo.New()
 	ctx := context.Background()
 	provinceID := uuid.New()
+	areaCode := "022"
 
 	tests := []struct {
 		name           string
@@ -695,6 +704,7 @@ func TestCreateCity(t *testing.T) {
 			req: &regencyDto.ReqCreateCity{
 				ProvinceID: provinceID,
 				Name:       "Bandung",
+				AreaCode:   &areaCode,
 			},
 			authId: "test-auth-id",
 			setupMock: func(m *MockRegencyRepository) {
@@ -703,10 +713,11 @@ func TestCreateCity(t *testing.T) {
 					Name: "Jawa Barat",
 				}, nil).Once()
 				m.On("ExistsCityByName", ctx, provinceID, "Bandung", uuid.Nil).Return(false, nil).Once()
-				m.On("CreateCity", ctx, provinceID, "Bandung").Return(&models.City{
+				m.On("CreateCity", ctx, provinceID, "Bandung", &areaCode).Return(&models.City{
 					ID:         uuid.New(),
 					ProvinceID: provinceID,
 					Name:       "Bandung",
+					AreaCode:   &areaCode,
 					CreatedAt:  time.Now(),
 					UpdatedAt:  time.Now(),
 				}, nil).Once()
@@ -722,6 +733,7 @@ func TestCreateCity(t *testing.T) {
 			req: &regencyDto.ReqCreateCity{
 				ProvinceID: provinceID,
 				Name:       "Bandung",
+				AreaCode:   &areaCode,
 			},
 			authId: "test-auth-id",
 			setupMock: func(m *MockRegencyRepository) {
@@ -773,6 +785,7 @@ func TestUpdateCity(t *testing.T) {
 	ctx := context.Background()
 	validID := uuid.New()
 	provinceID := uuid.New()
+	areaCode := "022"
 
 	tests := []struct {
 		name           string
@@ -789,6 +802,7 @@ func TestUpdateCity(t *testing.T) {
 			req: &regencyDto.ReqUpdateCity{
 				ProvinceID: provinceID,
 				Name:       "Bandung Updated",
+				AreaCode:   &areaCode,
 			},
 			authId: "test-auth-id",
 			setupMock: func(m *MockRegencyRepository) {
@@ -797,10 +811,11 @@ func TestUpdateCity(t *testing.T) {
 					Name: "Jawa Barat",
 				}, nil).Once()
 				m.On("ExistsCityByName", ctx, provinceID, "Bandung Updated", validID).Return(false, nil).Once()
-				m.On("UpdateCity", ctx, validID, provinceID, "Bandung Updated").Return(&models.City{
+				m.On("UpdateCity", ctx, validID, provinceID, "Bandung Updated", &areaCode).Return(&models.City{
 					ID:         validID,
 					ProvinceID: provinceID,
 					Name:       "Bandung Updated",
+					AreaCode:   &areaCode,
 					UpdatedAt:  time.Now(),
 				}, nil).Once()
 			},

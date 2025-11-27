@@ -148,8 +148,8 @@ func (handler *UserManagementHandler) DownloadUserImportTemplate(c echo.Context)
 	}
 
 	// Set response headers
-	c.Response().Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Response().Header().Set("Content-Disposition", "attachment; filename=user_import_template.xlsx")
+	c.Response().Header().Set(constants.FieldContentType, constants.ExcelContent)
+	c.Response().Header().Set(constants.FieldContentDisposition, constants.ExcelContentDisposition("user_import_template.xlsx"))
 
 	// Write Excel file to response
 	err = f.Write(c.Response().Writer)

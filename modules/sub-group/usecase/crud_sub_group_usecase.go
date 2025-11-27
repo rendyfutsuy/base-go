@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -101,7 +102,14 @@ func (u *subGroupUsecase) Update(c echo.Context, id string, reqBody *dto.ReqUpda
 	if exists {
 		return nil, errors.New(constants.SubGroupNameAlreadyExists)
 	}
-	return u.repo.Update(ctx, sgid, reqBody.GoodsGroupID, reqBody.Name, userID)
+	res, err := u.repo.Update(ctx, sgid, reqBody.GoodsGroupID, reqBody.Name, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf(constants.SubGroupNotFound, id)
+		}
+		return nil, err
+	}
+	return res, nil
 }
 
 func (u *subGroupUsecase) Delete(c echo.Context, id string, authId string) error {
@@ -109,6 +117,15 @@ func (u *subGroupUsecase) Delete(c echo.Context, id string, authId string) error
 	sgid, err := utils.StringToUUID(id)
 	if err != nil {
 		return err
+	}
+
+	// Check if sub-group is still used in types
+	exists, err := u.repo.ExistsInTypes(ctx, sgid)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return errors.New(constants.SubGroupStillUsedInTypes)
 	}
 
 	// Get user ID from context
@@ -121,6 +138,15 @@ func (u *subGroupUsecase) Delete(c echo.Context, id string, authId string) error
 	}
 
 	return u.repo.Delete(ctx, sgid, userID)
+}
+
+func (u *subGroupUsecase) ExistsInTypes(c echo.Context, subGroupID string) (bool, error) {
+	ctx := c.Request().Context()
+	sgid, err := utils.StringToUUID(subGroupID)
+	if err != nil {
+		return false, err
+	}
+	return u.repo.ExistsInTypes(ctx, sgid)
 }
 
 func (u *subGroupUsecase) GetByID(c echo.Context, id string) (*models.SubGroup, error) {
@@ -157,18 +183,81 @@ func (u *subGroupUsecase) Export(c echo.Context, filter dto.ReqSubGroupIndexFilt
 	f.SetSheetName("Sheet1", sheet)
 
 	// Header
-	f.SetCellValue(sheet, "A1", "Kode Sub Golongan")
-	f.SetCellValue(sheet, "B1", "Nama Sub Golongan")
-	f.SetCellValue(sheet, "C1", "Goods Group ID")
-	f.SetCellValue(sheet, "D1", "Update Date")
+	headers := []string{
+		"Kode Sub Golongan",
+		"Nama Sub Golongan",
+		"Nama Golongan",
+		"Updated Date",
+	}
+
+	// Set headers
+	for i, header := range headers {
+		cell := string(rune('A'+i)) + "1"
+		f.SetCellValue(sheet, cell, header)
+	}
 
 	// Rows
 	for i, sg := range list {
 		row := i + 2
-		f.SetCellValue(sheet, "A"+strconv.Itoa(row), sg.SubgroupCode)
-		f.SetCellValue(sheet, "B"+strconv.Itoa(row), sg.Name)
-		f.SetCellValue(sheet, "C"+strconv.Itoa(row), sg.GoodsGroupID.String())
-		f.SetCellValue(sheet, "D"+strconv.Itoa(row), sg.UpdatedAt.Local().Format("2006/01/02"))
+		col := 0
+
+		// Helper function to set cell value
+		setCell := func(value interface{}) {
+			cell := string(rune('A'+col)) + strconv.Itoa(row)
+			f.SetCellValue(sheet, cell, value)
+			col++
+		}
+
+		setCell(sg.SubgroupCode)
+		setCell(sg.Name)
+		if sg.GoodsGroupName != "" {
+			setCell(sg.GoodsGroupName)
+		} else {
+			setCell("-")
+		}
+		setCell(sg.UpdatedAt.Format("2006-01-02"))
+	}
+
+	// Calculate total rows for border styling
+	totalRows := len(list) + 1 // 1 header row + data rows
+
+	// Define border configuration
+	borderDefinition := []excelize.Border{
+		{Type: "left", Color: "000000", Style: 1},
+		{Type: "top", Color: "000000", Style: 1},
+		{Type: "bottom", Color: "000000", Style: 1},
+		{Type: "right", Color: "000000", Style: 1},
+	}
+
+	// Create border style
+	borderStyle, err := f.NewStyle(&excelize.Style{
+		Border: borderDefinition,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply border style to all cells
+	startCell := "A1"
+	endCell := "D" + strconv.Itoa(totalRows)
+	if err := f.SetCellStyle(sheet, startCell, endCell, borderStyle); err != nil {
+		return nil, err
+	}
+
+	// Create header style with bold font and border
+	headerStyle, err := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+		},
+		Border: borderDefinition,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply header style to header row
+	if err := f.SetCellStyle(sheet, "A1", "D1", headerStyle); err != nil {
+		return nil, err
 	}
 
 	// Write to buffer and return bytes

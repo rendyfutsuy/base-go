@@ -16,6 +16,7 @@ const (
 	AuthPasswordAttemptExceeded  = "Password Attempt is above 3, you're blocked. please contact admin"
 	AuthTokenParseFailed         = "failed to parse token"
 	AuthTokenMissingJTI          = "token does not contain jti claim"
+	AuthTokenJTIExtractionFailed = "Failed to extract jti from token, using accessToken as key"
 	AuthTokenInvalid             = "User Not Found, the access token is not valid please re-login"
 	AuthTokenInvalidRestart      = "User Not Found, the access token is not valid please restart the process..."
 	AuthTooManyPasswordAttempts  = "too many password attempts"

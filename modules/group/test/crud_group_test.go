@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	groupDto "github.com/rendyfutsuy/base-go/modules/group/dto"
@@ -24,24 +25,24 @@ type MockGroupRepository struct {
 	mock.Mock
 }
 
-func (m *MockGroupRepository) Create(ctx context.Context, name string) (*models.GoodsGroup, error) {
-	args := m.Called(ctx, name)
+func (m *MockGroupRepository) Create(ctx context.Context, name string, createdBy string) (*models.GoodsGroup, error) {
+	args := m.Called(ctx, name, createdBy)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.GoodsGroup), args.Error(1)
 }
 
-func (m *MockGroupRepository) Update(ctx context.Context, id uuid.UUID, name string) (*models.GoodsGroup, error) {
-	args := m.Called(ctx, id, name)
+func (m *MockGroupRepository) Update(ctx context.Context, id uuid.UUID, name string, updatedBy string) (*models.GoodsGroup, error) {
+	args := m.Called(ctx, id, name, updatedBy)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.GoodsGroup), args.Error(1)
 }
 
-func (m *MockGroupRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	args := m.Called(ctx, id)
+func (m *MockGroupRepository) Delete(ctx context.Context, id uuid.UUID, deletedBy string) error {
+	args := m.Called(ctx, id, deletedBy)
 	return args.Error(0)
 }
 
@@ -74,6 +75,11 @@ func (m *MockGroupRepository) ExistsByName(ctx context.Context, name string, exc
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockGroupRepository) ExistsInSubGroups(ctx context.Context, groupID uuid.UUID) (bool, error) {
+	args := m.Called(ctx, groupID)
+	return args.Bool(0), args.Error(1)
+}
+
 func TestCreateGroup(t *testing.T) {
 	e := echo.New()
 	ctx := context.Background()
@@ -94,7 +100,7 @@ func TestCreateGroup(t *testing.T) {
 			authId: "test-auth-id",
 			setupMock: func(m *MockGroupRepository) {
 				m.On("ExistsByName", ctx, "Test Group", uuid.Nil).Return(false, nil).Once()
-				m.On("Create", ctx, "Test Group").Return(&models.GoodsGroup{
+				m.On("Create", ctx, "Test Group", mock.Anything).Return(&models.GoodsGroup{
 					ID:        uuid.New(),
 					GroupCode: "01",
 					Name:      "Test Group",
@@ -140,7 +146,7 @@ func TestCreateGroup(t *testing.T) {
 			authId: "test-auth-id",
 			setupMock: func(m *MockGroupRepository) {
 				m.On("ExistsByName", ctx, "Test Group", uuid.Nil).Return(false, nil).Once()
-				m.On("Create", ctx, "Test Group").Return(nil, errors.New("create failed")).Once()
+				m.On("Create", ctx, "Test Group", mock.Anything).Return(nil, errors.New("create failed")).Once()
 			},
 			expectedError:  errors.New("create failed"),
 			expectedResult: nil,
@@ -202,7 +208,7 @@ func TestUpdateGroup(t *testing.T) {
 			authId: "test-auth-id",
 			setupMock: func(m *MockGroupRepository) {
 				m.On("ExistsByName", ctx, "Updated Group", validID).Return(false, nil).Once()
-				m.On("Update", ctx, validID, "Updated Group").Return(&models.GoodsGroup{
+				m.On("Update", ctx, validID, "Updated Group", mock.Anything).Return(&models.GoodsGroup{
 					ID:        validID,
 					GroupCode: "02",
 					Name:      "Updated Group",
@@ -251,7 +257,7 @@ func TestUpdateGroup(t *testing.T) {
 			authId: "test-auth-id",
 			setupMock: func(m *MockGroupRepository) {
 				m.On("ExistsByName", ctx, "Updated Group", validID).Return(false, nil).Once()
-				m.On("Update", ctx, validID, "Updated Group").Return(nil, errors.New("update failed")).Once()
+				m.On("Update", ctx, validID, "Updated Group", mock.Anything).Return(nil, errors.New("update failed")).Once()
 			},
 			expectedError:  errors.New("update failed"),
 			expectedResult: nil,
@@ -309,7 +315,8 @@ func TestDeleteGroup(t *testing.T) {
 			id:     validID.String(),
 			authId: "test-auth-id",
 			setupMock: func(m *MockGroupRepository) {
-				m.On("Delete", ctx, validID).Return(nil).Once()
+				m.On("ExistsInSubGroups", ctx, validID).Return(false, nil).Once()
+				m.On("Delete", ctx, validID, mock.Anything).Return(nil).Once()
 			},
 			expectedError: nil,
 		},
@@ -323,11 +330,21 @@ func TestDeleteGroup(t *testing.T) {
 			expectedError: errors.New("requested param is string"),
 		},
 		{
+			name:   "error when group still used in sub-groups",
+			id:     validID.String(),
+			authId: "test-auth-id",
+			setupMock: func(m *MockGroupRepository) {
+				m.On("ExistsInSubGroups", ctx, validID).Return(true, nil).Once()
+			},
+			expectedError: errors.New(constants.GroupStillUsedInSubGroups),
+		},
+		{
 			name:   "error when repository delete fails",
 			id:     validID.String(),
 			authId: "test-auth-id",
 			setupMock: func(m *MockGroupRepository) {
-				m.On("Delete", ctx, validID).Return(errors.New("delete failed")).Once()
+				m.On("ExistsInSubGroups", ctx, validID).Return(false, nil).Once()
+				m.On("Delete", ctx, validID, mock.Anything).Return(errors.New("delete failed")).Once()
 			},
 			expectedError: errors.New("delete failed"),
 		},

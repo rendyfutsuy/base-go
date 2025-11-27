@@ -374,6 +374,588 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/backing": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a paginated list of backings with optional search and filters. Supports multiple filter values for backing_code, name, and type_id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Backing"
+                ],
+                "summary": "Get list of backings with pagination",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page",
+                        "name": "per_page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort column (allowed: id, type_id, backing_code, name, created_at, updated_at)",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order (asc or desc)",
+                        "name": "sort_order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search keyword (searches in backing_code and name)",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by backing codes (multiple values)",
+                        "name": "backing_codes",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by names (multiple values)",
+                        "name": "names",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by type IDs (multiple values, UUID format)",
+                        "name": "type_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Multiple values",
+                        "name": "backing_codes",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by goodGroup IDs (multiple values, UUIDs as strings)",
+                        "name": "group_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Multiple values",
+                        "name": "names",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search keyword for filtering by backing_code, name",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by subgroup IDs (multiple values, UUIDs as strings)",
+                        "name": "subgroup_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Multiple values",
+                        "name": "type_ids",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved backings",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.PaginationResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.RespBackingIndex"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new backing with provided type_id and name",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Backing"
+                ],
+                "summary": "Create a new backing",
+                "parameters": [
+                    {
+                        "description": "Backing creation data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ReqCreateBacking"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully created backing",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.NonPaginationResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.RespBacking"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - validation error",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/backing/export": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Export backings to Excel file (.xlsx) with optional search and filter. Same search and filter logic as index but without pagination. Supports multiple filter values for backing_code, name, and type_id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                ],
+                "tags": [
+                    "Backing"
+                ],
+                "summary": "Export backings to Excel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search keyword (searches in backing_code and name)",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by backing codes (multiple values)",
+                        "name": "backing_codes",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by names (multiple values)",
+                        "name": "names",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by type IDs (multiple values, UUID format)",
+                        "name": "type_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Multiple values",
+                        "name": "backing_codes",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by goodGroup IDs (multiple values, UUIDs as strings)",
+                        "name": "group_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Multiple values",
+                        "name": "names",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search keyword for filtering by backing_code, name",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by subgroup IDs (multiple values, UUIDs as strings)",
+                        "name": "subgroup_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Multiple values",
+                        "name": "type_ids",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Excel file with backings data",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/backing/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a single backing by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Backing"
+                ],
+                "summary": "Get backing by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Backing UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved backing",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.NonPaginationResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.RespBacking"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid UUID",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Backing not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing backing's information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Backing"
+                ],
+                "summary": "Update backing",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Backing UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated backing data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ReqUpdateBacking"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated backing",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.NonPaginationResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.RespBacking"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - validation error",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Backing not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete an existing backing by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Backing"
+                ],
+                "summary": "Delete backing",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Backing UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted backing",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid UUID",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Backing not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/city": {
             "get": {
                 "security": [
@@ -409,6 +991,16 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Search keyword",
                         "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by multiple names (WHERE IN)",
+                        "name": "names",
                         "in": "query"
                     },
                     {
@@ -466,7 +1058,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new city with provided province_id and name",
+                "description": "Create a new city with provided province_id, name, dan optional area_code",
                 "consumes": [
                     "application/json"
                 ],
@@ -522,6 +1114,69 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/city/area-codes": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve distinct area_code values from city table with optional search by area_code",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Regency - City"
+                ],
+                "summary": "Get distinct city area codes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search area_code",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved area codes",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.NonPaginationResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.RespCityAreaCode"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/city/export": {
             "get": {
                 "security": [
@@ -545,6 +1200,16 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Search keyword",
                         "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by multiple names (WHERE IN)",
+                        "name": "names",
                         "in": "query"
                     },
                     {
@@ -654,7 +1319,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Update an existing city's information",
+                "description": "Update an existing city's information termasuk area_code",
                 "consumes": [
                     "application/json"
                 ],
@@ -820,6 +1485,16 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by multiple names (WHERE IN)",
+                        "name": "names",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "description": "Search keyword for filtering by name",
                         "name": "search",
@@ -953,6 +1628,16 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Filter by city_id",
                         "name": "city_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by multiple names (WHERE IN)",
+                        "name": "names",
                         "in": "query"
                     },
                     {
@@ -1220,6 +1905,16 @@ const docTemplate = `{
                         "description": "Search keyword for filtering by name and group_code",
                         "name": "search",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_order",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1341,14 +2036,18 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Search keyword",
+                        "description": "Search keyword for filtering by name and group_code",
                         "name": "search",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Search keyword for filtering by name and group_code",
-                        "name": "search",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_order",
                         "in": "query"
                     }
                 ],
@@ -2582,7 +3281,7 @@ const docTemplate = `{
             }
         },
         "/v1/role-management/role/check-name": {
-            "get": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -2612,6 +3311,24 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
+                        "description": "Role with such name is not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "409": {
                         "description": "Role with such name exists",
                         "schema": {
                             "allOf": [
@@ -2627,24 +3344,6 @@ const docTemplate = `{
                                     }
                                 }
                             ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/response.NonPaginationResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/response.NonPaginationResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Role with such name is not found",
-                        "schema": {
-                            "$ref": "#/definitions/response.NonPaginationResponse"
                         }
                     }
                 }
@@ -2926,7 +3625,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieve a paginated list of sub-groups with optional search and filters. Supports multiple filter values for subgroup_code, name, and goods_group_id. Subgroup codes are in 2-digit string format (e.g., \"01\", \"02\", \"05\", \"10\"). Only returns non-deleted sub-groups.",
+                "description": "Retrieve a paginated list of sub-groups with optional search and filters. Supports multiple filter values for subgroup_code, name, and goods_group_id. Subgroup codes are in 2-digit string format (e.g., \"01\", \"02\", \"05\", \"10\"). Only returns non-deleted sub-groups. Supports sorting by DTO field names (e.g., subgroup_code, name, goods_group_name, created_at, updated_at).",
                 "consumes": [
                     "application/json"
                 ],
@@ -2952,13 +3651,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Sort column (allowed: id, goods_group_id, subgroup_code, name, created_at, updated_at)",
+                        "description": "Sort by field (e.g., subgroup_code, name, goods_group_name, created_at, updated_at)",
                         "name": "sort_by",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Sort order: asc or desc (default: desc)",
+                        "description": "Sort order (ASC or DESC, default: DESC)",
                         "name": "sort_order",
                         "in": "query"
                     },
@@ -3116,7 +3815,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Export sub-groups to Excel file (.xlsx) with optional search and filter. Same search and filter logic as index but without pagination. Supports multiple filter values for each field. Only exports non-deleted sub-groups. Excel file includes: Kode Sub Golongan (2-digit format like \"01\", \"02\"), Nama Sub Golongan, Goods Group ID, Update Date. Requires 'api.master-data.sub-group.export' permission.",
+                "description": "Export sub-groups to Excel file (.xlsx) with optional search and filter. Same search and filter logic as index but without pagination. Supports multiple filter values for each field. Only exports non-deleted sub-groups. Excel file includes: Kode Sub Golongan (2-digit format like \"01\", \"02\"), Nama Sub Golongan, Nama Golongan, Updated Date. Requires 'sub-group.export' permission.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3162,6 +3861,18 @@ const docTemplate = `{
                         "collectionFormat": "csv",
                         "description": "Filter by goods group IDs (multiple values, UUIDs)",
                         "name": "goods_group_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort by field (e.g., subgroup_code, name, goods_group_name, created_at, updated_at)",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order (ASC or DESC)",
+                        "name": "sort_order",
                         "in": "query"
                     }
                 ],
@@ -3449,6 +4160,16 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by multiple names (WHERE IN)",
+                        "name": "names",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "description": "Search keyword for filtering by name",
                         "name": "search",
@@ -3582,6 +4303,16 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Filter by district_id",
                         "name": "district_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by multiple names (WHERE IN)",
+                        "name": "names",
                         "in": "query"
                     },
                     {
@@ -3874,6 +4605,16 @@ const docTemplate = `{
                         "collectionFormat": "csv",
                         "description": "Filter by subgroup IDs (multiple values, UUIDs)",
                         "name": "subgroup_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by group IDs (multiple values, UUIDs)",
+                        "name": "group_ids",
                         "in": "query"
                     },
                     {
@@ -4350,12 +5091,22 @@ const docTemplate = `{
                             "type": "string"
                         },
                         "collectionFormat": "csv",
-                        "name": "roleIds",
+                        "name": "role_ids",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "name": "roleName",
+                        "name": "role_name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort_order",
                         "in": "query"
                     }
                 ],
@@ -4513,7 +5264,7 @@ const docTemplate = `{
             }
         },
         "/v1/user-management/user/check-name": {
-            "get": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -4543,21 +5294,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "User with such name exists",
+                        "description": "User with such name is not found",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.NonPaginationResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.RespUser"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/response.NonPaginationResponse"
                         }
                     },
                     "400": {
@@ -4568,12 +5307,6 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/response.NonPaginationResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "User with such name is not found",
                         "schema": {
                             "$ref": "#/definitions/response.NonPaginationResponse"
                         }
@@ -4981,158 +5714,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/user-management/user/{id}/assign-status": {
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Activate or update status of a user account",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User Management"
-                ],
-                "summary": "Activate a user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User UUID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Activate user request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.ReqActivateUser"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully activated user",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.NonPaginationResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.RespUserDetail"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/response.NonPaginationResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/response.NonPaginationResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "User not found",
-                        "schema": {
-                            "$ref": "#/definitions/response.NonPaginationResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/user-management/user/{id}/block": {
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Block a user account and revoke all their tokens",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User Management"
-                ],
-                "summary": "Block a user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User UUID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Block user request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.ReqBlockUser"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully blocked user",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.NonPaginationResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.RespUserDetail"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/response.NonPaginationResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/response.NonPaginationResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "User not found",
-                        "schema": {
-                            "$ref": "#/definitions/response.NonPaginationResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/v1/user-management/user/{id}/password": {
             "patch": {
                 "security": [
@@ -5211,14 +5792,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.ReqActivateUser": {
-            "type": "object",
-            "properties": {
-                "is_active": {
-                    "type": "boolean"
-                }
-            }
-        },
         "dto.ReqAuthUser": {
             "type": "object",
             "required": [
@@ -5231,14 +5804,6 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string"
-                }
-            }
-        },
-        "dto.ReqBlockUser": {
-            "type": "object",
-            "properties": {
-                "is_block": {
-                    "type": "boolean"
                 }
             }
         },
@@ -5259,13 +5824,13 @@ const docTemplate = `{
         "dto.ReqCheckDuplicatedUser": {
             "type": "object",
             "required": [
-                "name"
+                "username"
             ],
             "properties": {
                 "excluded_user_id": {
                     "type": "string"
                 },
-                "name": {
+                "username": {
                     "type": "string"
                 }
             }
@@ -5281,6 +5846,22 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ReqCreateBacking": {
+            "type": "object",
+            "required": [
+                "name",
+                "type_id"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "type_id": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.ReqCreateCity": {
             "type": "object",
             "required": [
@@ -5288,6 +5869,10 @@ const docTemplate = `{
                 "province_id"
             ],
             "properties": {
+                "area_code": {
+                    "type": "string",
+                    "maxLength": 50
+                },
                 "name": {
                     "type": "string",
                     "maxLength": 255
@@ -5444,15 +6029,6 @@ const docTemplate = `{
                 "username"
             ],
             "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "gender": {
-                    "type": "string"
-                },
-                "is_active": {
-                    "type": "boolean"
-                },
                 "name": {
                     "type": "string",
                     "maxLength": 80
@@ -5500,6 +6076,22 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ReqUpdateBacking": {
+            "type": "object",
+            "required": [
+                "name",
+                "type_id"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "type_id": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.ReqUpdateCity": {
             "type": "object",
             "required": [
@@ -5507,6 +6099,10 @@ const docTemplate = `{
                 "province_id"
             ],
             "properties": {
+                "area_code": {
+                    "type": "string",
+                    "maxLength": 50
+                },
                 "name": {
                     "type": "string",
                     "maxLength": 255
@@ -5711,6 +6307,9 @@ const docTemplate = `{
                 },
                 "role_id": {
                     "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -5774,9 +6373,95 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.RespBacking": {
+            "type": "object",
+            "properties": {
+                "backing_code": {
+                    "description": "omit when creating new backing",
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "deletable": {
+                    "type": "boolean"
+                },
+                "goods_group_id": {
+                    "type": "string"
+                },
+                "goods_group_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "subgroup_id": {
+                    "type": "string"
+                },
+                "subgroup_name": {
+                    "type": "string"
+                },
+                "type_id": {
+                    "type": "string"
+                },
+                "type_name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.RespBackingIndex": {
+            "type": "object",
+            "properties": {
+                "backing_code": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "deletable": {
+                    "type": "boolean"
+                },
+                "group_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "subgroup_name": {
+                    "type": "string"
+                },
+                "type_id": {
+                    "type": "string"
+                },
+                "type_name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.RespCity": {
             "type": "object",
             "properties": {
+                "area_code": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -5797,9 +6482,20 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.RespCityAreaCode": {
+            "type": "object",
+            "properties": {
+                "area_code": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.RespCityIndex": {
             "type": "object",
             "properties": {
+                "area_code": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -5866,6 +6562,10 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
+                "deletable": {
+                    "description": "true if group is not used in any active sub-group",
+                    "type": "boolean"
+                },
                 "group_code": {
                     "description": "omit when creating new group",
                     "type": "string"
@@ -5886,6 +6586,10 @@ const docTemplate = `{
             "properties": {
                 "created_at": {
                     "type": "string"
+                },
+                "deletable": {
+                    "description": "true if group is not used in any active sub-group",
+                    "type": "boolean"
                 },
                 "group_code": {
                     "type": "string"
@@ -6024,7 +6728,7 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "name": {
+                "role_name": {
                     "type": "string"
                 }
             }
@@ -6034,6 +6738,9 @@ const docTemplate = `{
             "properties": {
                 "created_at": {
                     "type": "string"
+                },
+                "deletable": {
+                    "type": "boolean"
                 },
                 "description": {
                     "$ref": "#/definitions/utils.NullString"
@@ -6064,6 +6771,9 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
+                "deletable": {
+                    "type": "boolean"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -6093,6 +6803,9 @@ const docTemplate = `{
                 "created_by": {
                     "type": "string"
                 },
+                "deletable": {
+                    "type": "boolean"
+                },
                 "goods_group_id": {
                     "type": "string"
                 },
@@ -6121,6 +6834,9 @@ const docTemplate = `{
             "properties": {
                 "created_at": {
                     "type": "string"
+                },
+                "deletable": {
+                    "type": "boolean"
                 },
                 "goods_group_id": {
                     "type": "string"
@@ -6191,7 +6907,13 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
-                "goods_group_id": {
+                "deletable": {
+                    "type": "boolean"
+                },
+                "group_id": {
+                    "type": "string"
+                },
+                "group_name": {
                     "type": "string"
                 },
                 "id": {
@@ -6220,7 +6942,10 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
-                "goods_group_name": {
+                "deletable": {
+                    "type": "boolean"
+                },
+                "group_name": {
                     "type": "string"
                 },
                 "id": {
@@ -6257,26 +6982,14 @@ const docTemplate = `{
         "dto.RespUserDetail": {
             "type": "object",
             "properties": {
-                "active_status": {
-                    "$ref": "#/definitions/utils.NullString"
-                },
                 "created_at": {
                     "type": "string"
                 },
-                "email": {
-                    "type": "string"
-                },
-                "gender": {
-                    "type": "string"
+                "deletable": {
+                    "type": "boolean"
                 },
                 "id": {
                     "type": "string"
-                },
-                "is_active": {
-                    "type": "boolean"
-                },
-                "is_blocked": {
-                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"
@@ -6289,32 +7002,23 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
         "dto.RespUserIndex": {
             "type": "object",
             "properties": {
-                "active_status": {
-                    "$ref": "#/definitions/utils.NullString"
-                },
                 "created_at": {
                     "type": "string"
                 },
-                "email": {
-                    "type": "string"
-                },
-                "gender": {
-                    "type": "string"
+                "deletable": {
+                    "type": "boolean"
                 },
                 "id": {
                     "type": "string"
-                },
-                "is_active": {
-                    "type": "boolean"
-                },
-                "is_blocked": {
-                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"
@@ -6323,6 +7027,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "updated_at": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }

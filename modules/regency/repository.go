@@ -21,13 +21,14 @@ type Repository interface {
 	ExistsProvinceByName(ctx context.Context, name string, excludeID uuid.UUID) (bool, error)
 
 	// City methods
-	CreateCity(ctx context.Context, provinceID uuid.UUID, name string) (*models.City, error)
-	UpdateCity(ctx context.Context, id uuid.UUID, provinceID uuid.UUID, name string) (*models.City, error)
+	CreateCity(ctx context.Context, provinceID uuid.UUID, name string, areaCode *string) (*models.City, error)
+	UpdateCity(ctx context.Context, id uuid.UUID, provinceID uuid.UUID, name string, areaCode *string) (*models.City, error)
 	DeleteCity(ctx context.Context, id uuid.UUID) error
 	GetCityByID(ctx context.Context, id uuid.UUID) (*models.City, error)
 	GetCityIndex(ctx context.Context, req request.PageRequest, filter dto.ReqCityIndexFilter) ([]models.City, int, error)
 	GetAllCity(ctx context.Context, filter dto.ReqCityIndexFilter) ([]models.City, error)
 	ExistsCityByName(ctx context.Context, provinceID uuid.UUID, name string, excludeID uuid.UUID) (bool, error)
+	GetCityAreaCodes(ctx context.Context, search string) ([]string, error)
 
 	// District methods
 	CreateDistrict(ctx context.Context, cityID uuid.UUID, name string) (*models.District, error)

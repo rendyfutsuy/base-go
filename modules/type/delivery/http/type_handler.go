@@ -42,24 +42,29 @@ func NewTypeHandler(e *echo.Echo, uc type_module.Usecase, mwP _reqContext.IMiddl
 	// Update: type.update
 	// Delete: type.delete
 	// Export: type.export
+	permissionToView := []string{"type.view"}
+	permissionToCreate := []string{"type.create"}
+	permissionToUpdate := []string{"type.update"}
+	permissionToDelete := []string{"type.delete"}
+	permissionToExport := []string{"type.export"}
 
 	// Index with pagination + search
-	r.GET("", h.GetIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation([]string{"type.view"}))
+	r.GET("", h.GetIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation(permissionToView))
 
 	// Export (no pagination, same filters) - must be before /:id to avoid route conflict
-	r.GET("/export", h.Export, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"type.export"}))
+	r.GET("/export", h.Export, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToExport))
 
 	// Get by ID (detail) - must be after /export to avoid route conflict
-	r.GET("/:id", h.GetByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"type.view"}))
+	r.GET("/:id", h.GetByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToView))
 
 	// Create
-	r.POST("", h.Create, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"type.create"}))
+	r.POST("", h.Create, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToCreate))
 
 	// Update
-	r.PUT("/:id", h.Update, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"type.update"}))
+	r.PUT("/:id", h.Update, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToUpdate))
 
 	// Delete
-	r.DELETE("/:id", h.Delete, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"type.delete"}))
+	r.DELETE("/:id", h.Delete, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToDelete))
 }
 
 // Create godoc
@@ -175,6 +180,7 @@ func (h *TypeHandler) Delete(c echo.Context) error {
 // @Param			search			query		string					false	"Search keyword (searches in type_code and name)"
 // @Param			type_codes		query		[]string				false	"Filter by type codes (multiple values)"
 // @Param			subgroup_ids	query		[]string				false	"Filter by subgroup IDs (multiple values, UUIDs)"
+// @Param			group_ids		query		[]string				false	"Filter by group IDs (multiple values, UUIDs)"
 // @Param			names			query		[]string				false	"Filter by names (multiple values)"
 // @Success		200				{object}	response.PaginationResponse{data=[]dto.RespTypeIndex}	"Successfully retrieved types"
 // @Failure		400				{object}	response.NonPaginationResponse	"Bad request - invalid query parameters"
@@ -281,7 +287,7 @@ func (h *TypeHandler) Export(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	c.Response().Header().Set(echo.HeaderContentType, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Response().Header().Set("Content-Disposition", "attachment; filename=types.xlsx")
-	return c.Blob(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelBytes)
+	c.Response().Header().Set(echo.HeaderContentType, constants.ExcelContent)
+	c.Response().Header().Set(constants.FieldContentDisposition, constants.ExcelContentDisposition("types.xlsx"))
+	return c.Blob(http.StatusOK, constants.ExcelContent, excelBytes)
 }

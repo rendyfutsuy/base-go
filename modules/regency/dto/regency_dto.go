@@ -2,6 +2,7 @@ package dto
 
 import (
 	"github.com/google/uuid"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/models"
 )
 
@@ -25,8 +26,8 @@ func ToRespProvince(m models.Province) RespProvince {
 	return RespProvince{
 		ID:        m.ID,
 		Name:      m.Name,
-		CreatedAt: m.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt: m.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		CreatedAt: m.CreatedAt.Format(constants.FormatDateTimeISO8601),
+		UpdatedAt: m.UpdatedAt.Format(constants.FormatDateTimeISO8601),
 	}
 }
 
@@ -41,8 +42,8 @@ func ToRespProvinceIndex(m models.Province) RespProvinceIndex {
 	return RespProvinceIndex{
 		ID:        m.ID,
 		Name:      m.Name,
-		CreatedAt: m.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt: m.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		CreatedAt: m.CreatedAt.Format(constants.FormatDateTimeISO8601),
+		UpdatedAt: m.UpdatedAt.Format(constants.FormatDateTimeISO8601),
 	}
 }
 
@@ -54,11 +55,13 @@ type ReqProvinceIndexFilter struct {
 type ReqCreateCity struct {
 	ProvinceID uuid.UUID `form:"province_id" json:"province_id" validate:"required"`
 	Name       string    `form:"name" json:"name" validate:"required,max=255"`
+	AreaCode   *string   `form:"area_code" json:"area_code" validate:"omitempty,max=50"`
 }
 
 type ReqUpdateCity struct {
 	ProvinceID uuid.UUID `form:"province_id" json:"province_id" validate:"required"`
 	Name       string    `form:"name" json:"name" validate:"required,max=255"`
+	AreaCode   *string   `form:"area_code" json:"area_code" validate:"omitempty,max=50"`
 }
 
 type RespCity struct {
@@ -66,6 +69,7 @@ type RespCity struct {
 	ProvinceID uuid.UUID     `json:"province_id"`
 	Province   *RespProvince `json:"province,omitempty"`
 	Name       string        `json:"name"`
+	AreaCode   *string       `json:"area_code"`
 	CreatedAt  string        `json:"created_at"`
 	UpdatedAt  string        `json:"updated_at"`
 }
@@ -75,8 +79,9 @@ func ToRespCity(m models.City) RespCity {
 		ID:         m.ID,
 		ProvinceID: m.ProvinceID,
 		Name:       m.Name,
-		CreatedAt:  m.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:  m.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		AreaCode:   m.AreaCode,
+		CreatedAt:  m.CreatedAt.Format(constants.FormatDateTimeISO8601),
+		UpdatedAt:  m.UpdatedAt.Format(constants.FormatDateTimeISO8601),
 	}
 	if m.Province.ID != uuid.Nil {
 		province := ToRespProvince(m.Province)
@@ -89,6 +94,7 @@ type RespCityIndex struct {
 	ID         uuid.UUID `json:"id"`
 	ProvinceID uuid.UUID `json:"province_id"`
 	Name       string    `json:"name"`
+	AreaCode   *string   `json:"area_code"`
 	CreatedAt  string    `json:"created_at"`
 	UpdatedAt  string    `json:"updated_at"`
 }
@@ -98,14 +104,20 @@ func ToRespCityIndex(m models.City) RespCityIndex {
 		ID:         m.ID,
 		ProvinceID: m.ProvinceID,
 		Name:       m.Name,
-		CreatedAt:  m.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:  m.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		AreaCode:   m.AreaCode,
+		CreatedAt:  m.CreatedAt.Format(constants.FormatDateTimeISO8601),
+		UpdatedAt:  m.UpdatedAt.Format(constants.FormatDateTimeISO8601),
 	}
 }
 
 type ReqCityIndexFilter struct {
 	Search     string    `query:"search" json:"search"`           // Search keyword for filtering by name
 	ProvinceID uuid.UUID `query:"province_id" json:"province_id"` // Filter by province_id
+	Names      []string  `query:"names" json:"names"`             // Filter by multiple names (WHERE IN)
+}
+
+type RespCityAreaCode struct {
+	AreaCode string `json:"area_code"`
 }
 
 // District DTOs
@@ -133,8 +145,8 @@ func ToRespDistrict(m models.District) RespDistrict {
 		ID:        m.ID,
 		CityID:    m.CityID,
 		Name:      m.Name,
-		CreatedAt: m.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt: m.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		CreatedAt: m.CreatedAt.Format(constants.FormatDateTimeISO8601),
+		UpdatedAt: m.UpdatedAt.Format(constants.FormatDateTimeISO8601),
 	}
 	if m.City.ID != uuid.Nil {
 		city := ToRespCity(m.City)
@@ -156,14 +168,15 @@ func ToRespDistrictIndex(m models.District) RespDistrictIndex {
 		ID:        m.ID,
 		CityID:    m.CityID,
 		Name:      m.Name,
-		CreatedAt: m.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt: m.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		CreatedAt: m.CreatedAt.Format(constants.FormatDateTimeISO8601),
+		UpdatedAt: m.UpdatedAt.Format(constants.FormatDateTimeISO8601),
 	}
 }
 
 type ReqDistrictIndexFilter struct {
 	Search string    `query:"search" json:"search"`   // Search keyword for filtering by name
 	CityID uuid.UUID `query:"city_id" json:"city_id"` // Filter by city_id
+	Names  []string  `query:"names" json:"names"`     // Filter by multiple names (WHERE IN)
 }
 
 // Subdistrict DTOs
@@ -191,8 +204,8 @@ func ToRespSubdistrict(m models.Subdistrict) RespSubdistrict {
 		ID:         m.ID,
 		DistrictID: m.DistrictID,
 		Name:       m.Name,
-		CreatedAt:  m.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:  m.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		CreatedAt:  m.CreatedAt.Format(constants.FormatDateTimeISO8601),
+		UpdatedAt:  m.UpdatedAt.Format(constants.FormatDateTimeISO8601),
 	}
 	if m.District.ID != uuid.Nil {
 		district := ToRespDistrict(m.District)
@@ -214,12 +227,13 @@ func ToRespSubdistrictIndex(m models.Subdistrict) RespSubdistrictIndex {
 		ID:         m.ID,
 		DistrictID: m.DistrictID,
 		Name:       m.Name,
-		CreatedAt:  m.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:  m.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		CreatedAt:  m.CreatedAt.Format(constants.FormatDateTimeISO8601),
+		UpdatedAt:  m.UpdatedAt.Format(constants.FormatDateTimeISO8601),
 	}
 }
 
 type ReqSubdistrictIndexFilter struct {
 	Search     string    `query:"search" json:"search"`           // Search keyword for filtering by name
 	DistrictID uuid.UUID `query:"district_id" json:"district_id"` // Filter by district_id
+	Names      []string  `query:"names" json:"names"`             // Filter by multiple names (WHERE IN)
 }

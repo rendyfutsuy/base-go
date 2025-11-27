@@ -1,9 +1,4 @@
 definitions:
-  dto.ReqActivateUser:
-    properties:
-      is_active:
-        type: boolean
-    type: object
   dto.ReqAuthUser:
     properties:
       login:
@@ -13,11 +8,6 @@ definitions:
     required:
     - login
     - password
-    type: object
-  dto.ReqBlockUser:
-    properties:
-      is_block:
-        type: boolean
     type: object
   dto.ReqCheckDuplicatedRole:
     properties:
@@ -32,10 +22,10 @@ definitions:
     properties:
       excluded_user_id:
         type: string
-      name:
+      username:
         type: string
     required:
-    - name
+    - username
     type: object
   dto.ReqConfirmationUserPassword:
     properties:
@@ -44,8 +34,22 @@ definitions:
     required:
     - password
     type: object
+  dto.ReqCreateBacking:
+    properties:
+      name:
+        maxLength: 255
+        type: string
+      type_id:
+        type: string
+    required:
+    - name
+    - type_id
+    type: object
   dto.ReqCreateCity:
     properties:
+      area_code:
+        maxLength: 50
+        type: string
       name:
         maxLength: 255
         type: string
@@ -151,12 +155,6 @@ definitions:
     type: object
   dto.ReqCreateUser:
     properties:
-      email:
-        type: string
-      gender:
-        type: string
-      is_active:
-        type: boolean
       name:
         maxLength: 80
         type: string
@@ -195,8 +193,22 @@ definitions:
     required:
     - email
     type: object
+  dto.ReqUpdateBacking:
+    properties:
+      name:
+        maxLength: 255
+        type: string
+      type_id:
+        type: string
+    required:
+    - name
+    - type_id
+    type: object
   dto.ReqUpdateCity:
     properties:
+      area_code:
+        maxLength: 50
+        type: string
       name:
         maxLength: 255
         type: string
@@ -337,6 +349,8 @@ definitions:
         type: string
       role_id:
         type: string
+      username:
+        type: string
     required:
     - name
     - role_id
@@ -382,8 +396,65 @@ definitions:
       total_rows:
         type: integer
     type: object
+  dto.RespBacking:
+    properties:
+      backing_code:
+        description: omit when creating new backing
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      deletable:
+        type: boolean
+      goods_group_id:
+        type: string
+      goods_group_name:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      subgroup_id:
+        type: string
+      subgroup_name:
+        type: string
+      type_id:
+        type: string
+      type_name:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+    type: object
+  dto.RespBackingIndex:
+    properties:
+      backing_code:
+        type: string
+      created_at:
+        type: string
+      deletable:
+        type: boolean
+      group_name:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      subgroup_name:
+        type: string
+      type_id:
+        type: string
+      type_name:
+        type: string
+      updated_at:
+        type: string
+    type: object
   dto.RespCity:
     properties:
+      area_code:
+        type: string
       created_at:
         type: string
       id:
@@ -397,8 +468,15 @@ definitions:
       updated_at:
         type: string
     type: object
+  dto.RespCityAreaCode:
+    properties:
+      area_code:
+        type: string
+    type: object
   dto.RespCityIndex:
     properties:
+      area_code:
+        type: string
       created_at:
         type: string
       id:
@@ -442,6 +520,9 @@ definitions:
     properties:
       created_at:
         type: string
+      deletable:
+        description: true if group is not used in any active sub-group
+        type: boolean
       group_code:
         description: omit when creating new group
         type: string
@@ -456,6 +537,9 @@ definitions:
     properties:
       created_at:
         type: string
+      deletable:
+        description: true if group is not used in any active sub-group
+        type: boolean
       group_code:
         type: string
       id:
@@ -545,13 +629,15 @@ definitions:
     properties:
       id:
         type: string
-      name:
+      role_name:
         type: string
     type: object
   dto.RespRoleDetail:
     properties:
       created_at:
         type: string
+      deletable:
+        type: boolean
       description:
         $ref: '#/definitions/utils.NullString'
       id:
@@ -571,6 +657,8 @@ definitions:
     properties:
       created_at:
         type: string
+      deletable:
+        type: boolean
       id:
         type: string
       modules:
@@ -590,6 +678,8 @@ definitions:
         type: string
       created_by:
         type: string
+      deletable:
+        type: boolean
       goods_group_id:
         type: string
       goods_group_name:
@@ -609,6 +699,8 @@ definitions:
     properties:
       created_at:
         type: string
+      deletable:
+        type: boolean
       goods_group_id:
         type: string
       goods_group_name:
@@ -654,7 +746,11 @@ definitions:
     properties:
       created_at:
         type: string
-      goods_group_id:
+      deletable:
+        type: boolean
+      group_id:
+        type: string
+      group_name:
         type: string
       id:
         type: string
@@ -673,7 +769,9 @@ definitions:
     properties:
       created_at:
         type: string
-      goods_group_name:
+      deletable:
+        type: boolean
+      group_name:
         type: string
       id:
         type: string
@@ -697,20 +795,12 @@ definitions:
     type: object
   dto.RespUserDetail:
     properties:
-      active_status:
-        $ref: '#/definitions/utils.NullString'
       created_at:
         type: string
-      email:
-        type: string
-      gender:
-        type: string
+      deletable:
+        type: boolean
       id:
         type: string
-      is_active:
-        type: boolean
-      is_blocked:
-        type: boolean
       name:
         type: string
       role_id:
@@ -719,28 +809,24 @@ definitions:
         type: string
       updated_at:
         type: string
+      username:
+        type: string
     type: object
   dto.RespUserIndex:
     properties:
-      active_status:
-        $ref: '#/definitions/utils.NullString'
       created_at:
         type: string
-      email:
-        type: string
-      gender:
-        type: string
+      deletable:
+        type: boolean
       id:
         type: string
-      is_active:
-        type: boolean
-      is_blocked:
-        type: boolean
       name:
         type: string
       role_name:
         type: string
       updated_at:
+        type: string
+      username:
         type: string
     type: object
   dto.UserProfile:
@@ -1058,6 +1144,380 @@ paths:
       summary: Reset user password
       tags:
       - Authentication
+  /v1/backing:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of backings with optional search and
+        filters. Supports multiple filter values for backing_code, name, and type_id.
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      - description: 'Sort column (allowed: id, type_id, backing_code, name, created_at,
+          updated_at)'
+        in: query
+        name: sort_by
+        type: string
+      - description: Sort order (asc or desc)
+        in: query
+        name: sort_order
+        type: string
+      - description: Search keyword (searches in backing_code and name)
+        in: query
+        name: search
+        type: string
+      - collectionFormat: csv
+        description: Filter by backing codes (multiple values)
+        in: query
+        items:
+          type: string
+        name: backing_codes
+        type: array
+      - collectionFormat: csv
+        description: Filter by names (multiple values)
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
+      - collectionFormat: csv
+        description: Filter by type IDs (multiple values, UUID format)
+        in: query
+        items:
+          type: string
+        name: type_ids
+        type: array
+      - collectionFormat: csv
+        description: Multiple values
+        in: query
+        items:
+          type: string
+        name: backing_codes
+        type: array
+      - collectionFormat: csv
+        description: Filter by goodGroup IDs (multiple values, UUIDs as strings)
+        in: query
+        items:
+          type: string
+        name: group_ids
+        type: array
+      - collectionFormat: csv
+        description: Multiple values
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
+      - description: Search keyword for filtering by backing_code, name
+        in: query
+        name: search
+        type: string
+      - in: query
+        name: sort_by
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - collectionFormat: csv
+        description: Filter by subgroup IDs (multiple values, UUIDs as strings)
+        in: query
+        items:
+          type: string
+        name: subgroup_ids
+        type: array
+      - collectionFormat: csv
+        description: Multiple values
+        in: query
+        items:
+          type: string
+        name: type_ids
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved backings
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.PaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespBackingIndex'
+                  type: array
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get list of backings with pagination
+      tags:
+      - Backing
+    post:
+      consumes:
+      - application/json
+      description: Create a new backing with provided type_id and name
+      parameters:
+      - description: Backing creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCreateBacking'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created backing
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespBacking'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new backing
+      tags:
+      - Backing
+  /v1/backing/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing backing by ID
+      parameters:
+      - description: Backing UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted backing
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Backing not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete backing
+      tags:
+      - Backing
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single backing by its ID
+      parameters:
+      - description: Backing UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved backing
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespBacking'
+              type: object
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Backing not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get backing by ID
+      tags:
+      - Backing
+    put:
+      consumes:
+      - application/json
+      description: Update an existing backing's information
+      parameters:
+      - description: Backing UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated backing data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqUpdateBacking'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated backing
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespBacking'
+              type: object
+        "400":
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Backing not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Update backing
+      tags:
+      - Backing
+  /v1/backing/export:
+    get:
+      consumes:
+      - application/json
+      description: Export backings to Excel file (.xlsx) with optional search and
+        filter. Same search and filter logic as index but without pagination. Supports
+        multiple filter values for backing_code, name, and type_id.
+      parameters:
+      - description: Search keyword (searches in backing_code and name)
+        in: query
+        name: search
+        type: string
+      - collectionFormat: csv
+        description: Filter by backing codes (multiple values)
+        in: query
+        items:
+          type: string
+        name: backing_codes
+        type: array
+      - collectionFormat: csv
+        description: Filter by names (multiple values)
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
+      - collectionFormat: csv
+        description: Filter by type IDs (multiple values, UUID format)
+        in: query
+        items:
+          type: string
+        name: type_ids
+        type: array
+      - collectionFormat: csv
+        description: Multiple values
+        in: query
+        items:
+          type: string
+        name: backing_codes
+        type: array
+      - collectionFormat: csv
+        description: Filter by goodGroup IDs (multiple values, UUIDs as strings)
+        in: query
+        items:
+          type: string
+        name: group_ids
+        type: array
+      - collectionFormat: csv
+        description: Multiple values
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
+      - description: Search keyword for filtering by backing_code, name
+        in: query
+        name: search
+        type: string
+      - in: query
+        name: sort_by
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - collectionFormat: csv
+        description: Filter by subgroup IDs (multiple values, UUIDs as strings)
+        in: query
+        items:
+          type: string
+        name: subgroup_ids
+        type: array
+      - collectionFormat: csv
+        description: Multiple values
+        in: query
+        items:
+          type: string
+        name: type_ids
+        type: array
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: Excel file with backings data
+          schema:
+            type: file
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Export backings to Excel
+      tags:
+      - Backing
   /v1/city:
     get:
       consumes:
@@ -1076,6 +1536,13 @@ paths:
         in: query
         name: search
         type: string
+      - collectionFormat: csv
+        description: Filter by multiple names (WHERE IN)
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
       - description: Filter by province_id
         in: query
         name: province_id
@@ -1114,7 +1581,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new city with provided province_id and name
+      description: Create a new city with provided province_id, name, dan optional
+        area_code
       parameters:
       - description: City creation data
         in: body
@@ -1224,7 +1692,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: Update an existing city's information
+      description: Update an existing city's information termasuk area_code
       parameters:
       - description: City UUID
         in: path
@@ -1266,6 +1734,44 @@ paths:
       summary: Update city
       tags:
       - Regency - City
+  /v1/city/area-codes:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve distinct area_code values from city table with optional
+        search by area_code
+      parameters:
+      - description: Search area_code
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved area codes
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespCityAreaCode'
+                  type: array
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get distinct city area codes
+      tags:
+      - Regency - City
   /v1/city/export:
     get:
       consumes:
@@ -1276,6 +1782,13 @@ paths:
         in: query
         name: search
         type: string
+      - collectionFormat: csv
+        description: Filter by multiple names (WHERE IN)
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
       - description: Filter by province_id
         in: query
         name: province_id
@@ -1326,6 +1839,13 @@ paths:
         in: query
         name: city_id
         type: string
+      - collectionFormat: csv
+        description: Filter by multiple names (WHERE IN)
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
       - description: Search keyword for filtering by name
         in: query
         name: search
@@ -1527,6 +2047,13 @@ paths:
         in: query
         name: city_id
         type: string
+      - collectionFormat: csv
+        description: Filter by multiple names (WHERE IN)
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
       - description: Search keyword for filtering by name
         in: query
         name: search
@@ -1572,6 +2099,12 @@ paths:
       - description: Search keyword for filtering by name and group_code
         in: query
         name: search
+        type: string
+      - in: query
+        name: sort_by
+        type: string
+      - in: query
+        name: sort_order
         type: string
       produces:
       - application/json
@@ -1762,13 +2295,15 @@ paths:
       description: Export goods groups to Excel file (.xlsx) with optional search
         and filter. Same search and filter logic as index but without pagination.
       parameters:
-      - description: Search keyword
-        in: query
-        name: search
-        type: string
       - description: Search keyword for filtering by name and group_code
         in: query
         name: search
+        type: string
+      - in: query
+        name: sort_by
+        type: string
+      - in: query
+        name: sort_order
         type: string
       produces:
       - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
@@ -2536,7 +3071,7 @@ paths:
       tags:
       - Role Management
   /v1/role-management/role/check-name:
-    get:
+    post:
       consumes:
       - application/json
       description: Check if a role name already exists in the database
@@ -2551,14 +3086,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: Role with such name exists
+          description: Role with such name is not found
           schema:
-            allOf:
-            - $ref: '#/definitions/response.NonPaginationResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.RespRole'
-              type: object
+            $ref: '#/definitions/response.NonPaginationResponse'
         "400":
           description: Bad request
           schema:
@@ -2567,10 +3097,15 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/response.NonPaginationResponse'
-        "404":
-          description: Role with such name is not found
+        "409":
+          description: Role with such name exists
           schema:
-            $ref: '#/definitions/response.NonPaginationResponse'
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespRole'
+              type: object
       security:
       - BearerAuth: []
       summary: Check if role name is duplicated
@@ -2622,7 +3157,8 @@ paths:
       description: Retrieve a paginated list of sub-groups with optional search and
         filters. Supports multiple filter values for subgroup_code, name, and goods_group_id.
         Subgroup codes are in 2-digit string format (e.g., "01", "02", "05", "10").
-        Only returns non-deleted sub-groups.
+        Only returns non-deleted sub-groups. Supports sorting by DTO field names (e.g.,
+        subgroup_code, name, goods_group_name, created_at, updated_at).
       parameters:
       - description: 'Page number (default: 1)'
         in: query
@@ -2632,12 +3168,12 @@ paths:
         in: query
         name: per_page
         type: integer
-      - description: 'Sort column (allowed: id, goods_group_id, subgroup_code, name,
-          created_at, updated_at)'
+      - description: Sort by field (e.g., subgroup_code, name, goods_group_name, created_at,
+          updated_at)
         in: query
         name: sort_by
         type: string
-      - description: 'Sort order: asc or desc (default: desc)'
+      - description: 'Sort order (ASC or DESC, default: DESC)'
         in: query
         name: sort_order
         type: string
@@ -2892,8 +3428,7 @@ paths:
         filter. Same search and filter logic as index but without pagination. Supports
         multiple filter values for each field. Only exports non-deleted sub-groups.
         Excel file includes: Kode Sub Golongan (2-digit format like "01", "02"), Nama
-        Sub Golongan, Goods Group ID, Update Date. Requires ''api.master-data.sub-group.export''
-        permission.'
+        Sub Golongan, Nama Golongan, Updated Date. Requires ''sub-group.export'' permission.'
       parameters:
       - description: Search keyword (searches in subgroup_code and name)
         in: query
@@ -2920,6 +3455,15 @@ paths:
           type: string
         name: goods_group_ids
         type: array
+      - description: Sort by field (e.g., subgroup_code, name, goods_group_name, created_at,
+          updated_at)
+        in: query
+        name: sort_by
+        type: string
+      - description: Sort order (ASC or DESC)
+        in: query
+        name: sort_order
+        type: string
       produces:
       - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
       responses:
@@ -2967,6 +3511,13 @@ paths:
         in: query
         name: district_id
         type: string
+      - collectionFormat: csv
+        description: Filter by multiple names (WHERE IN)
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
       - description: Search keyword for filtering by name
         in: query
         name: search
@@ -3168,6 +3719,13 @@ paths:
         in: query
         name: district_id
         type: string
+      - collectionFormat: csv
+        description: Filter by multiple names (WHERE IN)
+        in: query
+        items:
+          type: string
+        name: names
+        type: array
       - description: Search keyword for filtering by name
         in: query
         name: search
@@ -3234,6 +3792,13 @@ paths:
         items:
           type: string
         name: subgroup_ids
+        type: array
+      - collectionFormat: csv
+        description: Filter by group IDs (multiple values, UUIDs)
+        in: query
+        items:
+          type: string
+        name: group_ids
         type: array
       - collectionFormat: csv
         description: Filter by names (multiple values)
@@ -3542,10 +4107,16 @@ paths:
         in: query
         items:
           type: string
-        name: roleIds
+        name: role_ids
         type: array
       - in: query
-        name: roleName
+        name: role_name
+        type: string
+      - in: query
+        name: sort_by
+        type: string
+      - in: query
+        name: sort_order
         type: string
       produces:
       - application/json
@@ -3740,98 +4311,6 @@ paths:
       summary: Update user
       tags:
       - User Management
-  /v1/user-management/user/{id}/assign-status:
-    patch:
-      consumes:
-      - application/json
-      description: Activate or update status of a user account
-      parameters:
-      - description: User UUID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Activate user request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.ReqActivateUser'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully activated user
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.NonPaginationResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.RespUserDetail'
-              type: object
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/response.NonPaginationResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.NonPaginationResponse'
-        "404":
-          description: User not found
-          schema:
-            $ref: '#/definitions/response.NonPaginationResponse'
-      security:
-      - BearerAuth: []
-      summary: Activate a user
-      tags:
-      - User Management
-  /v1/user-management/user/{id}/block:
-    patch:
-      consumes:
-      - application/json
-      description: Block a user account and revoke all their tokens
-      parameters:
-      - description: User UUID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Block user request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.ReqBlockUser'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully blocked user
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.NonPaginationResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.RespUserDetail'
-              type: object
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/response.NonPaginationResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.NonPaginationResponse'
-        "404":
-          description: User not found
-          schema:
-            $ref: '#/definitions/response.NonPaginationResponse'
-      security:
-      - BearerAuth: []
-      summary: Block a user
-      tags:
-      - User Management
   /v1/user-management/user/{id}/password:
     patch:
       consumes:
@@ -3911,7 +4390,7 @@ paths:
       tags:
       - User Management
   /v1/user-management/user/check-name:
-    get:
+    post:
       consumes:
       - application/json
       description: Check if a user name already exists in the database
@@ -3926,24 +4405,15 @@ paths:
       - application/json
       responses:
         "200":
-          description: User with such name exists
+          description: User with such name is not found
           schema:
-            allOf:
-            - $ref: '#/definitions/response.NonPaginationResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.RespUser'
-              type: object
+            $ref: '#/definitions/response.NonPaginationResponse'
         "400":
           description: Bad request
           schema:
             $ref: '#/definitions/response.NonPaginationResponse'
         "401":
           description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.NonPaginationResponse'
-        "404":
-          description: User with such name is not found
           schema:
             $ref: '#/definitions/response.NonPaginationResponse'
       security:

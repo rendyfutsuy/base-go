@@ -32,6 +32,7 @@ func (repo *roleRepository) GetPermissionGroupByID(ctx context.Context, id uuid.
 		SELECT
 			pg.id AS permission_group_id,
 			pg.name AS permission_group_name,
+			pg.module AS permission_group_module,
 			ARRAY_AGG(p.name) AS permissions,
 			pg.created_at,
 			pg.updated_at,
@@ -49,7 +50,7 @@ func (repo *roleRepository) GetPermissionGroupByID(ctx context.Context, id uuid.
 		WHERE
 			pg.id = $1 AND pg.deleted_at IS NULL
 		GROUP BY
-			pg.id, pg.name
+			pg.id, pg.name, pg.module
 	`
 
 	var permissionNames []utils.NullString
@@ -57,6 +58,7 @@ func (repo *roleRepository) GetPermissionGroupByID(ctx context.Context, id uuid.
 	err = sqlDB.QueryRowContext(ctx, query, id).Scan(
 		&permissionGroup.ID,
 		&permissionGroup.Name,
+		&permissionGroup.Module,
 		pq.Array(&permissionNames),
 		&permissionGroup.CreatedAt,
 		&permissionGroup.UpdatedAt,
@@ -98,11 +100,13 @@ func (repo *roleRepository) GetIndexPermissionGroup(ctx context.Context, req req
 
 	// Apply pagination using generic function
 	config := request.PaginationConfig{
-		DefaultSortBy:    "permission_group.created_at",
-		DefaultSortOrder: "DESC",
-		AllowedColumns:   []string{"id", "name", "module", "created_at", "updated_at", "deleted_at"},
-		ColumnPrefix:     "permission_group.",
-		MaxPerPage:       100,
+		DefaultSortBy:      "permission_group.created_at",
+		DefaultSortOrder:   "DESC",
+		AllowedColumns:     []string{"id", "name", "module", "created_at", "updated_at", "deleted_at"},
+		ColumnPrefix:       "permission_group.",
+		MaxPerPage:         100,
+		SortMapping:        mapPermissionGroupIndexSortColumn,
+		NaturalSortColumns: []string{"permission_group.name", "permission_group.module"}, // Enable natural sorting for permission_group.name
 	}
 
 	total, err = request.ApplyPagination(query, req, config, &permissionGroups)

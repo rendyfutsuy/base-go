@@ -27,6 +27,7 @@ type RespSubGroup struct {
 	CreatedBy      string    `json:"created_by"`
 	UpdatedAt      time.Time `json:"updated_at"`
 	UpdatedBy      string    `json:"updated_by"`
+	Deletable      bool      `json:"deletable"`
 }
 
 func ToRespSubGroup(m models.SubGroup) RespSubGroup {
@@ -40,6 +41,7 @@ func ToRespSubGroup(m models.SubGroup) RespSubGroup {
 		CreatedBy:      m.CreatedBy,
 		UpdatedAt:      m.UpdatedAt,
 		UpdatedBy:      m.UpdatedBy,
+		Deletable:      m.Deletable,
 	}
 }
 
@@ -51,6 +53,7 @@ type RespSubGroupIndex struct {
 	Name           string    `json:"name"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
+	Deletable      bool      `json:"deletable"`
 }
 
 func ToRespSubGroupIndex(m models.SubGroup) RespSubGroupIndex {
@@ -62,14 +65,16 @@ func ToRespSubGroupIndex(m models.SubGroup) RespSubGroupIndex {
 		Name:           m.Name,
 		CreatedAt:      m.CreatedAt,
 		UpdatedAt:      m.UpdatedAt,
+		Deletable:      m.Deletable,
 	}
 }
 
 // ReqSubGroupIndexFilter for filtering sub-group index with multiple values support
 type ReqSubGroupIndexFilter struct {
-	Search string `query:"search"` // Search keyword for filtering by subgroup_code, name
-
-	SubgroupCodes []string    `query:"subgroup_codes"`  // Multiple values
-	Names         []string    `query:"names"`           // Multiple values
-	GoodsGroupIDs []uuid.UUID `query:"goods_group_ids"` // Multiple values
+	Search        string      `query:"search" json:"search"`                   // Search keyword for filtering by subgroup_code, name
+	SubgroupCodes []string    `query:"subgroup_codes" json:"subgroup_codes"`   // Multiple values
+	Names         []string    `query:"names" json:"names"`                     // Multiple values
+	GoodsGroupIDs []uuid.UUID `query:"goods_group_ids" json:"goods_group_ids"` // Multiple values
+	SortBy        string      `query:"sort_by" json:"sort_by"`
+	SortOrder     string      `query:"sort_order" json:"sort_order"`
 }

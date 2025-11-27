@@ -12,7 +12,7 @@ const (
 	RoleNotFound             = "Role Not Found"
 	RoleNotFoundWithID       = "Role with ID `%s` is not Found.."
 	RoleNotFoundWithName     = "Role with name %s not found"
-	RoleNotFoundWithIDRepo   = "role role with id %s not found"
+	RoleNotFoundWithIDRepo   = "role with id %s not found"
 	RoleHasUsersCannotDelete = "Role has user. Can't be deleted"
 	RoleAssignUsersError     = "Something went wrong when assigning users to role, please check if role and users exist"
 	RoleNotExist             = "Not Such Role Exist"

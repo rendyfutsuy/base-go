@@ -51,19 +51,16 @@ func TestReAssignPermissionByGroup(t *testing.T) {
 			setupMock: func() {
 				mockRoleRepo.On("GetPermissionGroupByID", ctx, mock.Anything).Return(&models.PermissionGroup{ID: validPermissionGroupID}, nil).Once()
 				mockRoleRepo.On("ReAssignPermissionGroup", ctx, validRoleID, mock.Anything).Return(nil).Once()
-				mockRoleRepo.On("GetRoleByID", ctx, validRoleID).Return(expectedRole, nil).Once()
+				mockRoleRepo.On("GetRoleByID", ctx, validRoleID).Return(expectedRole, nil).Twice()
 			},
 			expectedError: false,
 			description:   "Valid request should reassign permission group successfully",
 		},
 		{
-			name:   "Negative case - invalid role UUID",
-			roleId: "invalid-uuid",
-			req:    validReq,
-			setupMock: func() {
-				// GetPermissionGroupByID will be called first, then UUID parsing will fail
-				mockRoleRepo.On("GetPermissionGroupByID", ctx, mock.Anything).Return(&models.PermissionGroup{ID: validPermissionGroupID}, nil).Once()
-			},
+			name:           "Negative case - invalid role UUID",
+			roleId:         "invalid-uuid",
+			req:            validReq,
+			setupMock:      func() {},
 			expectedError:  true,
 			expectedErrMsg: "requested param is string",
 			description:    "Invalid UUID should return error",
@@ -73,6 +70,7 @@ func TestReAssignPermissionByGroup(t *testing.T) {
 			roleId: validRoleIDString,
 			req:    validReq,
 			setupMock: func() {
+				mockRoleRepo.On("GetRoleByID", ctx, validRoleID).Return(expectedRole, nil).Once()
 				mockRoleRepo.On("GetPermissionGroupByID", ctx, mock.Anything).Return(nil, errors.New("permission group not found")).Once()
 			},
 			expectedError:  true,
@@ -84,6 +82,7 @@ func TestReAssignPermissionByGroup(t *testing.T) {
 			roleId: validRoleIDString,
 			req:    validReq,
 			setupMock: func() {
+				mockRoleRepo.On("GetRoleByID", ctx, validRoleID).Return(expectedRole, nil).Once()
 				mockRoleRepo.On("GetPermissionGroupByID", ctx, mock.Anything).Return(&models.PermissionGroup{ID: validPermissionGroupID}, nil).Once()
 				mockRoleRepo.On("ReAssignPermissionGroup", ctx, validRoleID, mock.Anything).Return(errors.New("database error")).Once()
 			},
@@ -92,13 +91,10 @@ func TestReAssignPermissionByGroup(t *testing.T) {
 			description:    "Database error should be returned",
 		},
 		{
-			name:   "Negative-Positive case - SQL injection attempt in role ID",
-			roleId: "'; DROP TABLE roles; --",
-			req:    validReq,
-			setupMock: func() {
-				// GetPermissionGroupByID will be called first, then UUID parsing will fail
-				mockRoleRepo.On("GetPermissionGroupByID", ctx, mock.Anything).Return(&models.PermissionGroup{ID: validPermissionGroupID}, nil).Once()
-			},
+			name:           "Negative-Positive case - SQL injection attempt in role ID",
+			roleId:         "'; DROP TABLE roles; --",
+			req:            validReq,
+			setupMock:      func() {},
 			expectedError:  true,
 			expectedErrMsg: "requested param is string",
 			description:    "SQL injection attempt should fail UUID validation",

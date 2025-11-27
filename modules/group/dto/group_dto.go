@@ -19,6 +19,7 @@ type RespGroup struct {
 	ID        uuid.UUID `json:"id"`
 	GroupCode string    `json:"group_code,omitempty"` // omit when creating new group
 	Name      string    `json:"name"`
+	Deletable bool      `json:"deletable"` // true if group is not used in any active sub-group
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -28,6 +29,7 @@ func ToRespGroup(m models.GoodsGroup) RespGroup {
 		ID:        m.ID,
 		GroupCode: m.GroupCode,
 		Name:      m.Name,
+		Deletable: m.Deletable,
 		CreatedAt: m.CreatedAt,
 		UpdatedAt: m.UpdatedAt,
 	}
@@ -37,6 +39,7 @@ type RespGroupIndex struct {
 	ID        uuid.UUID `json:"id"`
 	GroupCode string    `json:"group_code"`
 	Name      string    `json:"name"`
+	Deletable bool      `json:"deletable"` // true if group is not used in any active sub-group
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -46,6 +49,7 @@ func ToRespGroupIndex(m models.GoodsGroup) RespGroupIndex {
 		ID:        m.ID,
 		GroupCode: m.GroupCode,
 		Name:      m.Name,
+		Deletable: m.Deletable,
 		CreatedAt: m.CreatedAt,
 		UpdatedAt: m.UpdatedAt,
 	}
@@ -53,7 +57,7 @@ func ToRespGroupIndex(m models.GoodsGroup) RespGroupIndex {
 
 // ReqGroupIndexFilter for filtering group index (prepared for future use)
 type ReqGroupIndexFilter struct {
-	Search string `query:"search"` // Search keyword for filtering by name and group_code
-	// Add filter fields here when needed in the future
-	// Example: GroupCodes []string `query:"group_codes"`
+	Search    string `query:"search" json:"search"` // Search keyword for filtering by name and group_code
+	SortBy    string `query:"sort_by" json:"sort_by"`
+	SortOrder string `query:"sort_order" json:"sort_order"`
 }

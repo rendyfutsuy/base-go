@@ -2,6 +2,7 @@ package dto
 
 import (
 	"github.com/google/uuid"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/models"
 )
 
@@ -43,8 +44,8 @@ func ToRespParameter(m models.Parameter) RespParameter {
 		Value:     value,
 		Type:      typeVal,
 		Desc:      desc,
-		CreatedAt: m.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt: m.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		CreatedAt: m.CreatedAt.Format(constants.FormatDateTimeISO8601),
+		UpdatedAt: m.UpdatedAt.Format(constants.FormatDateTimeISO8601),
 	}
 }
 
@@ -67,14 +68,17 @@ func ToRespParameterIndex(m models.Parameter) RespParameterIndex {
 		Name:      m.Name,
 		Value:     value,
 		Type:      typeVal,
-		CreatedAt: m.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt: m.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		CreatedAt: m.CreatedAt.Format(constants.FormatDateTimeISO8601),
+		UpdatedAt: m.UpdatedAt.Format(constants.FormatDateTimeISO8601),
 	}
 }
 
 // ReqParameterIndexFilter for filtering parameter index (prepared for future use)
 type ReqParameterIndexFilter struct {
-	Search string   `query:"search"` // Search keyword for filtering by name and code
-	Types  []string `query:"types"`
-	Names  []string `query:"names"`
+	Search    string      `query:"search"` // Search keyword for filtering by name and code
+	Types     []string    `query:"types"`
+	Names     []string    `query:"names"`
+	IDs       []uuid.UUID `query:"ids"` // Filter by parameter IDs
+	SortBy    string      `query:"sort_by"`
+	SortOrder string      `query:"sort_order"`
 }

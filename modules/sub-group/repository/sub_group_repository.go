@@ -54,18 +54,14 @@ func (r *subGroupRepository) Update(ctx context.Context, id uuid.UUID, goodsGrou
 		"updated_at":     time.Now().UTC(),
 		"updated_by":     updatedBy,
 	}
-	sg := &models.SubGroup{}
 	err := r.DB.WithContext(ctx).Model(&models.SubGroup{}).
 		Where("id = ? AND deleted_at IS NULL", id).
-		Updates(updates).
-		First(sg).Error
+		Updates(updates).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
-		}
 		return nil, err
 	}
-	return sg, nil
+	// Re-fetch with deletable status
+	return r.GetByID(ctx, id)
 }
 
 func (r *subGroupRepository) Delete(ctx context.Context, id uuid.UUID, deletedBy string) error {
@@ -91,7 +87,11 @@ func (r *subGroupRepository) GetByID(ctx context.Context, id uuid.UUID) (*models
 			sg.created_by,
 			sg.updated_at,
 			sg.updated_by,
-			gg.name as goods_group_name
+			gg.name as goods_group_name,
+			NOT EXISTS (
+				SELECT 1 FROM types t
+				WHERE t.subgroup_id = sg.id AND t.deleted_at IS NULL
+			) as deletable
 		`).
 		Joins("LEFT JOIN goods_group gg ON sg.goods_group_id = gg.id AND gg.deleted_at IS NULL").
 		Where("sg.id = ? AND sg.deleted_at IS NULL", id).
@@ -118,6 +118,18 @@ func (r *subGroupRepository) ExistsByName(ctx context.Context, goodsGroupID uuid
 	return count > 0, nil
 }
 
+func (r *subGroupRepository) ExistsInTypes(ctx context.Context, subGroupID uuid.UUID) (bool, error) {
+	var count int64
+	err := r.DB.WithContext(ctx).
+		Model(&models.Type{}).
+		Where("subgroup_id = ? AND deleted_at IS NULL", subGroupID).
+		Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (r *subGroupRepository) GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, int, error) {
 	var subGroups []models.SubGroup
 	query := r.DB.WithContext(ctx).
@@ -129,14 +141,18 @@ func (r *subGroupRepository) GetIndex(ctx context.Context, req request.PageReque
 			sg.name,
 			sg.created_at,
 			sg.updated_at,
-			gg.name as goods_group_name
+			gg.name as goods_group_name,
+			NOT EXISTS (
+				SELECT 1 FROM types t
+				WHERE t.subgroup_id = sg.id AND t.deleted_at IS NULL
+			) as deletable
 		`).
 		Joins("LEFT JOIN goods_group gg ON sg.goods_group_id = gg.id AND gg.deleted_at IS NULL").
 		Where("sg.deleted_at IS NULL")
 
 	// Apply search from PageRequest
 	searchQuery := req.Search
-	query = request.ApplySearchCondition(query, searchQuery, []string{"sg.name", "sg.subgroup_code"})
+	query = request.ApplySearchCondition(query, searchQuery, []string{"sg.name", "sg.subgroup_code", "gg.name"})
 
 	// Apply filters with multiple values support
 	if len(filter.SubgroupCodes) > 0 {
@@ -152,11 +168,11 @@ func (r *subGroupRepository) GetIndex(ctx context.Context, req request.PageReque
 	// Pagination
 	// Use Scan() for JOIN queries with custom SELECT
 	total, err := request.ApplyPagination(query, req, request.PaginationConfig{
-		DefaultSortBy:    "sg.created_at",
-		DefaultSortOrder: "DESC",
-		AllowedColumns:   []string{"id", "goods_group_id", "subgroup_code", "name", "created_at", "updated_at"},
-		ColumnPrefix:     "sg.",
-		MaxPerPage:       100,
+		DefaultSortBy:      "sg.created_at",
+		DefaultSortOrder:   "DESC",
+		MaxPerPage:         100,
+		SortMapping:        mapSubGroupIndexSortColumn,
+		NaturalSortColumns: []string{"sg.name"}, // Enable natural sorting for sg.name
 	}, &subGroups)
 	if err != nil {
 		return nil, 0, err
@@ -194,9 +210,19 @@ func (r *subGroupRepository) GetAll(ctx context.Context, filter dto.ReqSubGroupI
 		query = query.Where("sg.goods_group_id IN (?)", filter.GoodsGroupIDs)
 	}
 
-	// Order by created_at DESC (no pagination)
+	// Determine sorting with natural sorting support
+	sortExpression := request.BuildSortExpressionForExport(
+		filter.SortBy,
+		filter.SortOrder,
+		"sg.created_at",
+		"DESC",
+		mapSubGroupIndexSortColumn,
+		[]string{"sg.name"}, // Enable natural sorting for sub-group name
+	)
+
+	// Order results
 	// Use Scan() for JOIN queries with custom SELECT
-	if err := query.Order("sg.created_at DESC").Scan(&subGroups).Error; err != nil {
+	if err := query.Order(sortExpression).Scan(&subGroups).Error; err != nil {
 		return nil, err
 	}
 	return subGroups, nil

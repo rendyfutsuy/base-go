@@ -42,24 +42,29 @@ func NewSubGroupHandler(e *echo.Echo, uc sub_group.Usecase, mwP _reqContext.IMid
 	// Update: sub-group.update
 	// Delete: sub-group.delete
 	// Export: sub-group.export
+	permissionToView := []string{"sub-group.view"}
+	permissionToCreate := []string{"sub-group.create"}
+	permissionToUpdate := []string{"sub-group.update"}
+	permissionToDelete := []string{"sub-group.delete"}
+	permissionToExport := []string{"sub-group.export"}
 
 	// Index with pagination + search
-	r.GET("", h.GetIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation([]string{"sub-group.view"}))
+	r.GET("", h.GetIndex, middleware.RequireActivatedUser, h.mwPageRequest.PageRequestCtx, h.middlewarePermission.PermissionValidation(permissionToView))
 
 	// Export (no pagination, same filters) - must be before /:id to avoid route conflict
-	r.GET("/export", h.Export, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"sub-group.export"}))
+	r.GET("/export", h.Export, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToExport))
 
 	// Get by ID (detail) - must be after /export to avoid route conflict
-	r.GET("/:id", h.GetByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"sub-group.view"}))
+	r.GET("/:id", h.GetByID, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToView))
 
 	// Create
-	r.POST("", h.Create, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"sub-group.create"}))
+	r.POST("", h.Create, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToCreate))
 
 	// Update
-	r.PUT("/:id", h.Update, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"sub-group.update"}))
+	r.PUT("/:id", h.Update, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToUpdate))
 
 	// Delete
-	r.DELETE("/:id", h.Delete, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation([]string{"sub-group.delete"}))
+	r.DELETE("/:id", h.Delete, middleware.RequireActivatedUser, h.middlewarePermission.PermissionValidation(permissionToDelete))
 }
 
 // Create godoc
@@ -89,6 +94,8 @@ func (h *SubGroupHandler) Create(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
+	// Set deletable to true for newly created sub-group (no types reference yet)
+	res.Deletable = true
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(dto.ToRespSubGroup(*res))
 	return c.JSON(http.StatusOK, resp)
@@ -153,15 +160,15 @@ func (h *SubGroupHandler) Delete(c echo.Context) error {
 
 // GetIndex godoc
 // @Summary		Get list of sub-groups with pagination
-// @Description	Retrieve a paginated list of sub-groups with optional search and filters. Supports multiple filter values for subgroup_code, name, and goods_group_id. Subgroup codes are in 2-digit string format (e.g., "01", "02", "05", "10"). Only returns non-deleted sub-groups.
+// @Description	Retrieve a paginated list of sub-groups with optional search and filters. Supports multiple filter values for subgroup_code, name, and goods_group_id. Subgroup codes are in 2-digit string format (e.g., "01", "02", "05", "10"). Only returns non-deleted sub-groups. Supports sorting by DTO field names (e.g., subgroup_code, name, goods_group_name, created_at, updated_at).
 // @Tags			Sub Golongan
 // @Accept			json
 // @Produce		json
 // @Security		BearerAuth
 // @Param			page			query		int							false	"Page number (default: 1)"
 // @Param			per_page		query		int							false	"Items per page (default: 10)"
-// @Param			sort_by			query		string						false	"Sort column (allowed: id, goods_group_id, subgroup_code, name, created_at, updated_at)"
-// @Param			sort_order		query		string						false	"Sort order: asc or desc (default: desc)"
+// @Param			sort_by			query		string						false	"Sort by field (e.g., subgroup_code, name, goods_group_name, created_at, updated_at)"
+// @Param			sort_order		query		string						false	"Sort order (ASC or DESC, default: DESC)"
 // @Param			search			query		string						false	"Search keyword (searches in subgroup_code and name)"
 // @Param			subgroup_codes	query		[]string					false	"Filter by subgroup codes (multiple values, format: "01", "02", etc.)"
 // @Param			names			query		[]string					false	"Filter by names (multiple values)"
@@ -237,7 +244,7 @@ func (h *SubGroupHandler) GetByID(c echo.Context) error {
 
 // Export godoc
 // @Summary		Export sub-groups to Excel
-// @Description	Export sub-groups to Excel file (.xlsx) with optional search and filter. Same search and filter logic as index but without pagination. Supports multiple filter values for each field. Only exports non-deleted sub-groups. Excel file includes: Kode Sub Golongan (2-digit format like "01", "02"), Nama Sub Golongan, Goods Group ID, Update Date. Requires 'api.master-data.sub-group.export' permission.
+// @Description	Export sub-groups to Excel file (.xlsx) with optional search and filter. Same search and filter logic as index but without pagination. Supports multiple filter values for each field. Only exports non-deleted sub-groups. Excel file includes: Kode Sub Golongan (2-digit format like "01", "02"), Nama Sub Golongan, Nama Golongan, Updated Date. Requires 'sub-group.export' permission.
 // @Tags			Sub Golongan
 // @Accept			json
 // @Produce		application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
@@ -246,6 +253,8 @@ func (h *SubGroupHandler) GetByID(c echo.Context) error {
 // @Param			subgroup_codes	query		[]string					false	"Filter by subgroup codes (multiple values, format: "01", "02", etc.)"
 // @Param			names			query		[]string					false	"Filter by names (multiple values)"
 // @Param			goods_group_ids	query		[]string					false	"Filter by goods group IDs (multiple values, UUIDs)"
+// @Param			sort_by			query		string						false	"Sort by field (e.g., subgroup_code, name, goods_group_name, created_at, updated_at)"
+// @Param			sort_order		query		string						false	"Sort order (ASC or DESC)"
 // @Success		200				{file}		binary	"Excel file (sub-groups.xlsx) with sub-groups data including subgroup_code in 2-digit format"
 // @Failure		400				{object}	response.NonPaginationResponse	"Bad request - invalid query parameters"
 // @Failure		401				{object}	response.NonPaginationResponse	"Unauthorized"
@@ -271,7 +280,7 @@ func (h *SubGroupHandler) Export(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	c.Response().Header().Set(echo.HeaderContentType, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Response().Header().Set("Content-Disposition", "attachment; filename=sub-groups.xlsx")
-	return c.Blob(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelBytes)
+	c.Response().Header().Set(echo.HeaderContentType, constants.ExcelContent)
+	c.Response().Header().Set(constants.FieldContentDisposition, constants.ExcelContentDisposition("sub-groups.xlsx"))
+	return c.Blob(http.StatusOK, constants.ExcelContent, excelBytes)
 }

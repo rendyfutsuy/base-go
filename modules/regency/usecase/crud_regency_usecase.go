@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -54,7 +55,14 @@ func (u *regencyUsecase) UpdateProvince(c echo.Context, id string, reqBody *dto.
 		return nil, errors.New(constants.ProvinceNameAlreadyExists)
 	}
 
-	return u.repo.UpdateProvince(ctx, pid, reqBody.Name)
+	res, err := u.repo.UpdateProvince(ctx, pid, reqBody.Name)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf(constants.ProvinceNotFound, id)
+		}
+		return nil, err
+	}
+	return res, nil
 }
 
 func (u *regencyUsecase) DeleteProvince(c echo.Context, id string, authId string) error {
@@ -139,7 +147,7 @@ func (u *regencyUsecase) CreateCity(c echo.Context, reqBody *dto.ReqCreateCity, 
 		return nil, errors.New(constants.CityNameAlreadyExists)
 	}
 
-	return u.repo.CreateCity(ctx, reqBody.ProvinceID, reqBody.Name)
+	return u.repo.CreateCity(ctx, reqBody.ProvinceID, reqBody.Name, reqBody.AreaCode)
 }
 
 func (u *regencyUsecase) UpdateCity(c echo.Context, id string, reqBody *dto.ReqUpdateCity, authId string) (*models.City, error) {
@@ -172,7 +180,14 @@ func (u *regencyUsecase) UpdateCity(c echo.Context, id string, reqBody *dto.ReqU
 		return nil, errors.New(constants.CityNameAlreadyExists)
 	}
 
-	return u.repo.UpdateCity(ctx, cid, reqBody.ProvinceID, reqBody.Name)
+	res, err := u.repo.UpdateCity(ctx, cid, reqBody.ProvinceID, reqBody.Name, reqBody.AreaCode)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf(constants.CityNotFound, id)
+		}
+		return nil, err
+	}
+	return res, nil
 }
 
 func (u *regencyUsecase) DeleteCity(c echo.Context, id string, authId string) error {
@@ -215,14 +230,20 @@ func (u *regencyUsecase) ExportCity(c echo.Context, filter dto.ReqCityIndexFilte
 	f.SetSheetName("Sheet1", sheet)
 
 	f.SetCellValue(sheet, "A1", "Province ID")
-	f.SetCellValue(sheet, "B1", "Name")
-	f.SetCellValue(sheet, "C1", "Update Date")
+	f.SetCellValue(sheet, "B1", "Area Code")
+	f.SetCellValue(sheet, "C1", "Name")
+	f.SetCellValue(sheet, "D1", "Update Date")
 
 	for i, c := range list {
 		row := i + 2
 		f.SetCellValue(sheet, "A"+strconv.Itoa(row), c.ProvinceID.String())
-		f.SetCellValue(sheet, "B"+strconv.Itoa(row), c.Name)
-		f.SetCellValue(sheet, "C"+strconv.Itoa(row), c.UpdatedAt.Local().Format("2006/01/02"))
+		if c.AreaCode != nil {
+			f.SetCellValue(sheet, "B"+strconv.Itoa(row), *c.AreaCode)
+		} else {
+			f.SetCellValue(sheet, "B"+strconv.Itoa(row), "")
+		}
+		f.SetCellValue(sheet, "C"+strconv.Itoa(row), c.Name)
+		f.SetCellValue(sheet, "D"+strconv.Itoa(row), c.UpdatedAt.Local().Format("2006/01/02"))
 	}
 
 	buf, err := f.WriteToBuffer()
@@ -230,6 +251,11 @@ func (u *regencyUsecase) ExportCity(c echo.Context, filter dto.ReqCityIndexFilte
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func (u *regencyUsecase) GetCityAreaCodes(c echo.Context, search string) ([]string, error) {
+	ctx := c.Request().Context()
+	return u.repo.GetCityAreaCodes(ctx, search)
 }
 
 // District Usecase
@@ -292,7 +318,14 @@ func (u *regencyUsecase) UpdateDistrict(c echo.Context, id string, reqBody *dto.
 		return nil, errors.New(constants.DistrictNameAlreadyExists)
 	}
 
-	return u.repo.UpdateDistrict(ctx, did, reqBody.CityID, reqBody.Name)
+	res, err := u.repo.UpdateDistrict(ctx, did, reqBody.CityID, reqBody.Name)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf(constants.DistrictNotFound, id)
+		}
+		return nil, err
+	}
+	return res, nil
 }
 
 func (u *regencyUsecase) DeleteDistrict(c echo.Context, id string, authId string) error {
@@ -412,7 +445,14 @@ func (u *regencyUsecase) UpdateSubdistrict(c echo.Context, id string, reqBody *d
 		return nil, errors.New(constants.SubdistrictNameAlreadyExists)
 	}
 
-	return u.repo.UpdateSubdistrict(ctx, sid, reqBody.DistrictID, reqBody.Name)
+	res, err := u.repo.UpdateSubdistrict(ctx, sid, reqBody.DistrictID, reqBody.Name)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf(constants.SubdistrictNotFound, id)
+		}
+		return nil, err
+	}
+	return res, nil
 }
 
 func (u *regencyUsecase) DeleteSubdistrict(c echo.Context, id string, authId string) error {

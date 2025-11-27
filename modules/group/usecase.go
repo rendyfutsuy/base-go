@@ -1,6 +1,9 @@
 package group
 
 import (
+	"context"
+
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
@@ -15,4 +18,5 @@ type Usecase interface {
 	GetIndex(c echo.Context, req request.PageRequest, filter dto.ReqGroupIndexFilter) ([]models.GoodsGroup, int, error)
 	GetAll(c echo.Context, filter dto.ReqGroupIndexFilter) ([]models.GoodsGroup, error)
 	Export(c echo.Context, filter dto.ReqGroupIndexFilter) ([]byte, error)
+	ExistsInSubGroups(ctx context.Context, groupID uuid.UUID) (bool, error)
 }

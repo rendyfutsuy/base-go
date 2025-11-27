@@ -51,11 +51,13 @@ func (repo *roleRepository) GetIndexPermission(ctx context.Context, req request.
 
 	// Apply pagination using generic function
 	config := request.PaginationConfig{
-		DefaultSortBy:    "permission.created_at",
-		DefaultSortOrder: "DESC",
-		AllowedColumns:   []string{"id", "name", "created_at", "updated_at", "deleted_at"},
-		ColumnPrefix:     "permission.",
-		MaxPerPage:       100,
+		DefaultSortBy:      "permission.created_at",
+		DefaultSortOrder:   "DESC",
+		AllowedColumns:     []string{"id", "name", "created_at", "updated_at", "deleted_at"},
+		ColumnPrefix:       "permission.",
+		MaxPerPage:         100,
+		SortMapping:        mapPermissionIndexSortColumn,
+		NaturalSortColumns: []string{"permission.name"}, // Enable natural sorting for permission.name
 	}
 
 	total, err = request.ApplyPagination(query, req, config, &permissions)

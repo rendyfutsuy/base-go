@@ -89,7 +89,8 @@ func (repo *roleRepository) GetRoleByID(ctx context.Context, id uuid.UUID) (role
 			role.description,
 			ARRAY_AGG(pg.name) AS permission_group_names,
 			ARRAY_AGG(pg.id) AS permission_group_ids,
-			ARRAY_AGG(DISTINCT pg.module) AS modules
+			ARRAY_AGG(DISTINCT pg.module) AS modules,
+			role.deletable
 		FROM 
 			roles role
 		LEFT JOIN
@@ -120,6 +121,7 @@ func (repo *roleRepository) GetRoleByID(ctx context.Context, id uuid.UUID) (role
 		pq.Array(&permissionGroupNames),
 		pq.Array(&permissionGroupIds),
 		pq.Array(&modules),
+		&role.Deletable,
 	)
 
 	if err != nil {
@@ -181,36 +183,22 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 		return nil, 0, err
 	}
 
-	// Prepare pagination config for sorting
+	// Prepare pagination config using same logic as ApplyPagination
 	config := request.PaginationConfig{
-		DefaultSortBy:    "role.created_at",
-		DefaultSortOrder: "DESC",
-		AllowedColumns:   []string{"id", "name", "created_at", "updated_at", "deleted_at", "total_user"},
-		ColumnPrefix:     "role.",
-		MaxPerPage:       100,
+		DefaultSortBy:      "role.created_at",
+		DefaultSortOrder:   "DESC",
+		AllowedColumns:     []string{"role.id", "role.name", "role.created_at", "role.updated_at", "role.deleted_at", "total_user", "modules"},
+		ColumnPrefix:       "",
+		MaxPerPage:         100,
+		NaturalSortColumns: []string{"role.name"}, // Enable natural sorting for role.name
 	}
 
-	// Validate and sanitize pagination parameters
+	// Validate and sanitize pagination parameters using ApplyPagination logic
 	validatedPage, validatedPerPage := request.ValidatePaginationParams(req.Page, req.PerPage, config.MaxPerPage)
 	offset := (validatedPage - 1) * validatedPerPage
 
-	// Determine sort column using same logic as ApplyPagination
-	sortBy := config.DefaultSortBy
-	if req.SortBy != "" {
-		validated := request.ValidateAndSanitizeSortColumn(req.SortBy, config.AllowedColumns, config.ColumnPrefix)
-		if validated != "" {
-			sortBy = validated
-		}
-	}
-
-	// Determine sort order using same logic as ApplyPagination
-	sortOrder := config.DefaultSortOrder
-	if req.SortOrder != "" {
-		validated := request.ValidateAndSanitizeSortOrder(req.SortOrder)
-		if validated != "" {
-			sortOrder = validated
-		}
-	}
+	// Determine sort expression using ApplyPagination logic
+	sortExpression := request.BuildSortExpressionForRawSQL(req, config, mapRoleIndexSortColumn)
 
 	// Build base query that is shared between count and data queries
 	// This ensures both queries have the same structure and filtering logic
@@ -230,7 +218,7 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 	`
 
 	// Build GROUP BY and HAVING clause (shared between count and data queries)
-	groupByClause := " GROUP BY role.id, role.name"
+	groupByClause := " GROUP BY role.id, role.name, role.deletable"
 	args := []interface{}{}
 	argIdx := 1
 
@@ -271,8 +259,9 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 			role.updated_at,
 			role.deleted_at,
 			(SELECT COUNT(*) FROM users WHERE role_id = role.id AND deleted_at IS NULL) AS total_user,
-			ARRAY_AGG(DISTINCT pg.module) AS modules
-	` + baseQueryFrom + groupByClause + " ORDER BY " + sortBy + " " + sortOrder
+			ARRAY_AGG(DISTINCT pg.module) AS modules,
+			role.deletable
+	` + baseQueryFrom + groupByClause + " ORDER BY " + sortExpression
 
 	// Add pagination parameters
 	limitArgIdx := argIdx
@@ -302,6 +291,7 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 			&role.DeletedAt,
 			&role.TotalUser,
 			pq.Array(&modules),
+			&role.Deletable,
 		)
 
 		if err != nil {

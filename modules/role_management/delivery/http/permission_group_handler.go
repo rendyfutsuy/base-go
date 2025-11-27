@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -136,6 +137,7 @@ func (handler *RoleManagementHandler) GetDuplicatedPermissionGroup(c echo.Contex
 func (handler *RoleManagementHandler) buildPermissionGroupsByModule(c echo.Context, roleIDStr string) ([]dto.RespPermissionGroupByModule, error) {
 	var role *models.Role
 	var rolePermissionGroups map[uuid.UUID]bool
+	isSuperAdminRole := false
 
 	// If role_id is provided, validate and get role's permission groups
 	if roleIDStr != "" {
@@ -149,6 +151,9 @@ func (handler *RoleManagementHandler) buildPermissionGroupsByModule(c echo.Conte
 		if err != nil {
 			return nil, err
 		}
+
+		// Determine if this role is Super Admin
+		isSuperAdminRole = strings.EqualFold(role.Name, constants.AuthRoleSuperAdmin)
 
 		// Get permission groups assigned to the role
 		rolePermissionGroups = make(map[uuid.UUID]bool)
@@ -173,6 +178,12 @@ func (handler *RoleManagementHandler) buildPermissionGroupsByModule(c echo.Conte
 	moduleRead := make(map[utils.NullString]bool)
 
 	for _, group := range res {
+		if !isSuperAdminRole {
+			if shouldHideUserPermissionGroup(group) {
+				continue
+			}
+		}
+
 		// Check if the module is already in the map, if not initialize it
 		if _, ok := modules[group.Module]; !ok {
 			modules[group.Module] = []dto.RespPermissionGroup{}
@@ -244,4 +255,17 @@ func (handler *RoleManagementHandler) GetAllPermissionGroupByModule(c echo.Conte
 	resp, _ = resp.SetResponse(respPermissionGroup)
 
 	return c.JSON(http.StatusOK, resp)
+}
+
+func shouldHideUserPermissionGroup(group models.PermissionGroup) bool {
+	if !group.Module.Valid {
+		return false
+	}
+
+	if !strings.EqualFold(group.Module.String, constants.UserPermissionModuleName) {
+		return false
+	}
+
+	return strings.EqualFold(group.Name, constants.UserPermissionNameCreate) ||
+		strings.EqualFold(group.Name, constants.UserPermissionNameDelete)
 }

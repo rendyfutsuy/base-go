@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	groupDto "github.com/rendyfutsuy/base-go/modules/group/dto"
@@ -75,29 +76,34 @@ func (m *MockSubGroupRepository) ExistsByName(ctx context.Context, goodsGroupID 
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockSubGroupRepository) ExistsInTypes(ctx context.Context, subGroupID uuid.UUID) (bool, error) {
+	args := m.Called(ctx, subGroupID)
+	return args.Bool(0), args.Error(1)
+}
+
 // MockGroupRepository is a mock implementation of group.Repository
 type MockGroupRepository struct {
 	mock.Mock
 }
 
-func (m *MockGroupRepository) Create(ctx context.Context, name string) (*models.GoodsGroup, error) {
-	args := m.Called(ctx, name)
+func (m *MockGroupRepository) Create(ctx context.Context, name string, createdBy string) (*models.GoodsGroup, error) {
+	args := m.Called(ctx, name, createdBy)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.GoodsGroup), args.Error(1)
 }
 
-func (m *MockGroupRepository) Update(ctx context.Context, id uuid.UUID, name string) (*models.GoodsGroup, error) {
-	args := m.Called(ctx, id, name)
+func (m *MockGroupRepository) Update(ctx context.Context, id uuid.UUID, name string, updatedBy string) (*models.GoodsGroup, error) {
+	args := m.Called(ctx, id, name, updatedBy)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.GoodsGroup), args.Error(1)
 }
 
-func (m *MockGroupRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	args := m.Called(ctx, id)
+func (m *MockGroupRepository) Delete(ctx context.Context, id uuid.UUID, deletedBy string) error {
+	args := m.Called(ctx, id, deletedBy)
 	return args.Error(0)
 }
 
@@ -127,6 +133,11 @@ func (m *MockGroupRepository) GetAll(ctx context.Context, filter groupDto.ReqGro
 
 func (m *MockGroupRepository) ExistsByName(ctx context.Context, name string, excludeID uuid.UUID) (bool, error) {
 	args := m.Called(ctx, name, excludeID)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockGroupRepository) ExistsInSubGroups(ctx context.Context, groupID uuid.UUID) (bool, error) {
+	args := m.Called(ctx, groupID)
 	return args.Bool(0), args.Error(1)
 }
 
@@ -450,6 +461,7 @@ func TestDeleteSubGroup(t *testing.T) {
 			id:     validID.String(),
 			authId: "test-auth-id",
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
+				m.On("ExistsInTypes", ctx, validID).Return(false, nil).Once()
 				m.On("Delete", ctx, validID, testUserID.String()).Return(nil).Once()
 			},
 			setupContext: func(c *echo.Context) {
@@ -470,10 +482,23 @@ func TestDeleteSubGroup(t *testing.T) {
 			expectedError: errors.New("requested param is string"),
 		},
 		{
+			name:   "error when sub-group still used in types",
+			id:     validID.String(),
+			authId: "test-auth-id",
+			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
+				m.On("ExistsInTypes", ctx, validID).Return(true, nil).Once()
+			},
+			setupContext: func(c *echo.Context) {
+				(*c).Set("user", models.User{ID: testUserID, Username: "testuser"})
+			},
+			expectedError: errors.New(constants.SubGroupStillUsedInTypes),
+		},
+		{
 			name:   "error when repository delete fails",
 			id:     validID.String(),
 			authId: "test-auth-id",
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
+				m.On("ExistsInTypes", ctx, validID).Return(false, nil).Once()
 				m.On("Delete", ctx, validID, testUserID.String()).Return(errors.New("delete failed")).Once()
 			},
 			setupContext: func(c *echo.Context) {

@@ -26,6 +26,7 @@ type City struct {
 	ProvinceID uuid.UUID      `gorm:"column:province_id;type:uuid;not null" json:"province_id" validate:"required"`
 	Province   Province       `gorm:"foreignKey:ProvinceID" json:"province,omitempty"`
 	Name       string         `gorm:"column:name;type:varchar(255);not null" json:"name" validate:"required"`
+	AreaCode   *string        `gorm:"column:area_code;type:varchar(50)" json:"area_code"`
 	CreatedAt  time.Time      `gorm:"column:created_at;not null" json:"created_at"`
 	UpdatedAt  time.Time      `gorm:"column:updated_at;not null" json:"updated_at"`
 	DeletedAt  gorm.DeletedAt `gorm:"column:deleted_at;index" json:"deleted_at"`
@@ -64,4 +65,3 @@ type Subdistrict struct {
 func (Subdistrict) TableName() string {
 	return "subdistrict"
 }
-

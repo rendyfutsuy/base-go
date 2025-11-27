@@ -15,4 +15,5 @@ type Usecase interface {
 	GetIndex(c echo.Context, req request.PageRequest, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, int, error)
 	GetAll(c echo.Context, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, error)
 	Export(c echo.Context, filter dto.ReqSubGroupIndexFilter) ([]byte, error)
+	ExistsInTypes(c echo.Context, subGroupID string) (bool, error)
 }

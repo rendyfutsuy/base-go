@@ -2,16 +2,19 @@ package usecase
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	mod "github.com/rendyfutsuy/base-go/modules/parameter"
 	"github.com/rendyfutsuy/base-go/modules/parameter/dto"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/xuri/excelize/v2"
+	"gorm.io/gorm"
 )
 
 type parameterUsecase struct {
@@ -31,7 +34,7 @@ func (u *parameterUsecase) Create(c echo.Context, reqBody *dto.ReqCreateParamete
 		return nil, err
 	}
 	if exists {
-		return nil, errors.New("Parameter code already exists")
+		return nil, errors.New(constants.ParameterCodeAlreadyExists)
 	}
 
 	// Check if name already exists
@@ -40,7 +43,7 @@ func (u *parameterUsecase) Create(c echo.Context, reqBody *dto.ReqCreateParamete
 		return nil, err
 	}
 	if exists {
-		return nil, errors.New("Parameter name already exists")
+		return nil, errors.New(constants.ParameterNameAlreadyExists)
 	}
 
 	return u.repo.Create(ctx, reqBody.Code, reqBody.Name, reqBody.Value, reqBody.Type, reqBody.Desc)
@@ -59,7 +62,7 @@ func (u *parameterUsecase) Update(c echo.Context, id string, reqBody *dto.ReqUpd
 		return nil, err
 	}
 	if exists {
-		return nil, errors.New("Parameter code already exists")
+		return nil, errors.New(constants.ParameterCodeAlreadyExists)
 	}
 
 	// Check if name already exists (excluding current id)
@@ -68,10 +71,17 @@ func (u *parameterUsecase) Update(c echo.Context, id string, reqBody *dto.ReqUpd
 		return nil, err
 	}
 	if exists {
-		return nil, errors.New("Parameter name already exists")
+		return nil, errors.New(constants.ParameterNameAlreadyExists)
 	}
 
-	return u.repo.Update(ctx, pid, reqBody.Code, reqBody.Name, reqBody.Value, reqBody.Type, reqBody.Desc)
+	res, err := u.repo.Update(ctx, pid, reqBody.Code, reqBody.Name, reqBody.Value, reqBody.Type, reqBody.Desc)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf(constants.ParameterNotFound, id)
+		}
+		return nil, err
+	}
+	return res, nil
 }
 
 func (u *parameterUsecase) Delete(c echo.Context, id string, authId string) error {
