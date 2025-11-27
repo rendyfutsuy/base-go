@@ -97,7 +97,7 @@ func ValidateRequest(req interface{}, valStruck *validator.Validate) error {
 
 				if fe.Tag() == "password_uppercase" {
 					// Construct a human-friendly error message
-					errorMessages = append(errorMessages, fmt.Sprintf("%s must be alphanumeric, minimum 8 characters, and all letters must be uppercase", fieldName))
+					errorMessages = append(errorMessages, fmt.Sprintf("%s must be alphanumeric, minimum 8 characters, all letters must be uppercase, and must contain at least 1 special character", fieldName))
 				}
 
 				if fe.Tag() == "uppercase_letters" {
@@ -164,7 +164,7 @@ func validateEmailDomain(fl validator.FieldLevel) bool {
 }
 
 // Custom validation function for password
-// Password must be alphanumeric, minimum 8 characters, and all letters must be uppercase
+// Password must be alphanumeric, minimum 8 characters, all letters must be uppercase, and must contain at least 1 special character
 // shall not be called on other class by itself
 func validatePasswordUppercase(fl validator.FieldLevel) bool {
 	password := fl.Field().String()
@@ -174,10 +174,25 @@ func validatePasswordUppercase(fl validator.FieldLevel) bool {
 		return false
 	}
 
-	// Check if all characters are alphanumeric and uppercase
-	// Regex: ^[A-Z0-9]+$ means only uppercase letters and numbers
-	regex := regexp.MustCompile(`^[A-Z0-9]+$`)
-	return regex.MatchString(password)
+	// Check if there are any lowercase letters (not allowed)
+	hasLowercase := regexp.MustCompile(`[a-z]`)
+	if hasLowercase.MatchString(password) {
+		return false
+	}
+
+	// Check if there is at least one special character
+	// Special characters: !@#$%^&*()_+-=[]{}|;:,.<>?/~`
+	// Escape special regex characters: [ ] - ( ) { } | ? * + . ^ $ \
+	hasSpecialChar := regexp.MustCompile(`[!@#$%^&*()_+\-=\[\]{}|;:,.<>?/~` + "`" + `]`)
+	if !hasSpecialChar.MatchString(password) {
+		return false
+	}
+
+	// Check if all characters are alphanumeric or special characters only
+	// Regex: ^[A-Z0-9!@#$%^&*()_+\-=\[\]{}|;:,.<>?/~`]+$ means only uppercase letters, numbers, and special characters
+	// Escape special regex characters in character class
+	allowedChars := regexp.MustCompile(`^[A-Z0-9!@#$%^&*()_+\-=\[\]{}|;:,.<>?/~` + "`" + `]+$`)
+	return allowedChars.MatchString(password)
 }
 
 // Custom validation function for uppercase letters
