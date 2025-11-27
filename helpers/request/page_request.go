@@ -349,11 +349,11 @@ func ValidateAndSanitizeSortColumn(sortBy string, allowedColumns []string, prefi
 }
 
 // BuildNaturalSortExpression builds a natural/numeric sorting expression for PostgreSQL.
-// This is useful for sorting columns that contain numbers mixed with text (e.g., "PT ROKETIN TEKNOLOGI 1", "PT ROKETIN TEKNOLOGI 10").
+// This is useful for sorting columns that contain numbers mixed with text (e.g., "String 1", "String 10").
 // The function sorts by text part (prefix before first number) first alphabetically, then by first numeric part numerically, then by original column.
 // This ensures proper natural sorting where:
 // - Numbers are sorted numerically (1, 2, 10) not lexicographically (1, 10, 2)
-// - Strings with the same prefix and number are sorted by original column (e.g., "PT ROKETIN TEKNOLOGI 6" before "PT ROKETIN TEKNOLOGI 6 UPDATED")
+// - Strings with the same prefix and number are sorted by original column (e.g., "String 6" before "String 6 UPDATED")
 // - Strings without numbers appear after strings with numbers for the same text prefix (for ASC)
 //
 // Parameters:
@@ -386,7 +386,7 @@ func BuildNaturalSortExpression(column, sortOrder string, useNaturalSort bool) s
 	// This ensures proper natural sorting where:
 	// - Strings are grouped by text part (prefix before first number)
 	// - For the same text part, strings are sorted by first numeric value found
-	// - For the same numeric value, strings are sorted by original column (to handle cases like "PT ROKETIN TEKNOLOGI 6" vs "PT ROKETIN TEKNOLOGI 6 UPDATED")
+	// - For the same numeric value, strings are sorted by original column (to handle cases like "String 6" vs "String 6 UPDATED")
 	// Extract text part before first number (prefix text before any number appears)
 	textPart := fmt.Sprintf("TRIM(SUBSTRING(%s FROM '^([^0-9]*)'))", column)
 	// Extract first numeric part (extract first sequence of digits, convert to bigint, NULL if no digits)
