@@ -109,7 +109,7 @@ func TestReAssignPermissionByGroup(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
 
-			result, err := usecaseInstance.ReAssignPermissionByGroup(c, tt.roleId, tt.req)
+			result, err := usecaseInstance.ReAssignPermissionByGroup(c.Request().Context(), tt.roleId, tt.req)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -244,7 +244,7 @@ func TestAssignUsersToRole(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
 
-			result, err := usecaseInstance.AssignUsersToRole(c, tt.roleId, tt.req)
+			result, err := usecaseInstance.AssignUsersToRole(c.Request().Context(), tt.roleId, tt.req)
 
 			if tt.expectedError {
 				assert.Error(t, err)

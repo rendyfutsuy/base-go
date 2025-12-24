@@ -1,17 +1,15 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 
-	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (u *userUsecase) UpdateUserPassword(c echo.Context, id string, passwordChunks *dto.ReqUpdateUserPassword) error {
-	ctx := c.Request().Context()
-
+func (u *userUsecase) UpdateUserPassword(ctx context.Context, id string, passwordChunks *dto.ReqUpdateUserPassword) error {
 	// parsing UUID
 	userId, err := utils.StringToUUID(id)
 	if err != nil {
@@ -95,9 +93,7 @@ func (u *userUsecase) UpdateUserPassword(c echo.Context, id string, passwordChun
 	return nil
 }
 
-func (u *userUsecase) UpdateUserPasswordNoCheckRequired(c echo.Context, id string, passwordChunks *dto.ReqUpdateUserPassword) error {
-	ctx := c.Request().Context()
-
+func (u *userUsecase) UpdateUserPasswordNoCheckRequired(ctx context.Context, id string, passwordChunks *dto.ReqUpdateUserPassword) error {
 	// parsing UUID
 	userId, err := utils.StringToUUID(id)
 	if err != nil {
@@ -148,9 +144,7 @@ func (u *userUsecase) UpdateUserPasswordNoCheckRequired(c echo.Context, id strin
 	return nil
 }
 
-func (u *userUsecase) AssertCurrentUserPassword(c echo.Context, id string, inputtedPassword string) error {
-	ctx := c.Request().Context()
-
+func (u *userUsecase) AssertCurrentUserPassword(ctx context.Context, id string, inputtedPassword string) error {
 	// parsing UUID
 	userId, err := utils.StringToUUID(id)
 	if err != nil {

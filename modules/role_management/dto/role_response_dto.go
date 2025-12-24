@@ -14,13 +14,13 @@ type RespRole struct {
 }
 
 type RespRoleIndex struct {
-	ID        uuid.UUID          `json:"id"`
-	Name      string             `json:"role_name"`
-	TotalUser int                `json:"total_user"`
-	CreatedAt time.Time          `json:"created_at"`
-	UpdatedAt utils.NullTime     `json:"updated_at"`
-	Modules   []utils.NullString `json:"modules"`
-	Deletable bool               `json:"deletable"`
+	ID        uuid.UUID      `json:"id"`
+	Name      string         `json:"role_name"`
+	TotalUser int            `json:"total_user"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt utils.NullTime `json:"updated_at"`
+	Modules   []string       `json:"modules"`
+	Deletable bool           `json:"deletable"`
 }
 
 type RespPermissionGroupRoleDetail struct {
@@ -36,7 +36,7 @@ type RespRoleDetail struct {
 	Modules     []RespPermissionGroupByModule `json:"modules"`
 	CreatedAt   time.Time                     `json:"created_at"`
 	UpdatedAt   utils.NullTime                `json:"updated_at"`
-	Description utils.NullString              `json:"description"`
+	Description string                        `json:"description"`
 	Deletable   bool                          `json:"deletable"`
 }
 
@@ -54,21 +54,21 @@ func ToRespRole(roleDb models.Role) RespRole {
 func ToRespRoleIndex(roleDb models.Role) RespRoleIndex {
 
 	// mapping permission to show at Role Detail
-	Modules := make([]utils.NullString, 0)
+	Modules := make([]string, 0)
 	for _, Module := range roleDb.Modules {
 		// append Module to array
 
 		if Module.String != "" {
-			Modules = append(Modules, Module)
+			Modules = append(Modules, Module.String)
 		}
 	}
 
 	// mapping Cob to show at Role Detail
-	Categories := make([]utils.NullString, 0)
+	Categories := make([]string, 0)
 	for _, Category := range roleDb.CategoryNames {
 		// If the Category is valid and not empty, append it to the Categories slice
 		if Category.String != "" {
-			Categories = append(Categories, Category)
+			Categories = append(Categories, Category.String)
 		}
 	}
 
@@ -120,7 +120,7 @@ func ToRespRoleDetail(roleDb models.Role, modules []RespPermissionGroupByModule)
 		Modules:     modules,
 		CreatedAt:   roleDb.CreatedAt,
 		UpdatedAt:   roleDb.UpdatedAt,
-		Description: roleDb.Description,
+		Description: roleDb.Description.String,
 		Deletable:   deletable,
 	}
 }

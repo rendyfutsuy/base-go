@@ -2,11 +2,10 @@ package dto
 
 import (
 	"github.com/rendyfutsuy/base-go/models"
-	"github.com/rendyfutsuy/base-go/utils"
 )
 
 type RespPermissionGroupByModule struct {
-	Name             utils.NullString      `json:"name"`
+	Name             string                `json:"name"`
 	PermissionGroups []RespPermissionGroup `json:"accesses"`
 }
 
@@ -14,7 +13,7 @@ type RespPermissionGroupByModule struct {
 func ToRespPermissionGroupByModule(roleDb models.PermissionGroup) RespPermissionGroupByModule {
 
 	return RespPermissionGroupByModule{
-		Name: roleDb.Module,
+		Name: roleDb.Module.String,
 	}
 
 }

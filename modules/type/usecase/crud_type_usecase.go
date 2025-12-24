@@ -1,12 +1,12 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
@@ -27,16 +27,7 @@ func NewTypeUsecase(repo mod.Repository, subGroupRepo subGroupRepo.Repository) m
 	return &typeUsecase{repo: repo, subGroupRepo: subGroupRepo}
 }
 
-func (u *typeUsecase) Create(c echo.Context, reqBody *dto.ReqCreateType, authId string) (*models.Type, error) {
-	ctx := c.Request().Context()
-	user := c.Get("user")
-	userID := ""
-	if user != nil {
-		if userModel, ok := user.(models.User); ok {
-			userID = userModel.ID.String()
-		}
-	}
-
+func (u *typeUsecase) Create(ctx context.Context, reqBody *dto.ReqCreateType, userID string) (*models.Type, error) {
 	// Check if subgroup_id exists
 	if reqBody.SubgroupID != uuid.Nil {
 		subGroupObject, err := u.subGroupRepo.GetByID(ctx, reqBody.SubgroupID)
@@ -62,18 +53,10 @@ func (u *typeUsecase) Create(c echo.Context, reqBody *dto.ReqCreateType, authId 
 	return u.repo.Create(ctx, reqBody.SubgroupID, reqBody.Name, userID)
 }
 
-func (u *typeUsecase) Update(c echo.Context, id string, reqBody *dto.ReqUpdateType, authId string) (*models.Type, error) {
-	ctx := c.Request().Context()
+func (u *typeUsecase) Update(ctx context.Context, id string, reqBody *dto.ReqUpdateType, userID string) (*models.Type, error) {
 	tid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
-	}
-	user := c.Get("user")
-	userID := ""
-	if user != nil {
-		if userModel, ok := user.(models.User); ok {
-			userID = userModel.ID.String()
-		}
 	}
 
 	// Check if subgroup_id exists
@@ -108,8 +91,7 @@ func (u *typeUsecase) Update(c echo.Context, id string, reqBody *dto.ReqUpdateTy
 	return res, nil
 }
 
-func (u *typeUsecase) Delete(c echo.Context, id string, authId string) error {
-	ctx := c.Request().Context()
+func (u *typeUsecase) Delete(ctx context.Context, id string, userID string) error {
 	tid, err := utils.StringToUUID(id)
 	if err != nil {
 		return err
@@ -124,18 +106,10 @@ func (u *typeUsecase) Delete(c echo.Context, id string, authId string) error {
 		return errors.New(constants.TypeStillUsedInBackings)
 	}
 
-	user := c.Get("user")
-	userID := ""
-	if user != nil {
-		if userModel, ok := user.(models.User); ok {
-			userID = userModel.ID.String()
-		}
-	}
 	return u.repo.Delete(ctx, tid, userID)
 }
 
-func (u *typeUsecase) GetByID(c echo.Context, id string) (*models.Type, error) {
-	ctx := c.Request().Context()
+func (u *typeUsecase) GetByID(ctx context.Context, id string) (*models.Type, error) {
 	tid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
@@ -143,19 +117,16 @@ func (u *typeUsecase) GetByID(c echo.Context, id string) (*models.Type, error) {
 	return u.repo.GetByID(ctx, tid)
 }
 
-func (u *typeUsecase) GetIndex(c echo.Context, req request.PageRequest, filter dto.ReqTypeIndexFilter) ([]models.Type, int, error) {
-	ctx := c.Request().Context()
+func (u *typeUsecase) GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqTypeIndexFilter) ([]models.Type, int, error) {
 	// Search is already set in req.Search from PageRequest middleware
 	return u.repo.GetIndex(ctx, req, filter)
 }
 
-func (u *typeUsecase) GetAll(c echo.Context, filter dto.ReqTypeIndexFilter) ([]models.Type, error) {
-	ctx := c.Request().Context()
+func (u *typeUsecase) GetAll(ctx context.Context, filter dto.ReqTypeIndexFilter) ([]models.Type, error) {
 	return u.repo.GetAll(ctx, filter)
 }
 
-func (u *typeUsecase) Export(c echo.Context, filter dto.ReqTypeIndexFilter) ([]byte, error) {
-	ctx := c.Request().Context()
+func (u *typeUsecase) Export(ctx context.Context, filter dto.ReqTypeIndexFilter) ([]byte, error) {
 	// Use GetAll for export without pagination
 	list, err := u.repo.GetAll(ctx, filter)
 	if err != nil {

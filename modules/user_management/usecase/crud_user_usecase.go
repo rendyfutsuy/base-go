@@ -12,7 +12,6 @@ import (
 	"github.com/rendyfutsuy/base-go/utils"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
 
@@ -75,9 +74,7 @@ func (u *userUsecase) validateEmailNotDuplicated(ctx context.Context, email stri
 	return nil
 }
 
-func (u *userUsecase) CreateUser(c echo.Context, req *dto.ReqCreateUser, authId string) (userRes *models.User, err error) {
-	ctx := c.Request().Context()
-
+func (u *userUsecase) CreateUser(ctx context.Context, req *dto.ReqCreateUser, userID string) (userRes *models.User, err error) {
 	if err := u.validateRole(ctx, req.RoleId); err != nil {
 		return nil, err
 	}
@@ -92,7 +89,7 @@ func (u *userUsecase) CreateUser(c echo.Context, req *dto.ReqCreateUser, authId 
 	}
 
 	formatCount := fmt.Sprintf("%07d", *count+1)
-	userDb := req.ToDBCreateUser(formatCount, authId)
+	userDb := req.ToDBCreateUser(formatCount, userID)
 
 	userRes, err = u.userRepo.CreateUser(ctx, userDb)
 	if err != nil {
@@ -102,9 +99,7 @@ func (u *userUsecase) CreateUser(c echo.Context, req *dto.ReqCreateUser, authId 
 	return userRes, err
 }
 
-func (u *userUsecase) GetUserByID(c echo.Context, id string) (user *models.User, err error) {
-	ctx := c.Request().Context()
-
+func (u *userUsecase) GetUserByID(ctx context.Context, id string) (user *models.User, err error) {
 	uId, err := utils.StringToUUID(id)
 	if err != nil {
 		utils.Logger.Error(err.Error())
@@ -114,19 +109,15 @@ func (u *userUsecase) GetUserByID(c echo.Context, id string) (user *models.User,
 	return u.userRepo.GetUserByID(ctx, uId)
 }
 
-func (u *userUsecase) GetIndexUser(c echo.Context, req request.PageRequest, filter dto.ReqUserIndexFilter) (user_infos []models.User, total int, err error) {
-	ctx := c.Request().Context()
+func (u *userUsecase) GetIndexUser(ctx context.Context, req request.PageRequest, filter dto.ReqUserIndexFilter) (user_infos []models.User, total int, err error) {
 	return u.userRepo.GetIndexUser(ctx, req, filter)
 }
 
-func (u *userUsecase) GetAllUser(c echo.Context) (user_infos []models.User, err error) {
-	ctx := c.Request().Context()
+func (u *userUsecase) GetAllUser(ctx context.Context) (user_infos []models.User, err error) {
 	return u.userRepo.GetAllUser(ctx)
 }
 
-func (u *userUsecase) UpdateUser(c echo.Context, id string, req *dto.ReqUpdateUser, authId string) (userRes *models.User, err error) {
-	ctx := c.Request().Context()
-
+func (u *userUsecase) UpdateUser(ctx context.Context, id string, req *dto.ReqUpdateUser, userID string) (userRes *models.User, err error) {
 	uId, err := utils.StringToUUID(id)
 	if err != nil {
 		utils.Logger.Error(err.Error())
@@ -157,11 +148,9 @@ func (u *userUsecase) UpdateUser(c echo.Context, id string, req *dto.ReqUpdateUs
 	return u.userRepo.UpdateUser(ctx, uId, userDb)
 }
 
-func (u *userUsecase) SoftDeleteUser(c echo.Context, id string, authId string) (userRes *models.User, err error) {
-	ctx := c.Request().Context()
-
+func (u *userUsecase) SoftDeleteUser(ctx context.Context, id string, userID string) (userRes *models.User, err error) {
 	// Check if user exists
-	user, err := u.GetUserByID(c, id)
+	user, err := u.GetUserByID(ctx, id)
 	if err != nil {
 		return nil, errors.New(constants.UserNotFound)
 	}
@@ -179,14 +168,11 @@ func (u *userUsecase) SoftDeleteUser(c echo.Context, id string, authId string) (
 	return u.userRepo.SoftDeleteUser(ctx, user.ID, userDb)
 }
 
-func (u *userUsecase) UserNameIsNotDuplicated(c echo.Context, fullName string, id uuid.UUID) (userRes *models.User, err error) {
-	ctx := c.Request().Context()
+func (u *userUsecase) UserNameIsNotDuplicated(ctx context.Context, fullName string, id uuid.UUID) (userRes *models.User, err error) {
 	return u.userRepo.GetDuplicatedUser(ctx, fullName, id)
 }
 
-func (u *userUsecase) BlockUser(c echo.Context, id string, req *dto.ReqBlockUser) (userRes *models.User, err error) {
-	ctx := c.Request().Context()
-
+func (u *userUsecase) BlockUser(ctx context.Context, id string, req *dto.ReqBlockUser) (userRes *models.User, err error) {
 	// parsing UUID
 	uId, err := utils.StringToUUID(id)
 	if err != nil {
@@ -195,14 +181,14 @@ func (u *userUsecase) BlockUser(c echo.Context, id string, req *dto.ReqBlockUser
 	}
 
 	// determinate if user is block or not
-	if req.IsBlock == false {
+	if !req.IsBlock {
 		// user requested to be unblock
 		// unblock user
 		_, err = u.userRepo.UnBlockUser(ctx, uId)
 		if err != nil {
 			return nil, err
 		}
-	} else if req.IsBlock == true {
+	} else {
 		// user requested to be block
 		// block user
 		_, err = u.userRepo.BlockUser(ctx, uId)
@@ -217,9 +203,7 @@ func (u *userUsecase) BlockUser(c echo.Context, id string, req *dto.ReqBlockUser
 	return u.userRepo.GetUserByID(ctx, uId)
 }
 
-func (u *userUsecase) ActivateUser(c echo.Context, id string, req *dto.ReqActivateUser) (userRes *models.User, err error) {
-	ctx := c.Request().Context()
-
+func (u *userUsecase) ActivateUser(ctx context.Context, id string, req *dto.ReqActivateUser) (userRes *models.User, err error) {
 	// parsing UUID
 	uId, err := utils.StringToUUID(id)
 	if err != nil {
@@ -228,14 +212,14 @@ func (u *userUsecase) ActivateUser(c echo.Context, id string, req *dto.ReqActiva
 	}
 
 	// determinate if user is block or not
-	if req.IsActive == false {
+	if !req.IsActive {
 		// user requested to be dis-activate
 		// dis-activate user
 		_, err = u.userRepo.DisActivateUser(ctx, uId)
 		if err != nil {
 			return nil, err
 		}
-	} else if req.IsActive == true {
+	} else {
 		// user requested to be active
 		// active user
 		_, err = u.userRepo.ActivateUser(ctx, uId)

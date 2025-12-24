@@ -1,20 +1,18 @@
 package usecase
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/xuri/excelize/v2"
 )
 
-func (u *userUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (res *dto.ResImportUsers, err error) {
-	ctx := c.Request().Context()
-
+func (u *userUsecase) ImportUsersFromExcel(ctx context.Context, filePath string) (res *dto.ResImportUsers, err error) {
 	// Open Excel file
 	f, err := excelize.OpenFile(filePath)
 	if err != nil {

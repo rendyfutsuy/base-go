@@ -13,6 +13,8 @@ import (
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/role_management/dto"
+	rsearchrole "github.com/rendyfutsuy/base-go/modules/role_management/repository/searches"
+	"github.com/rendyfutsuy/base-go/modules/role_management/repository/sorts"
 	"github.com/rendyfutsuy/base-go/utils"
 	"gorm.io/gorm"
 )
@@ -198,7 +200,7 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 	offset := (validatedPage - 1) * validatedPerPage
 
 	// Determine sort expression using ApplyPagination logic
-	sortExpression := request.BuildSortExpressionForRawSQL(req, config, mapRoleIndexSortColumn)
+	sortExpression := request.BuildSortExpressionForRawSQL(req, config, sorts.MapRoleIndexSortColumn)
 
 	// Build base query that is shared between count and data queries
 	// This ensures both queries have the same structure and filtering logic
@@ -222,14 +224,9 @@ func (repo *roleRepository) GetIndexRole(ctx context.Context, req request.PageRe
 	args := []interface{}{}
 	argIdx := 1
 
-	// Apply search using BuildSearchConditionForRawSQL helper
-	// Note: We use BuildSearchConditionForRawSQL instead of ApplySearchCondition because:
-	// - This query uses raw SQL with sqlDB.QueryContext() to handle ARRAY_AGG with manual scanning via pq.Array()
-	// - GORM cannot properly scan ARRAY_AGG results into []utils.NullString, so we need raw SQL
-	// - ApplySearchCondition() requires *gorm.DB and returns *gorm.DB, which doesn't work with raw SQL strings
-	// - BuildSearchConditionForRawSQL returns SQL clause string and args that can be used directly in raw SQL queries
-	// - This maintains the same search logic as ApplySearchCondition() but for raw SQL context
-	searchClause, searchArgs := request.BuildSearchConditionForRawSQL(searchQuery, []string{"role.name"}, argIdx, "HAVING")
+	// Build search condition using BuildSearchConditionForRawSQLFromInterface
+	// This ensures both queries have the same filtering logic
+	searchClause, searchArgs := request.BuildSearchConditionForRawSQLFromInterface(searchQuery, rsearchrole.NewRoleSearchHelper(), argIdx, "HAVING")
 	if searchClause != "" {
 		groupByClause += searchClause
 		args = append(args, searchArgs...)

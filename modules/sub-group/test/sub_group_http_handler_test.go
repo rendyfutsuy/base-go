@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -26,61 +27,61 @@ type mockSubGroupUsecase struct {
 	mock.Mock
 }
 
-func (m *mockSubGroupUsecase) Create(c echo.Context, req *dto.ReqCreateSubGroup, authId string) (*models.SubGroup, error) {
-	args := m.Called(c, req, authId)
+func (m *mockSubGroupUsecase) Create(ctx context.Context, req *dto.ReqCreateSubGroup, userID string) (*models.SubGroup, error) {
+	args := m.Called(ctx, req, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.SubGroup), args.Error(1)
 }
 
-func (m *mockSubGroupUsecase) Update(c echo.Context, id string, req *dto.ReqUpdateSubGroup, authId string) (*models.SubGroup, error) {
-	args := m.Called(c, id, req, authId)
+func (m *mockSubGroupUsecase) Update(ctx context.Context, id string, req *dto.ReqUpdateSubGroup, userID string) (*models.SubGroup, error) {
+	args := m.Called(ctx, id, req, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.SubGroup), args.Error(1)
 }
 
-func (m *mockSubGroupUsecase) Delete(c echo.Context, id string, authId string) error {
-	args := m.Called(c, id, authId)
+func (m *mockSubGroupUsecase) Delete(ctx context.Context, id string, userID string) error {
+	args := m.Called(ctx, id, userID)
 	return args.Error(0)
 }
 
-func (m *mockSubGroupUsecase) GetByID(c echo.Context, id string) (*models.SubGroup, error) {
-	args := m.Called(c, id)
+func (m *mockSubGroupUsecase) GetByID(ctx context.Context, id string) (*models.SubGroup, error) {
+	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.SubGroup), args.Error(1)
 }
 
-func (m *mockSubGroupUsecase) GetIndex(c echo.Context, req request.PageRequest, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, int, error) {
-	args := m.Called(c, req, filter)
+func (m *mockSubGroupUsecase) GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, int, error) {
+	args := m.Called(ctx, req, filter)
 	if args.Get(0) == nil {
 		return nil, args.Int(1), args.Error(2)
 	}
 	return args.Get(0).([]models.SubGroup), args.Int(1), args.Error(2)
 }
 
-func (m *mockSubGroupUsecase) GetAll(c echo.Context, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, error) {
-	args := m.Called(c, filter)
+func (m *mockSubGroupUsecase) GetAll(ctx context.Context, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, error) {
+	args := m.Called(ctx, filter)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]models.SubGroup), args.Error(1)
 }
 
-func (m *mockSubGroupUsecase) Export(c echo.Context, filter dto.ReqSubGroupIndexFilter) ([]byte, error) {
-	args := m.Called(c, filter)
+func (m *mockSubGroupUsecase) Export(ctx context.Context, filter dto.ReqSubGroupIndexFilter) ([]byte, error) {
+	args := m.Called(ctx, filter)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]byte), args.Error(1)
 }
 
-func (m *mockSubGroupUsecase) ExistsInTypes(c echo.Context, subGroupID string) (bool, error) {
-	args := m.Called(c, subGroupID)
+func (m *mockSubGroupUsecase) ExistsInTypes(ctx context.Context, subGroupID string) (bool, error) {
+	args := m.Called(ctx, subGroupID)
 	return args.Bool(0), args.Error(1)
 }
 
@@ -94,17 +95,18 @@ func newSubGroupEcho() *echo.Echo {
 
 func TestSubGroupHandler_CreateSuccess(t *testing.T) {
 	e := newSubGroupEcho()
-	body := fmt.Sprintf(`{"goods_group_id":"%s","name":"SUBGROUP"}`, uuid.New().String())
+	body := fmt.Sprintf(`{"groups_id":"%s","name":"SUBGROUP"}`, uuid.New().String())
 	req := httptest.NewRequest(http.MethodPost, "/v1/sub-group", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user", models.User{ID: uuid.New()})
+	userID := uuid.New()
+	c.Set("user", models.User{ID: userID})
 
 	mockUC := new(mockSubGroupUsecase)
 	handler := &subgroupHttp.SubGroupHandler{Usecase: mockUC}
 
-	mockUC.On("Create", mock.Anything, mock.AnythingOfType("*dto.ReqCreateSubGroup"), "").
+	mockUC.On("Create", mock.Anything, mock.AnythingOfType("*dto.ReqCreateSubGroup"), userID.String()).
 		Return(&models.SubGroup{ID: uuid.New(), Name: "SUBGROUP"}, nil).Once()
 
 	err := handler.Create(c)
@@ -131,7 +133,7 @@ func TestSubGroupHandler_CreateValidationError(t *testing.T) {
 func TestSubGroupHandler_UpdateSuccess(t *testing.T) {
 	e := newSubGroupEcho()
 	subGroupID := uuid.New().String()
-	body := fmt.Sprintf(`{"goods_group_id":"%s","name":"UPDATED"}`, uuid.New().String())
+	body := fmt.Sprintf(`{"groups_id":"%s","name":"UPDATED"}`, uuid.New().String())
 	req := httptest.NewRequest(http.MethodPut, "/v1/sub-group/"+subGroupID, strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -248,7 +250,7 @@ func TestSubGroupHandler_GetIndexBindError(t *testing.T) {
 
 func TestSubGroupHandler_ExportValidateError(t *testing.T) {
 	e := newSubGroupEcho()
-	req := httptest.NewRequest(http.MethodGet, "/v1/sub-group/export", strings.NewReader(`{"goods_group_ids":["invalid"]}`))
+	req := httptest.NewRequest(http.MethodGet, "/v1/sub-group/export", strings.NewReader(`{"groups_ids":["invalid"]}`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)

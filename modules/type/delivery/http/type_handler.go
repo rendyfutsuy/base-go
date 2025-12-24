@@ -10,6 +10,7 @@ import (
 	_reqContext "github.com/rendyfutsuy/base-go/helpers/middleware/request"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/helpers/response"
+	"github.com/rendyfutsuy/base-go/models"
 	type_module "github.com/rendyfutsuy/base-go/modules/type"
 	"github.com/rendyfutsuy/base-go/modules/type/dto"
 )
@@ -81,6 +82,9 @@ func NewTypeHandler(e *echo.Echo, uc type_module.Usecase, mwP _reqContext.IMiddl
 // @Failure		403		{object}	response.NonPaginationResponse	"Forbidden - insufficient permissions"
 // @Router			/v1/type [post]
 func (h *TypeHandler) Create(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	req := new(dto.ReqCreateType)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -88,14 +92,22 @@ func (h *TypeHandler) Create(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
+
+	// Get user ID from context
 	user := c.Get("user")
-	_ = user // not used; keep signature parity
-	res, err := h.Usecase.Create(c, req, "")
+	userID := ""
+	if user != nil {
+		if userModel, ok := user.(models.User); ok {
+			userID = userModel.ID.String()
+		}
+	}
+
+	res, err := h.Usecase.Create(ctx, req, userID)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 	// Reload to get subgroup_name from join
-	typeDetail, err := h.Usecase.GetByID(c, res.ID.String())
+	typeDetail, err := h.Usecase.GetByID(ctx, res.ID.String())
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -120,6 +132,9 @@ func (h *TypeHandler) Create(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Type not found"
 // @Router			/v1/type/{id} [put]
 func (h *TypeHandler) Update(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
 	req := new(dto.ReqUpdateType)
 	if err := c.Bind(req); err != nil {
@@ -128,12 +143,22 @@ func (h *TypeHandler) Update(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	_, err := h.Usecase.Update(c, id, req, "")
+
+	// Get user ID from context
+	user := c.Get("user")
+	userID := ""
+	if user != nil {
+		if userModel, ok := user.(models.User); ok {
+			userID = userModel.ID.String()
+		}
+	}
+
+	_, err := h.Usecase.Update(ctx, id, req, userID)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 	// Reload to get subgroup_name from join
-	typeDetail, err := h.Usecase.GetByID(c, id)
+	typeDetail, err := h.Usecase.GetByID(ctx, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -157,8 +182,20 @@ func (h *TypeHandler) Update(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Type not found"
 // @Router			/v1/type/{id} [delete]
 func (h *TypeHandler) Delete(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
+	// Get user ID from context
+	user := c.Get("user")
+	userID := ""
+	if user != nil {
+		if userModel, ok := user.(models.User); ok {
+			userID = userModel.ID.String()
+		}
+	}
+
 	id := c.Param("id")
-	if err := h.Usecase.Delete(c, id, ""); err != nil {
+	if err := h.Usecase.Delete(ctx, id, userID); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 	resp := response.NonPaginationResponse{}
@@ -188,6 +225,9 @@ func (h *TypeHandler) Delete(c echo.Context) error {
 // @Failure		403				{object}	response.NonPaginationResponse	"Forbidden - insufficient permissions"
 // @Router			/v1/type [get]
 func (h *TypeHandler) GetIndex(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	pageRequest := c.Get("page_request").(*request.PageRequest)
 
 	// validate filter req.
@@ -204,7 +244,7 @@ func (h *TypeHandler) GetIndex(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	res, total, err := h.Usecase.GetIndex(c, *pageRequest, *filter)
+	res, total, err := h.Usecase.GetIndex(ctx, *pageRequest, *filter)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -241,8 +281,11 @@ func (h *TypeHandler) GetIndex(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Type not found"
 // @Router			/v1/type/{id} [get]
 func (h *TypeHandler) GetByID(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
-	res, err := h.Usecase.GetByID(c, id)
+	res, err := h.Usecase.GetByID(ctx, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -268,6 +311,9 @@ func (h *TypeHandler) GetByID(c echo.Context) error {
 // @Failure		403				{object}	response.NonPaginationResponse	"Forbidden - insufficient permissions"
 // @Router			/v1/type/export [get]
 func (h *TypeHandler) Export(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	// validate filter req.
 	// initialize filter
 	filter := new(dto.ReqTypeIndexFilter)
@@ -282,7 +328,7 @@ func (h *TypeHandler) Export(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	excelBytes, err := h.Usecase.Export(c, *filter)
+	excelBytes, err := h.Usecase.Export(ctx, *filter)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}

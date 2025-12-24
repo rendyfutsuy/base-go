@@ -9,6 +9,8 @@ import (
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
+	rsearchperm "github.com/rendyfutsuy/base-go/modules/role_management/repository/searches"
+	"github.com/rendyfutsuy/base-go/modules/role_management/repository/sorts"
 	"gorm.io/gorm"
 )
 
@@ -44,10 +46,9 @@ func (repo *roleRepository) GetIndexPermission(ctx context.Context, req request.
 		Select("id", "name", "created_at", "updated_at", "deleted_at").
 		Where("permission.deleted_at IS NULL")
 
-	// Apply search with parameter binding
-	query = request.ApplySearchCondition(query, searchQuery, []string{
-		"permission.name",
-	})
+		// Build search condition using BuildSearchConditionForRawSQLFromInterface
+		// This ensures both queries have the same filtering logic
+	query = request.ApplySearchConditionFromInterface(query, searchQuery, rsearchperm.NewPermissionSearchHelper())
 
 	// Apply pagination using generic function
 	config := request.PaginationConfig{
@@ -56,7 +57,7 @@ func (repo *roleRepository) GetIndexPermission(ctx context.Context, req request.
 		AllowedColumns:     []string{"id", "name", "created_at", "updated_at", "deleted_at"},
 		ColumnPrefix:       "permission.",
 		MaxPerPage:         100,
-		SortMapping:        mapPermissionIndexSortColumn,
+		SortMapping:        sorts.MapPermissionIndexSortColumn,
 		NaturalSortColumns: []string{"permission.name"}, // Enable natural sorting for permission.name
 	}
 

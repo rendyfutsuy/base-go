@@ -11,6 +11,8 @@ import (
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
+	rsearchpg "github.com/rendyfutsuy/base-go/modules/role_management/repository/searches"
+	"github.com/rendyfutsuy/base-go/modules/role_management/repository/sorts"
 	"github.com/rendyfutsuy/base-go/utils"
 	"gorm.io/gorm"
 )
@@ -93,10 +95,9 @@ func (repo *roleRepository) GetIndexPermissionGroup(ctx context.Context, req req
 		Select("id", "name", "created_at", "updated_at", "deleted_at").
 		Where("permission_group.deleted_at IS NULL")
 
-	// Apply search with parameter binding
-	query = request.ApplySearchCondition(query, searchQuery, []string{
-		"permission_group.name",
-	})
+		// Build search condition using BuildSearchConditionForRawSQLFromInterface
+		// This ensures both queries have the same filtering logic
+	query = request.ApplySearchConditionFromInterface(query, searchQuery, rsearchpg.NewPermissionGroupSearchHelper())
 
 	// Apply pagination using generic function
 	config := request.PaginationConfig{
@@ -105,7 +106,7 @@ func (repo *roleRepository) GetIndexPermissionGroup(ctx context.Context, req req
 		AllowedColumns:     []string{"id", "name", "module", "created_at", "updated_at", "deleted_at"},
 		ColumnPrefix:       "permission_group.",
 		MaxPerPage:         100,
-		SortMapping:        mapPermissionGroupIndexSortColumn,
+		SortMapping:        sorts.MapPermissionGroupIndexSortColumn,
 		NaturalSortColumns: []string{"permission_group.name", "permission_group.module"}, // Enable natural sorting for permission_group.name
 	}
 

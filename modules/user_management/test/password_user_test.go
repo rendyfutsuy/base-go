@@ -157,7 +157,7 @@ func TestUpdateUserPassword(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
 
-			err := usecaseInstance.UpdateUserPassword(c, tt.id, tt.req)
+			err := usecaseInstance.UpdateUserPassword(c.Request().Context(), tt.id, tt.req)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -270,7 +270,7 @@ func TestAssertCurrentUserPassword(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPost, "/", nil), httptest.NewRecorder())
 
-			err := usecaseInstance.AssertCurrentUserPassword(c, tt.id, tt.password)
+			err := usecaseInstance.AssertCurrentUserPassword(c.Request().Context(), tt.id, tt.password)
 
 			if tt.expectedError {
 				assert.Error(t, err)

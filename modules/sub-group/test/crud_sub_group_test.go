@@ -162,7 +162,7 @@ func TestCreateSubGroup(t *testing.T) {
 				GoodsGroupID: goodsGroupID,
 				Name:         "Test Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				mg.On("GetByID", ctx, goodsGroupID).Return(&models.GoodsGroup{
 					ID:   goodsGroupID,
@@ -196,7 +196,7 @@ func TestCreateSubGroup(t *testing.T) {
 				GoodsGroupID: goodsGroupID,
 				Name:         "Existing Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				mg.On("GetByID", ctx, goodsGroupID).Return(&models.GoodsGroup{
 					ID:   goodsGroupID,
@@ -216,7 +216,7 @@ func TestCreateSubGroup(t *testing.T) {
 				GoodsGroupID: goodsGroupID,
 				Name:         "Test Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				mg.On("GetByID", ctx, goodsGroupID).Return(&models.GoodsGroup{
 					ID:   goodsGroupID,
@@ -236,7 +236,7 @@ func TestCreateSubGroup(t *testing.T) {
 				GoodsGroupID: goodsGroupID,
 				Name:         "Test Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				mg.On("GetByID", ctx, goodsGroupID).Return(&models.GoodsGroup{
 					ID:   goodsGroupID,
@@ -269,7 +269,7 @@ func TestCreateSubGroup(t *testing.T) {
 				tt.setupContext(&c)
 			}
 
-			result, err := usecaseInstance.Create(c, tt.req, tt.authId)
+			result, err := usecaseInstance.Create(ctx, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -314,7 +314,7 @@ func TestUpdateSubGroup(t *testing.T) {
 				GoodsGroupID: goodsGroupID,
 				Name:         "Updated Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				mg.On("GetByID", ctx, goodsGroupID).Return(&models.GoodsGroup{
 					ID:   goodsGroupID,
@@ -348,7 +348,7 @@ func TestUpdateSubGroup(t *testing.T) {
 				GoodsGroupID: goodsGroupID,
 				Name:         "Updated Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				// No mock calls expected
 			},
@@ -365,7 +365,7 @@ func TestUpdateSubGroup(t *testing.T) {
 				GoodsGroupID: goodsGroupID,
 				Name:         "Existing Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				mg.On("GetByID", ctx, goodsGroupID).Return(&models.GoodsGroup{
 					ID:   goodsGroupID,
@@ -386,7 +386,7 @@ func TestUpdateSubGroup(t *testing.T) {
 				GoodsGroupID: goodsGroupID,
 				Name:         "Updated Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				mg.On("GetByID", ctx, goodsGroupID).Return(&models.GoodsGroup{
 					ID:   goodsGroupID,
@@ -421,7 +421,7 @@ func TestUpdateSubGroup(t *testing.T) {
 				tt.setupContext(&c)
 			}
 
-			result, err := usecaseInstance.Update(c, tt.id, tt.req, tt.authId)
+			result, err := usecaseInstance.Update(ctx, tt.id, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -459,7 +459,7 @@ func TestDeleteSubGroup(t *testing.T) {
 		{
 			name:   "success delete sub-group",
 			id:     validID.String(),
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				m.On("ExistsInTypes", ctx, validID).Return(false, nil).Once()
 				m.On("Delete", ctx, validID, testUserID.String()).Return(nil).Once()
@@ -472,7 +472,7 @@ func TestDeleteSubGroup(t *testing.T) {
 		{
 			name:   "error when invalid UUID",
 			id:     "invalid-uuid",
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				// No mock calls expected
 			},
@@ -484,7 +484,7 @@ func TestDeleteSubGroup(t *testing.T) {
 		{
 			name:   "error when sub-group still used in types",
 			id:     validID.String(),
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				m.On("ExistsInTypes", ctx, validID).Return(true, nil).Once()
 			},
@@ -496,7 +496,7 @@ func TestDeleteSubGroup(t *testing.T) {
 		{
 			name:   "error when repository delete fails",
 			id:     validID.String(),
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				m.On("ExistsInTypes", ctx, validID).Return(false, nil).Once()
 				m.On("Delete", ctx, validID, testUserID.String()).Return(errors.New("delete failed")).Once()
@@ -526,7 +526,7 @@ func TestDeleteSubGroup(t *testing.T) {
 				tt.setupContext(&c)
 			}
 
-			err := usecaseInstance.Delete(c, tt.id, tt.authId)
+			err := usecaseInstance.Delete(ctx, tt.id, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -611,7 +611,7 @@ func TestGetSubGroupByID(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.GetByID(c, tt.id)
+			result, err := usecaseInstance.GetByID(ctx, tt.id)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -738,7 +738,7 @@ func TestGetIndexSubGroup(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, total, err := usecaseInstance.GetIndex(c, tt.req, tt.filter)
+			result, total, err := usecaseInstance.GetIndex(ctx, tt.req, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -856,7 +856,7 @@ func TestExportSubGroup(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.Export(c, tt.filter)
+			result, err := usecaseInstance.Export(ctx, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)

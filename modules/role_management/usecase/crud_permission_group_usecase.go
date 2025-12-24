@@ -1,7 +1,8 @@
 package usecase
 
 import (
-	"github.com/labstack/echo/v4"
+	"context"
+
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/utils"
@@ -9,9 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (u *roleUsecase) GetPermissionGroupByID(c echo.Context, id string) (role *models.PermissionGroup, err error) {
-	ctx := c.Request().Context()
-
+func (u *roleUsecase) GetPermissionGroupByID(ctx context.Context, id string) (role *models.PermissionGroup, err error) {
 	uId, err := utils.StringToUUID(id)
 	if err != nil {
 		utils.Logger.Error(err.Error())
@@ -21,17 +20,14 @@ func (u *roleUsecase) GetPermissionGroupByID(c echo.Context, id string) (role *m
 	return u.roleRepo.GetPermissionGroupByID(ctx, uId)
 }
 
-func (u *roleUsecase) GetIndexPermissionGroup(c echo.Context, req request.PageRequest) (role_infos []models.PermissionGroup, total int, err error) {
-	ctx := c.Request().Context()
+func (u *roleUsecase) GetIndexPermissionGroup(ctx context.Context, req request.PageRequest) (role_infos []models.PermissionGroup, total int, err error) {
 	return u.roleRepo.GetIndexPermissionGroup(ctx, req)
 }
 
-func (u *roleUsecase) GetAllPermissionGroup(c echo.Context) (role_infos []models.PermissionGroup, err error) {
-	ctx := c.Request().Context()
+func (u *roleUsecase) GetAllPermissionGroup(ctx context.Context) (role_infos []models.PermissionGroup, err error) {
 	return u.roleRepo.GetAllPermissionGroup(ctx)
 }
 
-func (u *roleUsecase) PermissionGroupNameIsNotDuplicated(c echo.Context, name string, id uuid.UUID) (permissionGroupRes *models.PermissionGroup, err error) {
-	ctx := c.Request().Context()
+func (u *roleUsecase) PermissionGroupNameIsNotDuplicated(ctx context.Context, name string, id uuid.UUID) (permissionGroupRes *models.PermissionGroup, err error) {
 	return u.roleRepo.GetDuplicatedPermissionGroup(ctx, name, id)
 }

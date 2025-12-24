@@ -164,7 +164,7 @@ func TestCreateType(t *testing.T) {
 				SubgroupID: subgroupID,
 				Name:       "Test Type",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockTypeRepository, msg *MockSubGroupRepository) {
 				msg.On("GetByID", ctx, subgroupID).Return(&models.SubGroup{
 					ID:   subgroupID,
@@ -195,7 +195,7 @@ func TestCreateType(t *testing.T) {
 				SubgroupID: subgroupID,
 				Name:       "Existing Type",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockTypeRepository, msg *MockSubGroupRepository) {
 				msg.On("GetByID", ctx, subgroupID).Return(&models.SubGroup{
 					ID:   subgroupID,
@@ -212,7 +212,7 @@ func TestCreateType(t *testing.T) {
 				SubgroupID: subgroupID,
 				Name:       "Test Type",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockTypeRepository, msg *MockSubGroupRepository) {
 				msg.On("GetByID", ctx, subgroupID).Return(&models.SubGroup{
 					ID:   subgroupID,
@@ -229,7 +229,7 @@ func TestCreateType(t *testing.T) {
 				SubgroupID: subgroupID,
 				Name:       "Test Type",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockTypeRepository, msg *MockSubGroupRepository) {
 				msg.On("GetByID", ctx, subgroupID).Return(&models.SubGroup{
 					ID:   subgroupID,
@@ -257,7 +257,7 @@ func TestCreateType(t *testing.T) {
 			c.SetRequest(req.WithContext(ctx))
 			setupContext(c)
 
-			result, err := usecaseInstance.Create(c, tt.req, tt.authId)
+			result, err := usecaseInstance.Create(ctx, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -306,7 +306,7 @@ func TestUpdateType(t *testing.T) {
 				SubgroupID: subgroupID,
 				Name:       "Updated Type",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockTypeRepository, msg *MockSubGroupRepository) {
 				msg.On("GetByID", ctx, subgroupID).Return(&models.SubGroup{
 					ID:   subgroupID,
@@ -337,7 +337,7 @@ func TestUpdateType(t *testing.T) {
 				SubgroupID: subgroupID,
 				Name:       "Updated Type",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockTypeRepository, msg *MockSubGroupRepository) {
 				// No mock calls expected
 			},
@@ -351,7 +351,7 @@ func TestUpdateType(t *testing.T) {
 				SubgroupID: subgroupID,
 				Name:       "Existing Type",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockTypeRepository, msg *MockSubGroupRepository) {
 				msg.On("GetByID", ctx, subgroupID).Return(&models.SubGroup{
 					ID:   subgroupID,
@@ -369,7 +369,7 @@ func TestUpdateType(t *testing.T) {
 				SubgroupID: subgroupID,
 				Name:       "Updated Type",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockTypeRepository, msg *MockSubGroupRepository) {
 				msg.On("GetByID", ctx, subgroupID).Return(&models.SubGroup{
 					ID:   subgroupID,
@@ -399,7 +399,7 @@ func TestUpdateType(t *testing.T) {
 			c.SetRequest(req.WithContext(ctx))
 			setupContext(c)
 
-			result, err := usecaseInstance.Update(c, tt.id, tt.req, tt.authId)
+			result, err := usecaseInstance.Update(ctx, tt.id, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -441,7 +441,7 @@ func TestDeleteType(t *testing.T) {
 		{
 			name:   "success delete type",
 			id:     validID.String(),
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockTypeRepository, msg *MockSubGroupRepository) {
 				m.On("ExistsInBackings", ctx, validID).Return(false, nil).Once()
 				m.On("Delete", ctx, validID, testUserID.String()).Return(nil).Once()
@@ -451,7 +451,7 @@ func TestDeleteType(t *testing.T) {
 		{
 			name:   "error when invalid UUID",
 			id:     "invalid-uuid",
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockTypeRepository, msg *MockSubGroupRepository) {
 				// No mock calls expected
 			},
@@ -460,7 +460,7 @@ func TestDeleteType(t *testing.T) {
 		{
 			name:   "error when repository delete fails",
 			id:     validID.String(),
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockTypeRepository, msg *MockSubGroupRepository) {
 				m.On("ExistsInBackings", ctx, validID).Return(false, nil).Once()
 				m.On("Delete", ctx, validID, testUserID.String()).Return(errors.New("delete failed")).Once()
@@ -485,7 +485,7 @@ func TestDeleteType(t *testing.T) {
 			c.SetRequest(req.WithContext(ctx))
 			setupContext(c)
 
-			err := usecaseInstance.Delete(c, tt.id, tt.authId)
+			err := usecaseInstance.Delete(ctx, tt.id, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -571,7 +571,7 @@ func TestGetTypeByID(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.GetByID(c, tt.id)
+			result, err := usecaseInstance.GetByID(ctx, tt.id)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -706,7 +706,7 @@ func TestGetIndexType(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, total, err := usecaseInstance.GetIndex(c, tt.req, tt.filter)
+			result, total, err := usecaseInstance.GetIndex(ctx, tt.req, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -827,7 +827,7 @@ func TestExportType(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.Export(c, tt.filter)
+			result, err := usecaseInstance.Export(ctx, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)

@@ -13,6 +13,7 @@ import (
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
+	"github.com/rendyfutsuy/base-go/modules/auth"
 	authDto "github.com/rendyfutsuy/base-go/modules/auth/dto"
 	roleDto "github.com/rendyfutsuy/base-go/modules/role_management/dto"
 	"github.com/rendyfutsuy/base-go/modules/user_management"
@@ -608,7 +609,7 @@ func TestCreateUser(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPost, "/", nil), httptest.NewRecorder())
 
-			result, err := usecaseInstance.CreateUser(c, tt.req, tt.authId)
+			result, err := usecaseInstance.CreateUser(c.Request().Context(), tt.req, tt.authId)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -720,7 +721,7 @@ func TestGetUserByID(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			result, err := usecaseInstance.GetUserByID(c, tt.id)
+			result, err := usecaseInstance.GetUserByID(c.Request().Context(), tt.id)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -823,7 +824,7 @@ func TestGetIndexUser(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			users, total, err := usecaseInstance.GetIndexUser(c, tt.req, tt.filter)
+			users, total, err := usecaseInstance.GetIndexUser(c.Request().Context(), tt.req, tt.filter)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -890,7 +891,7 @@ func TestGetAllUser(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			users, err := usecaseInstance.GetAllUser(c)
+			users, err := usecaseInstance.GetAllUser(c.Request().Context())
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -1007,7 +1008,7 @@ func TestUpdateUser(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
 
-			result, err := usecaseInstance.UpdateUser(c, tt.id, tt.req, tt.authId)
+			result, err := usecaseInstance.UpdateUser(c.Request().Context(), tt.id, tt.req, tt.authId)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -1125,7 +1126,7 @@ func TestSoftDeleteUser(t *testing.T) {
 			// Set user context
 			c.Set("user", models.User{ID: testUserID, Username: "testuser"})
 
-			result, err := usecaseInstance.SoftDeleteUser(c, tt.id, tt.authId)
+			result, err := usecaseInstance.SoftDeleteUser(ctx, tt.id, tt.authId)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -1246,7 +1247,7 @@ func TestBlockUser(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
 
-			result, err := usecaseInstance.BlockUser(c, tt.id, tt.req)
+			result, err := usecaseInstance.BlockUser(c.Request().Context(), tt.id, tt.req)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -1368,7 +1369,7 @@ func TestActivateUser(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
 
-			result, err := usecaseInstance.ActivateUser(c, tt.id, tt.req)
+			result, err := usecaseInstance.ActivateUser(c.Request().Context(), tt.id, tt.req)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -1463,7 +1464,7 @@ func TestUserNameIsNotDuplicated(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			result, err := usecaseInstance.UserNameIsNotDuplicated(c, tt.fullName, tt.id)
+			result, err := usecaseInstance.UserNameIsNotDuplicated(c.Request().Context(), tt.fullName, tt.id)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -1480,4 +1481,24 @@ func TestUserNameIsNotDuplicated(t *testing.T) {
 			mockRoleRepo.AssertExpectations(t)
 		})
 	}
+}
+
+func (m *MockAuthRepository) StoreRefreshToken(ctx context.Context, jti string, userId uuid.UUID, accessJTI string, ttl time.Duration) error {
+	args := m.Called(ctx, jti, userId, accessJTI, ttl)
+	return args.Error(0)
+}
+
+func (m *MockAuthRepository) GetRefreshTokenMetadata(ctx context.Context, jti string) (auth.RefreshTokenMeta, error) {
+	args := m.Called(ctx, jti)
+	return args.Get(0).(auth.RefreshTokenMeta), args.Error(1)
+}
+
+func (m *MockAuthRepository) MarkRefreshTokenUsed(ctx context.Context, jti string) error {
+	args := m.Called(ctx, jti)
+	return args.Error(0)
+}
+
+func (m *MockAuthRepository) RevokeAllUserSessions(ctx context.Context, userId uuid.UUID) error {
+	args := m.Called(ctx, userId)
+	return args.Error(0)
 }

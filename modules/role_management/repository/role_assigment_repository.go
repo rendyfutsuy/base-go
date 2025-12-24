@@ -45,7 +45,7 @@ func (repo *roleRepository) GetTotalUser(ctx context.Context, id uuid.UUID) (tot
 	err = repo.DB.WithContext(ctx).
 		Table("users usr").
 		Joins("JOIN roles role ON usr.role_id = role.id").
-		Where("role.id = ? AND role.deleted_at IS NULL", id).
+		Where("role.id = ? AND role.deleted_at IS NULL AND usr.deleted_at IS NULL", id).
 		Count(&count).Error
 
 	if err != nil {
