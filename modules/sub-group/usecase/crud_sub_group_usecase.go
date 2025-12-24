@@ -29,28 +29,28 @@ func NewSubGroupUsecase(repo mod.Repository, groupRepo groupRepo.Repository) mod
 
 func (u *subGroupUsecase) Create(ctx context.Context, reqBody *dto.ReqCreateSubGroup, userID string) (*models.SubGroup, error) {
 	// Check if groups_id exists
-	if reqBody.GoodsGroupID != uuid.Nil {
-		groupObject, err := u.groupRepo.GetByID(ctx, reqBody.GoodsGroupID)
+	if reqBody.GroupID != uuid.Nil {
+		groupObject, err := u.groupRepo.GetByID(ctx, reqBody.GroupID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, errors.New(constants.SubGroupGoodsGroupNotFound)
+				return nil, errors.New(constants.SubGroupGroupNotFound)
 			}
 			return nil, err
 		}
 		// Additional check: ensure groupObject is valid
 		if groupObject == nil || groupObject.ID == uuid.Nil {
-			return nil, errors.New(constants.SubGroupGoodsGroupNotFound)
+			return nil, errors.New(constants.SubGroupGroupNotFound)
 		}
 	}
 
-	exists, err := u.repo.ExistsByName(ctx, reqBody.GoodsGroupID, reqBody.Name, uuid.Nil)
+	exists, err := u.repo.ExistsByName(ctx, reqBody.GroupID, reqBody.Name, uuid.Nil)
 	if err != nil {
 		return nil, err
 	}
 	if exists {
 		return nil, errors.New(constants.SubGroupNameAlreadyExists)
 	}
-	return u.repo.Create(ctx, reqBody.GoodsGroupID, reqBody.Name, userID)
+	return u.repo.Create(ctx, reqBody.GroupID, reqBody.Name, userID)
 }
 
 func (u *subGroupUsecase) Update(ctx context.Context, id string, reqBody *dto.ReqUpdateSubGroup, userID string) (*models.SubGroup, error) {
@@ -60,28 +60,28 @@ func (u *subGroupUsecase) Update(ctx context.Context, id string, reqBody *dto.Re
 	}
 
 	// Check if groups_id exists
-	if reqBody.GoodsGroupID != uuid.Nil {
-		groupObject, err := u.groupRepo.GetByID(ctx, reqBody.GoodsGroupID)
+	if reqBody.GroupID != uuid.Nil {
+		groupObject, err := u.groupRepo.GetByID(ctx, reqBody.GroupID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, errors.New(constants.SubGroupGoodsGroupNotFound)
+				return nil, errors.New(constants.SubGroupGroupNotFound)
 			}
 			return nil, err
 		}
 		// Additional check: ensure groupObject is valid
 		if groupObject == nil || groupObject.ID == uuid.Nil {
-			return nil, errors.New(constants.SubGroupGoodsGroupNotFound)
+			return nil, errors.New(constants.SubGroupGroupNotFound)
 		}
 	}
 
-	exists, err := u.repo.ExistsByName(ctx, reqBody.GoodsGroupID, reqBody.Name, sgid)
+	exists, err := u.repo.ExistsByName(ctx, reqBody.GroupID, reqBody.Name, sgid)
 	if err != nil {
 		return nil, err
 	}
 	if exists {
 		return nil, errors.New(constants.SubGroupNameAlreadyExists)
 	}
-	res, err := u.repo.Update(ctx, sgid, reqBody.GoodsGroupID, reqBody.Name, userID)
+	res, err := u.repo.Update(ctx, sgid, reqBody.GroupID, reqBody.Name, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf(constants.SubGroupNotFound, id)
@@ -174,8 +174,8 @@ func (u *subGroupUsecase) Export(ctx context.Context, filter dto.ReqSubGroupInde
 
 		setCell(sg.SubgroupCode)
 		setCell(sg.Name)
-		if sg.GoodsGroupName != "" {
-			setCell(sg.GoodsGroupName)
+		if sg.GroupName != "" {
+			setCell(sg.GroupName)
 		} else {
 			setCell("-")
 		}

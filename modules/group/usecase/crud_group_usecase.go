@@ -25,7 +25,7 @@ func NewGroupUsecase(repo mod.Repository) mod.Usecase {
 	return &groupUsecase{repo: repo}
 }
 
-func (u *groupUsecase) Create(ctx context.Context, reqBody *dto.ReqCreateGroup, userID string) (*models.GoodsGroup, error) {
+func (u *groupUsecase) Create(ctx context.Context, reqBody *dto.ReqCreateGroup, userID string) (*models.Group, error) {
 	exists, err := u.repo.ExistsByName(ctx, reqBody.Name, uuid.Nil)
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func (u *groupUsecase) Create(ctx context.Context, reqBody *dto.ReqCreateGroup, 
 	return u.repo.Create(ctx, reqBody.Name, userID)
 }
 
-func (u *groupUsecase) Update(ctx context.Context, id string, reqBody *dto.ReqUpdateGroup, userID string) (*models.GoodsGroup, error) {
+func (u *groupUsecase) Update(ctx context.Context, id string, reqBody *dto.ReqUpdateGroup, userID string) (*models.Group, error) {
 	gid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (u *groupUsecase) Delete(ctx context.Context, id string, userID string) err
 	return u.repo.Delete(ctx, gid, userID)
 }
 
-func (u *groupUsecase) GetByID(ctx context.Context, id string) (*models.GoodsGroup, error) {
+func (u *groupUsecase) GetByID(ctx context.Context, id string) (*models.Group, error) {
 	gid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
@@ -86,12 +86,12 @@ func (u *groupUsecase) GetByID(ctx context.Context, id string) (*models.GoodsGro
 	return u.repo.GetByID(ctx, gid)
 }
 
-func (u *groupUsecase) GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqGroupIndexFilter) ([]models.GoodsGroup, int, error) {
+func (u *groupUsecase) GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqGroupIndexFilter) ([]models.Group, int, error) {
 	// Search is already set in req.Search from PageRequest middleware
 	return u.repo.GetIndex(ctx, req, filter)
 }
 
-func (u *groupUsecase) GetAll(ctx context.Context, filter dto.ReqGroupIndexFilter) ([]models.GoodsGroup, error) {
+func (u *groupUsecase) GetAll(ctx context.Context, filter dto.ReqGroupIndexFilter) ([]models.Group, error) {
 	return u.repo.GetAll(ctx, filter)
 }
 

@@ -27,7 +27,7 @@ type Backing struct {
 	TypeName     string    `gorm:"column:type_name;<-:false" json:"type_name"`
 	SubgroupID   uuid.UUID `gorm:"column:subgroup_id;<-:false" json:"subgroup_id"`
 	SubgroupName string    `gorm:"column:subgroup_name;<-:false" json:"subgroup_name"`
-	GoodsGroupID uuid.UUID `gorm:"column:groups_id;<-:false" json:"groups_id"`
+	GroupID      uuid.UUID `gorm:"column:groups_id;<-:false" json:"groups_id"`
 	GroupName    string    `gorm:"column:group_name;<-:false" json:"group_name"`
 }
 

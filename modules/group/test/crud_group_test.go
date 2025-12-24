@@ -25,20 +25,20 @@ type MockGroupRepository struct {
 	mock.Mock
 }
 
-func (m *MockGroupRepository) Create(ctx context.Context, name string, createdBy string) (*models.GoodsGroup, error) {
+func (m *MockGroupRepository) Create(ctx context.Context, name string, createdBy string) (*models.Group, error) {
 	args := m.Called(ctx, name, createdBy)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.GoodsGroup), args.Error(1)
+	return args.Get(0).(*models.Group), args.Error(1)
 }
 
-func (m *MockGroupRepository) Update(ctx context.Context, id uuid.UUID, name string, updatedBy string) (*models.GoodsGroup, error) {
+func (m *MockGroupRepository) Update(ctx context.Context, id uuid.UUID, name string, updatedBy string) (*models.Group, error) {
 	args := m.Called(ctx, id, name, updatedBy)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.GoodsGroup), args.Error(1)
+	return args.Get(0).(*models.Group), args.Error(1)
 }
 
 func (m *MockGroupRepository) Delete(ctx context.Context, id uuid.UUID, deletedBy string) error {
@@ -46,28 +46,28 @@ func (m *MockGroupRepository) Delete(ctx context.Context, id uuid.UUID, deletedB
 	return args.Error(0)
 }
 
-func (m *MockGroupRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.GoodsGroup, error) {
+func (m *MockGroupRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Group, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.GoodsGroup), args.Error(1)
+	return args.Get(0).(*models.Group), args.Error(1)
 }
 
-func (m *MockGroupRepository) GetIndex(ctx context.Context, req request.PageRequest, filter groupDto.ReqGroupIndexFilter) ([]models.GoodsGroup, int, error) {
+func (m *MockGroupRepository) GetIndex(ctx context.Context, req request.PageRequest, filter groupDto.ReqGroupIndexFilter) ([]models.Group, int, error) {
 	args := m.Called(ctx, req, filter)
 	if args.Get(0) == nil {
 		return nil, args.Int(1), args.Error(2)
 	}
-	return args.Get(0).([]models.GoodsGroup), args.Int(1), args.Error(2)
+	return args.Get(0).([]models.Group), args.Int(1), args.Error(2)
 }
 
-func (m *MockGroupRepository) GetAll(ctx context.Context, filter groupDto.ReqGroupIndexFilter) ([]models.GoodsGroup, error) {
+func (m *MockGroupRepository) GetAll(ctx context.Context, filter groupDto.ReqGroupIndexFilter) ([]models.Group, error) {
 	args := m.Called(ctx, filter)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]models.GoodsGroup), args.Error(1)
+	return args.Get(0).([]models.Group), args.Error(1)
 }
 
 func (m *MockGroupRepository) ExistsByName(ctx context.Context, name string, excludeID uuid.UUID) (bool, error) {
@@ -90,7 +90,7 @@ func TestCreateGroup(t *testing.T) {
 		authId         string
 		setupMock      func(*MockGroupRepository)
 		expectedError  error
-		expectedResult *models.GoodsGroup
+		expectedResult *models.Group
 	}{
 		{
 			name: "success create group",
@@ -100,7 +100,7 @@ func TestCreateGroup(t *testing.T) {
 			authId: "test-auth-id",
 			setupMock: func(m *MockGroupRepository) {
 				m.On("ExistsByName", ctx, "Test Group", uuid.Nil).Return(false, nil).Once()
-				m.On("Create", ctx, "Test Group", mock.Anything).Return(&models.GoodsGroup{
+				m.On("Create", ctx, "Test Group", mock.Anything).Return(&models.Group{
 					ID:        uuid.New(),
 					GroupCode: "01",
 					Name:      "Test Group",
@@ -109,7 +109,7 @@ func TestCreateGroup(t *testing.T) {
 				}, nil).Once()
 			},
 			expectedError: nil,
-			expectedResult: &models.GoodsGroup{
+			expectedResult: &models.Group{
 				GroupCode: "01",
 				Name:      "Test Group",
 			},
@@ -197,7 +197,7 @@ func TestUpdateGroup(t *testing.T) {
 		authId         string
 		setupMock      func(*MockGroupRepository)
 		expectedError  error
-		expectedResult *models.GoodsGroup
+		expectedResult *models.Group
 	}{
 		{
 			name: "success update group",
@@ -208,7 +208,7 @@ func TestUpdateGroup(t *testing.T) {
 			authId: "test-auth-id",
 			setupMock: func(m *MockGroupRepository) {
 				m.On("ExistsByName", ctx, "Updated Group", validID).Return(false, nil).Once()
-				m.On("Update", ctx, validID, "Updated Group", mock.Anything).Return(&models.GoodsGroup{
+				m.On("Update", ctx, validID, "Updated Group", mock.Anything).Return(&models.Group{
 					ID:        validID,
 					GroupCode: "02",
 					Name:      "Updated Group",
@@ -216,7 +216,7 @@ func TestUpdateGroup(t *testing.T) {
 				}, nil).Once()
 			},
 			expectedError: nil,
-			expectedResult: &models.GoodsGroup{
+			expectedResult: &models.Group{
 				ID:        validID,
 				GroupCode: "02",
 				Name:      "Updated Group",
@@ -388,13 +388,13 @@ func TestGetGroupByID(t *testing.T) {
 		id             string
 		setupMock      func(*MockGroupRepository)
 		expectedError  error
-		expectedResult *models.GoodsGroup
+		expectedResult *models.Group
 	}{
 		{
 			name: "success get group by id",
 			id:   validID.String(),
 			setupMock: func(m *MockGroupRepository) {
-				m.On("GetByID", ctx, validID).Return(&models.GoodsGroup{
+				m.On("GetByID", ctx, validID).Return(&models.Group{
 					ID:        validID,
 					GroupCode: "01",
 					Name:      "Test Group",
@@ -403,7 +403,7 @@ func TestGetGroupByID(t *testing.T) {
 				}, nil).Once()
 			},
 			expectedError: nil,
-			expectedResult: &models.GoodsGroup{
+			expectedResult: &models.Group{
 				ID:        validID,
 				GroupCode: "01",
 				Name:      "Test Group",
@@ -474,7 +474,7 @@ func TestGetIndexGroup(t *testing.T) {
 		filter         groupDto.ReqGroupIndexFilter
 		setupMock      func(*MockGroupRepository)
 		expectedError  error
-		expectedResult []models.GoodsGroup
+		expectedResult []models.Group
 		expectedTotal  int
 	}{
 		{
@@ -485,7 +485,7 @@ func TestGetIndexGroup(t *testing.T) {
 			},
 			filter: groupDto.ReqGroupIndexFilter{},
 			setupMock: func(m *MockGroupRepository) {
-				groups := []models.GoodsGroup{
+				groups := []models.Group{
 					{
 						ID:        uuid.New(),
 						GroupCode: "01",
@@ -502,7 +502,7 @@ func TestGetIndexGroup(t *testing.T) {
 				m.On("GetIndex", ctx, request.PageRequest{Page: 1, PerPage: 10}, groupDto.ReqGroupIndexFilter{}).Return(groups, 2, nil).Once()
 			},
 			expectedError: nil,
-			expectedResult: []models.GoodsGroup{
+			expectedResult: []models.Group{
 				{GroupCode: "01", Name: "Group 1"},
 				{GroupCode: "02", Name: "Group 2"},
 			},
@@ -516,7 +516,7 @@ func TestGetIndexGroup(t *testing.T) {
 			},
 			filter: groupDto.ReqGroupIndexFilter{},
 			setupMock: func(m *MockGroupRepository) {
-				groups := []models.GoodsGroup{
+				groups := []models.Group{
 					{
 						ID:        uuid.New(),
 						GroupCode: "01",
@@ -527,7 +527,7 @@ func TestGetIndexGroup(t *testing.T) {
 				m.On("GetIndex", ctx, request.PageRequest{Page: 1, PerPage: 10}, groupDto.ReqGroupIndexFilter{}).Return(groups, 1, nil).Once()
 			},
 			expectedError: nil,
-			expectedResult: []models.GoodsGroup{
+			expectedResult: []models.Group{
 				{GroupCode: "01", Name: "Group 1"},
 			},
 			expectedTotal: 1,
@@ -593,14 +593,14 @@ func TestExportGroup(t *testing.T) {
 		filter         groupDto.ReqGroupIndexFilter
 		setupMock      func(*MockGroupRepository)
 		expectedError  error
-		expectedResult []models.GoodsGroup
+		expectedResult []models.Group
 	}{
 		{
 			name:   "success export groups",
 			search: "",
 			filter: groupDto.ReqGroupIndexFilter{},
 			setupMock: func(m *MockGroupRepository) {
-				groups := []models.GoodsGroup{
+				groups := []models.Group{
 					{
 						ID:        uuid.New(),
 						GroupCode: "01",
@@ -617,7 +617,7 @@ func TestExportGroup(t *testing.T) {
 				m.On("GetAll", ctx, groupDto.ReqGroupIndexFilter{}).Return(groups, nil).Once()
 			},
 			expectedError: nil,
-			expectedResult: []models.GoodsGroup{
+			expectedResult: []models.Group{
 				{GroupCode: "01", Name: "Group 1"},
 				{GroupCode: "02", Name: "Group 2"},
 			},
@@ -627,7 +627,7 @@ func TestExportGroup(t *testing.T) {
 			search: "Group 1",
 			filter: groupDto.ReqGroupIndexFilter{Search: "Group 1"},
 			setupMock: func(m *MockGroupRepository) {
-				groups := []models.GoodsGroup{
+				groups := []models.Group{
 					{
 						ID:        uuid.New(),
 						GroupCode: "01",
@@ -638,7 +638,7 @@ func TestExportGroup(t *testing.T) {
 				m.On("GetAll", ctx, groupDto.ReqGroupIndexFilter{Search: "Group 1"}).Return(groups, nil).Once()
 			},
 			expectedError: nil,
-			expectedResult: []models.GoodsGroup{
+			expectedResult: []models.Group{
 				{GroupCode: "01", Name: "Group 1"},
 			},
 		},

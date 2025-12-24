@@ -7,8 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// GoodsGroup represents groups table
-type GoodsGroup struct {
+// Group represents groups table
+type Group struct {
 	ID        uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id" validate:"required"`
 	GroupCode string         `gorm:"column:group_code;type:varchar(255);unique;not null" json:"group_code"`
 	Name      string         `gorm:"column:name;type:varchar(255);not null;uniqueIndex" json:"name" validate:"required"`
@@ -23,6 +23,6 @@ type GoodsGroup struct {
 	Deletable bool `gorm:"column:deletable;<-:false" json:"deletable"`
 }
 
-func (GoodsGroup) TableName() string {
+func (Group) TableName() string {
 	return "groups"
 }

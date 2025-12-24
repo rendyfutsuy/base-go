@@ -27,12 +27,12 @@ func NewSubGroupRepository(db *gorm.DB) *subGroupRepository {
 func (r *subGroupRepository) Create(ctx context.Context, goodsGroupID uuid.UUID, name string, createdBy string) (*models.SubGroup, error) {
 	now := time.Now().UTC()
 	sg := &models.SubGroup{
-		GoodsGroupID: goodsGroupID,
-		Name:         name,
-		CreatedAt:    now,
-		CreatedBy:    createdBy,
-		UpdatedAt:    now,
-		UpdatedBy:    createdBy,
+		GroupID:   goodsGroupID,
+		Name:      name,
+		CreatedAt: now,
+		CreatedBy: createdBy,
+		UpdatedAt: now,
+		UpdatedBy: createdBy,
 	}
 	// Omit subgroup_code to let database trigger generate it with formatted 2-digit code
 	// Trigger will automatically generate code like "01", "02", etc. based on sequence
@@ -164,8 +164,8 @@ func (r *subGroupRepository) GetIndex(ctx context.Context, req request.PageReque
 	if len(filter.Names) > 0 {
 		query = query.Where("sg.name IN (?)", filter.Names)
 	}
-	if len(filter.GoodsGroupIDs) > 0 {
-		query = query.Where("sg.groups_id IN (?)", filter.GoodsGroupIDs)
+	if len(filter.GroupIDs) > 0 {
+		query = query.Where("sg.groups_id IN (?)", filter.GroupIDs)
 	}
 
 	// Pagination
@@ -209,8 +209,8 @@ func (r *subGroupRepository) GetAll(ctx context.Context, filter dto.ReqSubGroupI
 	if len(filter.Names) > 0 {
 		query = query.Where("sg.name IN (?)", filter.Names)
 	}
-	if len(filter.GoodsGroupIDs) > 0 {
-		query = query.Where("sg.groups_id IN (?)", filter.GoodsGroupIDs)
+	if len(filter.GroupIDs) > 0 {
+		query = query.Where("sg.groups_id IN (?)", filter.GroupIDs)
 	}
 
 	// Determine sorting with natural sorting support

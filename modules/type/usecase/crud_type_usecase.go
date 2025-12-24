@@ -151,7 +151,7 @@ func (u *typeUsecase) Export(ctx context.Context, filter dto.ReqTypeIndexFilter)
 		f.SetCellValue(sheet, "A"+strconv.Itoa(row), t.TypeCode)
 		f.SetCellValue(sheet, "B"+strconv.Itoa(row), t.Name)
 		f.SetCellValue(sheet, "C"+strconv.Itoa(row), t.SubgroupName)
-		f.SetCellValue(sheet, "D"+strconv.Itoa(row), t.GoodsGroupName)
+		f.SetCellValue(sheet, "D"+strconv.Itoa(row), t.GroupName)
 		f.SetCellValue(sheet, "E"+strconv.Itoa(row), t.UpdatedAt.Local().Format("2006/01/02"))
 	}
 

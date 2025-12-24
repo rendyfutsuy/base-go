@@ -21,9 +21,9 @@ type Type struct {
 	DeletedBy  *string        `gorm:"column:deleted_by;type:varchar(255)" json:"deleted_by"`
 
 	// Read-only field from join (not stored in database)
-	SubgroupName   string    `gorm:"column:subgroup_name;<-:false" json:"subgroup_name"`
-	GoodsGroupID   uuid.UUID `gorm:"column:groups_id;<-:false" json:"groups_id"`
-	GoodsGroupName string    `gorm:"column:groups_name;<-:false" json:"groups_name"`
+	SubgroupName string    `gorm:"column:subgroup_name;<-:false" json:"subgroup_name"`
+	GroupID      uuid.UUID `gorm:"column:groups_id;<-:false" json:"groups_id"`
+	GroupName    string    `gorm:"column:groups_name;<-:false" json:"groups_name"`
 
 	// Mutator field for deletable status (not stored in database)
 	Deletable bool `gorm:"column:deletable;<-:false" json:"deletable"`
