@@ -10,6 +10,7 @@ import (
 	_reqContext "github.com/rendyfutsuy/base-go/helpers/middleware/request"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/helpers/response"
+	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/group"
 	"github.com/rendyfutsuy/base-go/modules/group/dto"
 )
@@ -80,6 +81,9 @@ func NewGroupHandler(e *echo.Echo, uc group.Usecase, mwP _reqContext.IMiddleware
 // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/group [post]
 func (h *GroupHandler) Create(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	req := new(dto.ReqCreateGroup)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -87,9 +91,17 @@ func (h *GroupHandler) Create(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
+
+	// Get user ID from context
 	user := c.Get("user")
-	_ = user // not used; keep signature parity
-	res, err := h.Usecase.Create(c, req, "")
+	userID := ""
+	if user != nil {
+		if userModel, ok := user.(models.User); ok {
+			userID = userModel.ID.String()
+		}
+	}
+
+	res, err := h.Usecase.Create(ctx, req, userID)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -116,6 +128,9 @@ func (h *GroupHandler) Create(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Group not found"
 // @Router			/v1/group/{id} [put]
 func (h *GroupHandler) Update(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
 	req := new(dto.ReqUpdateGroup)
 	if err := c.Bind(req); err != nil {
@@ -124,7 +139,17 @@ func (h *GroupHandler) Update(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	res, err := h.Usecase.Update(c, id, req, "")
+
+	// Get user ID from context
+	user := c.Get("user")
+	userID := ""
+	if user != nil {
+		if userModel, ok := user.(models.User); ok {
+			userID = userModel.ID.String()
+		}
+	}
+
+	res, err := h.Usecase.Update(ctx, id, req, userID)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -148,8 +173,20 @@ func (h *GroupHandler) Update(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Group not found"
 // @Router			/v1/group/{id} [delete]
 func (h *GroupHandler) Delete(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
+	// Get user ID from context
+	user := c.Get("user")
+	userID := ""
+	if user != nil {
+		if userModel, ok := user.(models.User); ok {
+			userID = userModel.ID.String()
+		}
+	}
+
 	id := c.Param("id")
-	if err := h.Usecase.Delete(c, id, ""); err != nil {
+	if err := h.Usecase.Delete(ctx, id, userID); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 	resp := response.NonPaginationResponse{}
@@ -173,6 +210,9 @@ func (h *GroupHandler) Delete(c echo.Context) error {
 // @Failure		401			{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/group [get]
 func (h *GroupHandler) GetIndex(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	pageRequest := c.Get("page_request").(*request.PageRequest)
 
 	// validate filter req.
@@ -189,7 +229,7 @@ func (h *GroupHandler) GetIndex(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	res, total, err := h.Usecase.GetIndex(c, *pageRequest, *filter)
+	res, total, err := h.Usecase.GetIndex(ctx, *pageRequest, *filter)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -226,8 +266,11 @@ func (h *GroupHandler) GetIndex(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Group not found"
 // @Router			/v1/group/{id} [get]
 func (h *GroupHandler) GetByID(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
-	res, err := h.Usecase.GetByID(c, id)
+	res, err := h.Usecase.GetByID(ctx, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -250,6 +293,9 @@ func (h *GroupHandler) GetByID(c echo.Context) error {
 // @Failure		401			{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/group/export [get]
 func (h *GroupHandler) Export(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	// validate filter req.
 	// initialize filter
 	filter := new(dto.ReqGroupIndexFilter)
@@ -264,7 +310,7 @@ func (h *GroupHandler) Export(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	excelBytes, err := h.Usecase.Export(c, *filter)
+	excelBytes, err := h.Usecase.Export(ctx, *filter)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}

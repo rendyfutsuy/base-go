@@ -26,53 +26,53 @@ type mockGroupUsecase struct {
 	mock.Mock
 }
 
-func (m *mockGroupUsecase) Create(c echo.Context, req *dto.ReqCreateGroup, authId string) (*models.GoodsGroup, error) {
-	args := m.Called(c, req, authId)
+func (m *mockGroupUsecase) Create(ctx context.Context, req *dto.ReqCreateGroup, userID string) (*models.GoodsGroup, error) {
+	args := m.Called(ctx, req, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.GoodsGroup), args.Error(1)
 }
 
-func (m *mockGroupUsecase) Update(c echo.Context, id string, req *dto.ReqUpdateGroup, authId string) (*models.GoodsGroup, error) {
-	args := m.Called(c, id, req, authId)
+func (m *mockGroupUsecase) Update(ctx context.Context, id string, req *dto.ReqUpdateGroup, userID string) (*models.GoodsGroup, error) {
+	args := m.Called(ctx, id, req, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.GoodsGroup), args.Error(1)
 }
 
-func (m *mockGroupUsecase) Delete(c echo.Context, id string, authId string) error {
-	args := m.Called(c, id, authId)
+func (m *mockGroupUsecase) Delete(ctx context.Context, id string, userID string) error {
+	args := m.Called(ctx, id, userID)
 	return args.Error(0)
 }
 
-func (m *mockGroupUsecase) GetByID(c echo.Context, id string) (*models.GoodsGroup, error) {
-	args := m.Called(c, id)
+func (m *mockGroupUsecase) GetByID(ctx context.Context, id string) (*models.GoodsGroup, error) {
+	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.GoodsGroup), args.Error(1)
 }
 
-func (m *mockGroupUsecase) GetIndex(c echo.Context, req request.PageRequest, filter dto.ReqGroupIndexFilter) ([]models.GoodsGroup, int, error) {
-	args := m.Called(c, req, filter)
+func (m *mockGroupUsecase) GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqGroupIndexFilter) ([]models.GoodsGroup, int, error) {
+	args := m.Called(ctx, req, filter)
 	if args.Get(0) == nil {
 		return nil, args.Int(1), args.Error(2)
 	}
 	return args.Get(0).([]models.GoodsGroup), args.Int(1), args.Error(2)
 }
 
-func (m *mockGroupUsecase) GetAll(c echo.Context, filter dto.ReqGroupIndexFilter) ([]models.GoodsGroup, error) {
-	args := m.Called(c, filter)
+func (m *mockGroupUsecase) GetAll(ctx context.Context, filter dto.ReqGroupIndexFilter) ([]models.GoodsGroup, error) {
+	args := m.Called(ctx, filter)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]models.GoodsGroup), args.Error(1)
 }
 
-func (m *mockGroupUsecase) Export(c echo.Context, filter dto.ReqGroupIndexFilter) ([]byte, error) {
-	args := m.Called(c, filter)
+func (m *mockGroupUsecase) Export(ctx context.Context, filter dto.ReqGroupIndexFilter) ([]byte, error) {
+	args := m.Called(ctx, filter)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -98,12 +98,13 @@ func TestGroupHandler_CreateSuccess(t *testing.T) {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user", models.User{ID: uuid.New()})
+	userID := uuid.New()
+	c.Set("user", models.User{ID: userID})
 
 	mockUC := new(mockGroupUsecase)
 	handler := &groupHttp.GroupHandler{Usecase: mockUC}
 
-	mockUC.On("Create", mock.Anything, mock.AnythingOfType("*dto.ReqCreateGroup"), "").
+	mockUC.On("Create", mock.Anything, mock.AnythingOfType("*dto.ReqCreateGroup"), userID.String()).
 		Return(&models.GoodsGroup{ID: uuid.New(), Name: "GROUP-A"}, nil).Once()
 
 	err := handler.Create(c)
