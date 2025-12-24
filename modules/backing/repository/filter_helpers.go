@@ -40,7 +40,7 @@ func applyBackingFilters(query *gorm.DB, filter dto.ReqBackingIndexFilter) *gorm
 			}
 		}
 		if len(groupUUIDs) > 0 {
-			query = query.Where("sg.goods_group_id IN (?)", groupUUIDs)
+			query = query.Where("sg.groups_id IN (?)", groupUUIDs)
 		}
 	}
 	return query

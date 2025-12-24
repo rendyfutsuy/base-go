@@ -139,6 +139,7 @@ func TestCreateBacking(t *testing.T) {
 	e := echo.New()
 	ctx := context.Background()
 	typeID := uuid.New()
+	testUserID := uuid.New()
 
 	tests := []struct {
 		name           string
@@ -154,14 +155,14 @@ func TestCreateBacking(t *testing.T) {
 				TypeID: typeID,
 				Name:   "Test Backing",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockBackingRepository, mt *MockTypeRepository) {
 				mt.On("GetByID", ctx, typeID).Return(&models.Type{
 					ID:   typeID,
 					Name: "Test Type",
 				}, nil).Once()
 				m.On("ExistsByNameInType", ctx, typeID, "Test Backing", uuid.Nil).Return(false, nil).Once()
-				m.On("Create", ctx, typeID, "Test Backing", "").Return(&models.Backing{
+				m.On("Create", ctx, typeID, "Test Backing", testUserID.String()).Return(&models.Backing{
 					ID:          uuid.New(),
 					TypeID:      typeID,
 					BackingCode: "01",
@@ -182,7 +183,7 @@ func TestCreateBacking(t *testing.T) {
 				TypeID: typeID,
 				Name:   "Existing Backing",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockBackingRepository, mt *MockTypeRepository) {
 				mt.On("GetByID", ctx, typeID).Return(&models.Type{
 					ID:   typeID,
@@ -199,7 +200,7 @@ func TestCreateBacking(t *testing.T) {
 				TypeID: typeID,
 				Name:   "Test Backing",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockBackingRepository, mt *MockTypeRepository) {
 				mt.On("GetByID", ctx, typeID).Return(&models.Type{
 					ID:   typeID,
@@ -216,14 +217,14 @@ func TestCreateBacking(t *testing.T) {
 				TypeID: typeID,
 				Name:   "Test Backing",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockBackingRepository, mt *MockTypeRepository) {
 				mt.On("GetByID", ctx, typeID).Return(&models.Type{
 					ID:   typeID,
 					Name: "Test Type",
 				}, nil).Once()
 				m.On("ExistsByNameInType", ctx, typeID, "Test Backing", uuid.Nil).Return(false, nil).Once()
-				m.On("Create", ctx, typeID, "Test Backing", "").Return(nil, errors.New("create failed")).Once()
+				m.On("Create", ctx, typeID, "Test Backing", testUserID.String()).Return(nil, errors.New("create failed")).Once()
 			},
 			expectedError:  errors.New("create failed"),
 			expectedResult: nil,
@@ -243,7 +244,7 @@ func TestCreateBacking(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.Create(c, tt.req, tt.authId)
+			result, err := usecaseInstance.Create(ctx, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -269,6 +270,7 @@ func TestUpdateBacking(t *testing.T) {
 	ctx := context.Background()
 	validID := uuid.New()
 	typeID := uuid.New()
+	testUserID := uuid.New()
 
 	tests := []struct {
 		name           string
@@ -286,14 +288,14 @@ func TestUpdateBacking(t *testing.T) {
 				TypeID: typeID,
 				Name:   "Updated Backing",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockBackingRepository, mt *MockTypeRepository) {
 				mt.On("GetByID", ctx, typeID).Return(&models.Type{
 					ID:   typeID,
 					Name: "Test Type",
 				}, nil).Once()
 				m.On("ExistsByNameInType", ctx, typeID, "Updated Backing", validID).Return(false, nil).Once()
-				m.On("Update", ctx, validID, typeID, "Updated Backing", "").Return(&models.Backing{
+				m.On("Update", ctx, validID, typeID, "Updated Backing", testUserID.String()).Return(&models.Backing{
 					ID:          validID,
 					TypeID:      typeID,
 					BackingCode: "02",
@@ -315,7 +317,7 @@ func TestUpdateBacking(t *testing.T) {
 				TypeID: typeID,
 				Name:   "Updated Backing",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockBackingRepository, mt *MockTypeRepository) {
 				// No mock calls expected
 			},
@@ -329,7 +331,7 @@ func TestUpdateBacking(t *testing.T) {
 				TypeID: typeID,
 				Name:   "Existing Backing",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockBackingRepository, mt *MockTypeRepository) {
 				mt.On("GetByID", ctx, typeID).Return(&models.Type{
 					ID:   typeID,
@@ -347,14 +349,14 @@ func TestUpdateBacking(t *testing.T) {
 				TypeID: typeID,
 				Name:   "Updated Backing",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockBackingRepository, mt *MockTypeRepository) {
 				mt.On("GetByID", ctx, typeID).Return(&models.Type{
 					ID:   typeID,
 					Name: "Test Type",
 				}, nil).Once()
 				m.On("ExistsByNameInType", ctx, typeID, "Updated Backing", validID).Return(false, nil).Once()
-				m.On("Update", ctx, validID, typeID, "Updated Backing", "").Return(nil, errors.New("update failed")).Once()
+				m.On("Update", ctx, validID, typeID, "Updated Backing", testUserID.String()).Return(nil, errors.New("update failed")).Once()
 			},
 			expectedError:  errors.New("update failed"),
 			expectedResult: nil,
@@ -376,7 +378,7 @@ func TestUpdateBacking(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.Update(c, tt.id, tt.req, tt.authId)
+			result, err := usecaseInstance.Update(ctx, tt.id, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -453,7 +455,7 @@ func TestDeleteBacking(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			err := usecaseInstance.Delete(c, tt.id, tt.authId)
+			err := usecaseInstance.Delete(ctx, tt.id, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -536,7 +538,7 @@ func TestGetBackingByID(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.GetByID(c, tt.id)
+			result, err := usecaseInstance.GetByID(ctx, tt.id)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -655,7 +657,7 @@ func TestGetIndexBacking(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, total, err := usecaseInstance.GetIndex(c, tt.req, tt.filter)
+			result, total, err := usecaseInstance.GetIndex(ctx, tt.req, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -769,7 +771,7 @@ func TestExportBacking(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.Export(c, tt.filter)
+			result, err := usecaseInstance.Export(ctx, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)

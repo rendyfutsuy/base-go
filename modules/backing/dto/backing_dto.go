@@ -25,8 +25,8 @@ type RespBacking struct {
 	TypeName       string    `json:"type_name"`
 	SubgroupID     uuid.UUID `json:"subgroup_id"`
 	SubgroupName   string    `json:"subgroup_name"`
-	GoodsGroupID   uuid.UUID `json:"goods_group_id"`
-	GoodsGroupName string    `json:"goods_group_name"`
+	GoodsGroupID   uuid.UUID `json:"groups_id"`
+	GoodsGroupName string    `json:"groups_name"`
 	CreatedAt      time.Time `json:"created_at"`
 	CreatedBy      string    `json:"created_by"`
 	UpdatedAt      time.Time `json:"updated_at"`

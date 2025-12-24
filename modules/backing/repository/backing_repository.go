@@ -10,6 +10,7 @@ import (
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/backing/dto"
+	rsearchbacking "github.com/rendyfutsuy/base-go/modules/backing/repository/searches"
 	"gorm.io/gorm"
 )
 
@@ -18,7 +19,9 @@ type backingRepository struct {
 }
 
 func NewBackingRepository(db *gorm.DB) *backingRepository {
-	return &backingRepository{DB: db}
+	return &backingRepository{
+		DB: db,
+	}
 }
 
 func (r *backingRepository) Create(ctx context.Context, typeID uuid.UUID, name string, createdBy string) (*models.Backing, error) {
@@ -83,12 +86,12 @@ func (r *backingRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.
 			t.name as type_name,
 			t.subgroup_id as subgroup_id,
 			sg.name as subgroup_name,
-			sg.goods_group_id as goods_group_id,
+			sg.groups_id as groups_id,
 			gg.name as group_name
 		`).
 		Joins("LEFT JOIN types t ON b.type_id = t.id AND t.deleted_at IS NULL").
 		Joins("LEFT JOIN sub_groups sg ON t.subgroup_id = sg.id AND sg.deleted_at IS NULL").
-		Joins("LEFT JOIN goods_group gg ON sg.goods_group_id = gg.id AND gg.deleted_at IS NULL").
+		Joins("LEFT JOIN groups gg ON sg.groups_id = gg.id AND gg.deleted_at IS NULL").
 		Where("b.id = ? AND b.deleted_at IS NULL", id)
 
 	err := query.Scan(b).Error
@@ -131,12 +134,12 @@ func (r *backingRepository) GetIndex(ctx context.Context, req request.PageReques
 		`).
 		Joins("LEFT JOIN types t ON b.type_id = t.id AND t.deleted_at IS NULL").
 		Joins("LEFT JOIN sub_groups sg ON t.subgroup_id = sg.id AND sg.deleted_at IS NULL").
-		Joins("LEFT JOIN goods_group gg ON sg.goods_group_id = gg.id AND gg.deleted_at IS NULL").
+		Joins("LEFT JOIN groups gg ON sg.groups_id = gg.id AND gg.deleted_at IS NULL").
 		Where("b.deleted_at IS NULL")
 
-	// Apply search from PageRequest
+		// Apply search from PageRequest
 	searchQuery := req.Search
-	query = request.ApplySearchCondition(query, searchQuery, []string{"b.name", "b.backing_code"})
+	query = request.ApplySearchConditionFromInterface(query, searchQuery, rsearchbacking.NewBackingSearchHelper())
 
 	// Apply filters with multiple values support
 	query = r.ApplyFilters(query, filter)
@@ -172,11 +175,11 @@ func (r *backingRepository) GetAll(ctx context.Context, filter dto.ReqBackingInd
 		`).
 		Joins("LEFT JOIN types t ON b.type_id = t.id AND t.deleted_at IS NULL").
 		Joins("LEFT JOIN sub_groups sg ON t.subgroup_id = sg.id AND sg.deleted_at IS NULL").
-		Joins("LEFT JOIN goods_group gg ON sg.goods_group_id = gg.id AND gg.deleted_at IS NULL").
+		Joins("LEFT JOIN groups gg ON sg.groups_id = gg.id AND gg.deleted_at IS NULL").
 		Where("b.deleted_at IS NULL")
 
-	// Apply search from filter
-	query = request.ApplySearchCondition(query, filter.Search, []string{"b.name", "b.backing_code"})
+		// Apply search from filter
+	query = request.ApplySearchConditionFromInterface(query, filter.Search, rsearchbacking.NewBackingSearchHelper())
 
 	// Apply filters with multiple values support
 	query = r.ApplyFilters(query, filter)
