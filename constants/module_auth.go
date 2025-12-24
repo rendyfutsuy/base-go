@@ -19,7 +19,6 @@ const (
 	AuthTokenJTIExtractionFailed = "Failed to extract jti from token, using accessToken as key"
 	AuthTokenInvalid             = "User Not Found, the access token is not valid please re-login"
 	AuthTokenInvalidRestart      = "User Not Found, the access token is not valid please restart the process..."
-	AuthTooManyPasswordAttempts  = "too many password attempts"
 	AuthInvalidCredentials       = "invalid credentials"
 	AuthUsernamePasswordNotFound = "Username/Password not found..."
 	AuthOldPasswordNotMatch      = "Old Password not Match"

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -18,7 +17,6 @@ import (
 
 var (
 	app struct {
-		Database    *sql.DB
 		GormDB      *gorm.DB
 		RedisClient *redis.Client
 		Router      *echo.Echo
@@ -40,12 +38,6 @@ func init() {
 
 	if err := app.NewRelicApp.WaitForConnection(5 * time.Second); nil != err {
 		fmt.Println(err)
-	}
-
-	// Connect to database with raw SQL (keeping for backward compatibility)
-	app.Database = database.ConnectToDB("Database")
-	if app.Database == nil {
-		panic("Can't connect to Postgres : Database!")
 	}
 
 	// Connect to database with GORM
@@ -71,16 +63,13 @@ func main() {
 	// Set a timeout for each endpoint
 	timeoutContext := time.Duration(utils.ConfigVars.Int("context.timeout")) * time.Second
 
-	app.Router = router.InitializedRouter(app.Database, app.GormDB, app.RedisClient, timeoutContext, app.Validator, app.NewRelicApp)
+	app.Router = router.InitializedRouter(app.GormDB, app.RedisClient, timeoutContext, app.Validator, app.NewRelicApp)
 
 	app.Router.Validator = &utils.CustomValidator{Validator: app.Validator}
 
 	app.Router.Logger.Fatal(app.Router.Start(fmt.Sprintf(":%s", utils.ConfigVars.String("app_port"))))
 
 	defer func() {
-		if app.Database != nil {
-			app.Database.Close()
-		}
 		if app.GormDB != nil {
 			sqlDB, _ := app.GormDB.DB()
 			if sqlDB != nil {
