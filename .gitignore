@@ -2,7 +2,7 @@
 .vscode
 
 # environnement
-config.json
+.env
 
 # logger
 log.json

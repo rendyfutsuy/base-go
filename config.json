@@ -20,7 +20,7 @@
   "jwt_key": "",
   "jwt_refresh_key": "",
   "email": {
-    "smtp_host":"",
+    "smtp_host":"mail.roketin.com",
     "smtp_port":"587",
     "smtp_sender_mail":"",
     "smtp_auth_email":"",
@@ -44,12 +44,12 @@
     "driver": "minio"
   },
   "minio": {
-    "endpoint": ",
+    "endpoint": "storage.roketinapp.com",
     "bucket_name": "",
     "access_key_id": "",
     "secret_access_key": "",
     "use_ssl": true,
-    "origin_endpoint": "
+    "origin_endpoint": "https://storage.roketinapp.com"
   },
    "aws": {
     "aws_endpoint": "",
