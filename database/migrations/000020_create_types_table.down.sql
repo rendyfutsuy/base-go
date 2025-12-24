@@ -15,4 +15,3 @@ DROP FUNCTION IF EXISTS generate_type_code();
 
 -- Drop sequence
 DROP SEQUENCE IF EXISTS type_code_seq;
-

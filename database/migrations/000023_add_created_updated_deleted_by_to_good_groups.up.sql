@@ -10,4 +10,3 @@ ADD COLUMN IF NOT EXISTS deleted_by VARCHAR(255);
 CREATE INDEX IF NOT EXISTS groups_created_by_index ON groups (created_by);
 CREATE INDEX IF NOT EXISTS groups_updated_by_index ON groups (updated_by);
 CREATE INDEX IF NOT EXISTS groups_deleted_by_index ON groups (deleted_by);
-

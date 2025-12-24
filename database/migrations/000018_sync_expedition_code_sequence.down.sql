@@ -2,4 +2,3 @@
 -- Note: This may cause duplicate key issues if there are existing records
 DROP FUNCTION IF EXISTS sync_expedition_code_sequence();
 ALTER SEQUENCE expedition_code_seq RESTART WITH 1;
-

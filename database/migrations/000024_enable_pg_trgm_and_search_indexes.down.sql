@@ -18,4 +18,3 @@ DROP INDEX IF EXISTS city_name_trgm_idx;
 
 -- Finally, drop extension (optional)
 DROP EXTENSION IF EXISTS pg_trgm;
-

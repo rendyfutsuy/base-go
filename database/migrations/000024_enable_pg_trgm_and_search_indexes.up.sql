@@ -2,8 +2,8 @@
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- City and Subdistrict names (search via EXISTS subqueries)
-CREATE INDEX IF NOT EXISTS city_name_trgm_idx ON city USING gin (LOWER(REPLACE(name, ' ', '')) gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS subdistrict_name_trgm_idx ON subdistrict USING gin (LOWER(REPLACE(name, ' ', '')) gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS city_name_trgm_idx ON cities USING gin (LOWER(REPLACE(name, ' ', '')) gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS subdistrict_name_trgm_idx ON subdistricts USING gin (LOWER(REPLACE(name, ' ', '')) gin_trgm_ops);
 
 -- Goods Group (search: name, group_code)
 CREATE INDEX IF NOT EXISTS groups_name_trgm_idx ON groups USING gin (LOWER(REPLACE(name, ' ', '')) gin_trgm_ops);
@@ -18,4 +18,3 @@ CREATE INDEX IF NOT EXISTS backings_name_trgm_idx ON backings USING gin (LOWER(R
 
 -- Parameters (search via multiple modules by parameter name)
 CREATE INDEX IF NOT EXISTS parameter_name_trgm_idx ON parameters USING gin (LOWER(REPLACE(name, ' ', '')) gin_trgm_ops);
-

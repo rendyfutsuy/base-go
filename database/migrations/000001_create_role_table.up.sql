@@ -4,11 +4,11 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS roles(
   id UUID DEFAULT uuid_generate_v7() PRIMARY KEY NOT NULL,
   created_at TIMESTAMP,
-  created_by VARCHAR(80),
+  created_by UUID,
   updated_at TIMESTAMP,
-  updated_by VARCHAR(80),
+  updated_by UUID,
   deleted_at TIMESTAMP,
-  deleted_by VARCHAR(80),
+  deleted_by UUID,
   name VARCHAR(255) NOT NULL UNIQUE,
   deletable boolean NOT NULL,
   description TEXT NULL

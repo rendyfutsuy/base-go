@@ -41,4 +41,3 @@ CREATE INDEX IF NOT EXISTS types_name_index ON types (name);
 CREATE INDEX IF NOT EXISTS types_created_at_index ON types (created_at);
 CREATE INDEX IF NOT EXISTS types_updated_at_index ON types (updated_at);
 CREATE INDEX IF NOT EXISTS types_deleted_at_index ON types (deleted_at);
-

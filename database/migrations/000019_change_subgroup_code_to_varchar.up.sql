@@ -71,4 +71,3 @@ BEGIN
   -- Set the sequence to start from max_code_val + 1
   PERFORM setval('subgroup_code_seq', max_code_val + 1, false);
 END $$;
-

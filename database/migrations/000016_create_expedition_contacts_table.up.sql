@@ -25,4 +25,3 @@ CREATE INDEX IF NOT EXISTS expedition_contacts_deleted_at_index ON expedition_co
 CREATE UNIQUE INDEX IF NOT EXISTS expedition_contacts_expedition_primary_unique 
 ON expedition_contacts (expedition_id) 
 WHERE is_primary = true AND deleted_at IS NULL;
-

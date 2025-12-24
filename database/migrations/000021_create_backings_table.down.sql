@@ -16,4 +16,3 @@ DROP FUNCTION IF EXISTS generate_backing_code();
 
 -- Drop sequence
 DROP SEQUENCE IF EXISTS backing_code_seq;
-

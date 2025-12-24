@@ -27,4 +27,3 @@ $$ LANGUAGE plpgsql;
 
 -- Execute the sync function immediately
 SELECT sync_expedition_code_sequence();
-

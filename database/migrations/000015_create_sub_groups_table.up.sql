@@ -26,4 +26,3 @@ CREATE INDEX IF NOT EXISTS sub_groups_deleted_at_index ON sub_groups (deleted_at
 
 -- Unique constraint: name must be unique within a groups (excluding soft-deleted records)
 CREATE UNIQUE INDEX IF NOT EXISTS subgroup_in_group ON sub_groups (groups_id, name) WHERE deleted_at IS NULL;
-

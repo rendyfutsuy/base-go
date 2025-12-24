@@ -1,6 +1,5 @@
 -- Add area_code column to city table
-ALTER TABLE city
+ALTER TABLE cities
     ADD COLUMN IF NOT EXISTS area_code VARCHAR(50);
 
-COMMENT ON COLUMN city.area_code IS 'City dialing area code';
-
+COMMENT ON COLUMN cities.area_code IS 'City dialing area code';

@@ -43,4 +43,3 @@ CREATE INDEX IF NOT EXISTS backings_name_index ON backings (name);
 CREATE INDEX IF NOT EXISTS backings_created_at_index ON backings (created_at);
 CREATE INDEX IF NOT EXISTS backings_updated_at_index ON backings (updated_at);
 CREATE INDEX IF NOT EXISTS backings_deleted_at_index ON backings (deleted_at);
-
