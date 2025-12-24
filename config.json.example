@@ -4,9 +4,9 @@
   "database": {
     "host": "localhost",
     "port": 5432,
-    "user": "postgres",
-    "password": "postgres",
-    "db_name": "base",
+    "user": "",
+    "password": "",
+    "db_name": "",
     "sslmode": "disable"
   },
   "user": {
@@ -16,37 +16,40 @@
     "time": "2006-01-02T15:04:05.999Z07:00"
   },
   "app_port": 9090,
-  "jwt_key": 123456,
+  "queue_port": 9091,
+  "jwt_key": "",
+  "jwt_refresh_key": "",
   "email": {
-    "smtp_host":"",
+    "smtp_host":"mail.roketin.com",
     "smtp_port":"587",
     "smtp_sender_mail":"",
     "smtp_auth_email":"",
     "smtp_password":"",
     "reset_password_url":"http://localhost:3000/reset-password",
-    "validation-scope": "gmail.com|mailinator.com|company.com"
+    "validation_scope": "gmail.com|mailinator.com|company.com"
   },
   "redis": {
-    "addr": "",
+    "addr": "127.0.0.1:6379",
     "password": "",
     "db": "db0",
     "concurrency": 10
   },
   "auth": {
-    "access_token_ttl_seconds": 172800, // 2 days (2 * 24 * 60 * 60) - Redis session TTL
-    "jwt_expires_at_seconds": 1800 // 30 minutes (30 * 60) - JWT expiration time
+    "redis_ttl_seconds": 172800,
+    "access_token_ttl_seconds": 1800,
+    "refresh_token_ttl_seconds": 604800
   },
     "file": {
     "max_size": "30000000",
-    "driver": "minio/local/aws"
+    "driver": "minio"
   },
   "minio": {
-    "endpoint": "",
+    "endpoint": "storage.roketinapp.com",
     "bucket_name": "",
     "access_key_id": "",
     "secret_access_key": "",
     "use_ssl": true,
-    "origin_endpoint": "m"
+    "origin_endpoint": "https://storage.roketinapp.com"
   },
    "aws": {
     "aws_endpoint": "",
@@ -57,5 +60,11 @@
     "aws_origin_endpoint": "",
     "aws_cdn": "",
     "aws_delete_cycle_days": 30
+  },
+  "newrelic":{
+    "enable_new_relic_logging": true,
+    "app_name": "base-v2",
+    "license": "",
+    "identifier": ""
   }
 }

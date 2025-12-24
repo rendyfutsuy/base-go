@@ -12,7 +12,6 @@ import (
 	"github.com/rendyfutsuy/base-go/helpers/response"
 	"github.com/rendyfutsuy/base-go/modules/auth"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
-	"github.com/rendyfutsuy/base-go/utils"
 )
 
 // GeneralResponse represent the response error struct
@@ -22,6 +21,7 @@ type GeneralResponse struct {
 
 type ResponseAuth struct {
 	AccessToken      string `json:"access_token"`
+	RefreshToken     string `json:"refresh_token"`
 	IsFirstTimeLogin bool   `json:"is_first_time_login"`
 }
 
@@ -83,9 +83,8 @@ func NewAuthHandler(e *echo.Echo, us auth.Usecase, middlewareAuth middleware.IMi
 		handler.middlewareAuth.AuthorizationCheck,
 	)
 
-	r.GET("/refresh-token",
+	r.POST("/refresh-token",
 		handler.RefreshToken,
-		handler.middlewareAuth.AuthorizationCheck,
 	)
 }
 
@@ -122,6 +121,7 @@ func (handler *AuthHandler) Authenticate(c echo.Context) error {
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(ResponseAuth{
 		AccessToken:      result.AccessToken,
+		RefreshToken:     result.RefreshToken,
 		IsFirstTimeLogin: result.IsFirstTimeLogin,
 	})
 
@@ -187,11 +187,8 @@ func (handler *AuthHandler) GetProfile(c echo.Context) error {
 		Username:         user.Username,
 		Email:            user.Email,
 		IsFirstTimeLogin: user.IsFirstTimeLogin,
-		Role: utils.NullString{
-			String: user.RoleName,
-			Valid:  user.RoleName != "",
-		},
-		Permissions: user.Permissions,
+		Role:             user.RoleName,
+		Permissions:      user.Permissions,
 	}
 
 	resp := response.NonPaginationResponse{}
@@ -282,6 +279,10 @@ func (handler *AuthHandler) UpdateMyPassword(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
 // @Summary		Refresh access token
 // @Description	Generates a new access token based on the provided bearer token. Access tokens that have expired can still be refreshed as long as the Redis session (TTL) has not expired. If the token is revoked or the Redis session has expired, returns an error.
 // @Tags			Authentication
@@ -290,27 +291,39 @@ func (handler *AuthHandler) UpdateMyPassword(c echo.Context) error {
 // @Security		BearerAuth
 // @Success		200	{object}	response.NonPaginationResponse{data=ResponseAuth}	"Successfully refreshed token"
 // @Failure		401	{object}	response.NonPaginationResponse	"Unauthorized - token is revoked, invalid, or Redis session expired"
-// @Router			/v1/auth/refresh-token [get]
+// @Router			/v1/auth/refresh-token [post]
 func (handler *AuthHandler) RefreshToken(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// parse token from context (set by middleware)
-	token, ok := c.Get("token").(string)
-	if !ok || token == "" {
-		return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, constants.TokenRevokedMessage))
+	// Parse request body
+	var req RefreshTokenRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest,
+			response.SetErrorResponse(http.StatusBadRequest, "invalid request body"))
 	}
 
-	// initiate refresh token
-	newToken, err := handler.AuthUseCase.RefreshToken(ctx, token)
+	if req.RefreshToken == "" {
+		return c.JSON(http.StatusUnauthorized,
+			response.SetErrorResponse(http.StatusUnauthorized, constants.TokenRevokedMessage))
+	}
+
+	// Call usecase
+	newToken, err := handler.AuthUseCase.RefreshToken(ctx, req.RefreshToken)
 	if err != nil {
-		// Check if error is about revoked token
 		if err == constants.ErrTokenRevoked {
-			return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, constants.TokenRevokedMessage))
+			return c.JSON(http.StatusUnauthorized,
+				response.SetErrorResponse(http.StatusUnauthorized, constants.TokenRevokedMessage))
 		}
-		return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, err.Error()))
+		return c.JSON(http.StatusUnauthorized,
+			response.SetErrorResponse(http.StatusUnauthorized, err.Error()))
 	}
 
+	// Return response
 	resp := response.NonPaginationResponse{}
-	resp, _ = resp.SetResponse(ResponseAuth{AccessToken: newToken})
+	resp, _ = resp.SetResponse(ResponseAuth{
+		AccessToken:  newToken.AccessToken,
+		RefreshToken: newToken.RefreshToken,
+	})
+
 	return c.JSON(http.StatusOK, resp)
 }

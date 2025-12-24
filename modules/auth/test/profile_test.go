@@ -8,11 +8,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/constants"
+	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 	"github.com/rendyfutsuy/base-go/modules/auth/usecase"
 	roleManagementDto "github.com/rendyfutsuy/base-go/modules/role_management/dto"
-	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -241,10 +241,11 @@ func TestGetProfile(t *testing.T) {
 	mockRepo := new(MockAuthRepository)
 	mockRoleManagementRepo := new(MockRoleManagementRepository)
 	signingKey := []byte("test-secret-key")
+	refreshSigningKey := []byte("test-secret-refresh-key")
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, mockRoleManagementRepo, timeout, hashSalt, signingKey, 24*time.Hour)
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, mockRoleManagementRepo, timeout, hashSalt, signingKey, refreshSigningKey, 24*time.Hour)
 
 	accessToken := "valid-access-token"
 	testRoleId := uuid.New()
@@ -357,10 +358,11 @@ func TestUpdateProfile(t *testing.T) {
 	ctx := context.Background()
 	mockRepo := new(MockAuthRepository)
 	signingKey := []byte("test-secret-key")
+	refreshSigningKey := []byte("test-secret-refresh-key")
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, 24*time.Hour)
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, refreshSigningKey, 24*time.Hour)
 
 	validUserId := uuid.New().String()
 
@@ -483,10 +485,11 @@ func TestUpdateMyPassword(t *testing.T) {
 	ctx := context.Background()
 	mockRepo := new(MockAuthRepository)
 	signingKey := []byte("test-secret-key")
+	refreshSigningKey := []byte("test-secret-refresh-key")
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, 24*time.Hour)
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, refreshSigningKey, 24*time.Hour)
 
 	validUserId := uuid.New().String()
 	oldPassword := "oldpassword123"

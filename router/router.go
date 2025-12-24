@@ -135,6 +135,7 @@ func InitializedRouter(db *sql.DB, gormDB *gorm.DB, redisClient *redis.Client, t
 		timeoutContext,
 		utils.ConfigVars.String("jwt_key"),
 		[]byte(utils.ConfigVars.String("jwt_key")),
+		[]byte(utils.ConfigVars.String("jwt_refresh_key")),
 	)
 	_authController.NewAuthHandler(
 		router,

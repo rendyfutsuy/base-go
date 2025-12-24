@@ -10,6 +10,7 @@ import (
 	"github.com/knadh/koanf/v2"
 	"github.com/rendyfutsuy/base-go/constants"
 	models "github.com/rendyfutsuy/base-go/models"
+	"github.com/rendyfutsuy/base-go/modules/auth"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 	"github.com/rendyfutsuy/base-go/modules/auth/usecase"
 	"github.com/rendyfutsuy/base-go/utils"
@@ -26,6 +27,26 @@ type MockAuthRepository struct {
 func (m *MockAuthRepository) GetIsFirstTimeLogin(ctx context.Context, userId uuid.UUID) (bool, error) {
 	args := m.Called(ctx, userId)
 	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockAuthRepository) StoreRefreshToken(ctx context.Context, jti string, userId uuid.UUID, accessJTI string, ttl time.Duration) error {
+	args := m.Called(ctx, jti, userId, accessJTI, ttl)
+	return args.Error(0)
+}
+
+func (m *MockAuthRepository) GetRefreshTokenMetadata(ctx context.Context, jti string) (auth.RefreshTokenMeta, error) {
+	args := m.Called(ctx, jti)
+	return args.Get(0).(auth.RefreshTokenMeta), args.Error(1)
+}
+
+func (m *MockAuthRepository) MarkRefreshTokenUsed(ctx context.Context, jti string) error {
+	args := m.Called(ctx, jti)
+	return args.Error(0)
+}
+
+func (m *MockAuthRepository) RevokeAllUserSessions(ctx context.Context, userId uuid.UUID) error {
+	args := m.Called(ctx, userId)
+	return args.Error(0)
 }
 
 func (m *MockAuthRepository) FindByEmailOrUsername(ctx context.Context, login string) (models.User, error) {
@@ -130,15 +151,16 @@ func TestAuthenticate(t *testing.T) {
 		utils.ConfigVars = koanf.New(".")
 	}
 	// Set test config value
-	utils.ConfigVars.Set("auth.access_token_ttl_seconds", 86400) // 24 hours in seconds
+	utils.ConfigVars.Set("auth.redis_ttl_seconds", 86400) // 24 hours in seconds
 
 	ctx := context.Background()
 	mockRepo := new(MockAuthRepository)
-	signingKey := []byte("test-secret-key-for-jwt")
+	signingKey := []byte("test-secret-key")
+	refreshSigningKey := []byte("test-secret-refresh-key")
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, 24*time.Hour)
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, refreshSigningKey, 24*time.Hour)
 
 	testUserID := uuid.New()
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
@@ -169,6 +191,13 @@ func TestAuthenticate(t *testing.T) {
 				mockRepo.On("AssertPasswordExpiredIsPassed", ctx, testUserID).Return(false, nil).Once()
 				mockRepo.On("GetIsFirstTimeLogin", ctx, testUserID).Return(false, nil).Once()
 				mockRepo.On("AddUserAccessToken", ctx, mock.AnythingOfType("string"), testUserID).Return(nil).Once()
+				mockRepo.On("StoreRefreshToken",
+					ctx,
+					mock.AnythingOfType("string"), // refreshJTI
+					testUserID,
+					mock.AnythingOfType("string"), // accessJTI
+					mock.AnythingOfType("time.Duration"),
+				).Return(nil).Once()
 			},
 			expectedError: false,
 			description:   "Valid credentials should return access token",
@@ -193,7 +222,7 @@ func TestAuthenticate(t *testing.T) {
 				mockRepo.On("AssertPasswordAttemptPassed", ctx, testUserID).Return(false, nil).Once()
 			},
 			expectedError:  true,
-			expectedErrMsg: constants.AuthUsernamePasswordNotFound, // Usecase returns generic error for security
+			expectedErrMsg: constants.AuthPasswordAttemptExceeded, // Usecase returns generic error for security
 			description:    "Too many attempts should return error",
 		},
 		{
@@ -321,10 +350,11 @@ func TestIsUserPasswordExpired(t *testing.T) {
 	ctx := context.Background()
 	mockRepo := new(MockAuthRepository)
 	signingKey := []byte("test-secret-key")
+	refreshSigningKey := []byte("test-secret-refresh-key")
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, 24*time.Hour)
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, refreshSigningKey, 24*time.Hour)
 
 	testUserID := uuid.New()
 	testUser := models.User{

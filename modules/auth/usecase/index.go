@@ -19,10 +19,11 @@ type authUsecase struct {
 	contextTimeout     time.Duration
 	hashSalt           string
 	signingKey         []byte
+	refreshSigningKey  []byte
 	expireDuration     time.Duration
 }
 
-func NewAuthUsecase(r auth.Repository, rm roleManagement.Repository, timeout time.Duration, hashSalt string, signingKey []byte) auth.Usecase {
+func NewAuthUsecase(r auth.Repository, rm roleManagement.Repository, timeout time.Duration, hashSalt string, signingKey []byte, refreshSigningKey []byte) auth.Usecase {
 	// Expire Time Calculation BEGIN
 	// Determine the current time in UTC+7 (Asia/Bangkok timezone)
 	loc := time.FixedZone("UTC+7", 7*60*60) // UTC+7 is 7 hours ahead of UTC
@@ -44,6 +45,7 @@ func NewAuthUsecase(r auth.Repository, rm roleManagement.Repository, timeout tim
 		contextTimeout:     timeout,
 		hashSalt:           hashSalt,
 		signingKey:         signingKey,
+		refreshSigningKey:  refreshSigningKey,
 		expireDuration:     expireDuration,
 	}
 }

@@ -1,22 +1,18 @@
 package dto
 
-import (
-	"github.com/rendyfutsuy/base-go/utils"
-)
-
 type ReqAuthUser struct {
 	Login    string `json:"login" validate:"required"`
 	Password string `json:"password" validate:"required"`
 }
 
 type UserProfile struct {
-	UserId           string           `json:"id"`
-	Name             string           `json:"name"`
-	Username         string           `json:"username"`
-	Role             utils.NullString `json:"role"`
-	Email            string           `json:"email"`
-	IsFirstTimeLogin bool             `json:"is_first_time_login"`
-	Permissions      []string         `json:"permissions"`
+	UserId           string   `json:"id"`
+	Name             string   `json:"name"`
+	Username         string   `json:"username"`
+	Role             string   `json:"role"`
+	Email            string   `json:"email"`
+	IsFirstTimeLogin bool     `json:"is_first_time_login"`
+	Permissions      []string `json:"permissions"`
 }
 
 type ReqUpdateProfile struct {

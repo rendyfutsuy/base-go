@@ -13,13 +13,14 @@ import (
 // NewTestAuthUsecase creates a new authUsecase instance for testing purposes
 // This allows test packages to create authUsecase instances with custom configurations
 // roleManagementRepo can be nil if not needed for the test
-func NewTestAuthUsecase(r auth.Repository, rm roleManagement.Repository, timeout time.Duration, hashSalt string, signingKey []byte, expireDuration time.Duration) *authUsecase {
+func NewTestAuthUsecase(r auth.Repository, rm roleManagement.Repository, timeout time.Duration, hashSalt string, signingKey []byte, refreshSigningKey []byte, expireDuration time.Duration) *authUsecase {
 	return &authUsecase{
 		authRepo:           r,
 		roleManagementRepo: rm,
 		contextTimeout:     timeout,
 		hashSalt:           hashSalt,
 		signingKey:         signingKey,
+		refreshSigningKey:  refreshSigningKey,
 		expireDuration:     expireDuration,
 	}
 }
