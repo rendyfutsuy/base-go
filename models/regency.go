@@ -17,7 +17,7 @@ type Province struct {
 }
 
 func (Province) TableName() string {
-	return "province"
+	return "provinces"
 }
 
 // City represents city table
@@ -33,7 +33,7 @@ type City struct {
 }
 
 func (City) TableName() string {
-	return "city"
+	return "cities"
 }
 
 // District represents district table
@@ -48,7 +48,7 @@ type District struct {
 }
 
 func (District) TableName() string {
-	return "district"
+	return "districts"
 }
 
 // Subdistrict represents subdistrict table
@@ -63,5 +63,5 @@ type Subdistrict struct {
 }
 
 func (Subdistrict) TableName() string {
-	return "subdistrict"
+	return "subdistricts"
 }

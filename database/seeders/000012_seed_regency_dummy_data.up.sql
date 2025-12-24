@@ -2,14 +2,14 @@
 -- 2 Provinces, 4 Cities (2 per province), 8 Districts (2 per city), 16 Subdistricts (2 per district)
 
 -- Insert Provinces
-INSERT INTO "province" ("id", "name", "created_at", "updated_at") 
+INSERT INTO "provinces" ("id", "name", "created_at", "updated_at") 
 VALUES 
     ('1a1b1c1d-1e1f-4a1b-1c1d-1e1f1a1b1c1d', 'Jawa Barat', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('2a2b2c2d-2e2f-4a2b-2c2d-2e2f2a2b2c2d', 'Jawa Tengah', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert Cities (2 per province)
-INSERT INTO "city" ("id", "province_id", "name", "created_at", "updated_at")
+INSERT INTO "cities" ("id", "province_id", "name", "created_at", "updated_at")
 VALUES
     -- Cities for Jawa Barat
     ('3a3b3c3d-3e3f-4a3b-3c3d-3e3f3a3b3c3d', '1a1b1c1d-1e1f-4a1b-1c1d-1e1f1a1b1c1d', 'Bandung', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
@@ -20,7 +20,7 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert Districts (2 per city)
-INSERT INTO "district" ("id", "city_id", "name", "created_at", "updated_at")
+INSERT INTO "districts" ("id", "city_id", "name", "created_at", "updated_at")
 VALUES
     -- Districts for Bandung
     ('7a7b7c7d-7e7f-4a7b-7c7d-7e7f7a7b7c7d', '3a3b3c3d-3e3f-4a3b-3c3d-3e3f3a3b3c3d', 'Cicendo', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
@@ -37,7 +37,7 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert Subdistricts (2 per district)
-INSERT INTO "subdistrict" ("id", "district_id", "name", "created_at", "updated_at")
+INSERT INTO "subdistricts" ("id", "district_id", "name", "created_at", "updated_at")
 VALUES
     -- Subdistricts for Cicendo
     ('e5f5a5b5-c5d5-4e5f-5a5b-5c5d5e5f5a5b', '7a7b7c7d-7e7f-4a7b-7c7d-7e7f7a7b7c7d', 'Arjuna', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
