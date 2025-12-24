@@ -12,7 +12,7 @@ ALTER TABLE suppliers ADD COLUMN identity_type_varchar VARCHAR(255);
 -- Step 4: Migrate data back: Get parameter name/code
 UPDATE suppliers s
 SET identity_type_varchar = COALESCE(p.code, p.name)
-FROM parameter p
+FROM parameters p
 WHERE s.identity_type = p.id
   AND p.deleted_at IS NULL;
 

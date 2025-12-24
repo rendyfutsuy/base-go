@@ -11,7 +11,7 @@ ALTER TABLE suppliers ADD COLUMN identity_type_uuid UUID;
 -- If no match found, identity_type_uuid will be NULL (you may need to handle this manually)
 UPDATE suppliers s
 SET identity_type_uuid = p.id
-FROM parameter p
+FROM parameters p
 WHERE s.identity_type = p.code OR s.identity_type = p.name
   AND p.deleted_at IS NULL;
 

@@ -17,5 +17,5 @@ CREATE INDEX IF NOT EXISTS types_name_trgm_idx ON types USING gin (LOWER(REPLACE
 CREATE INDEX IF NOT EXISTS backings_name_trgm_idx ON backings USING gin (LOWER(REPLACE(name, ' ', '')) gin_trgm_ops);
 
 -- Parameters (search via multiple modules by parameter name)
-CREATE INDEX IF NOT EXISTS parameter_name_trgm_idx ON parameter USING gin (LOWER(REPLACE(name, ' ', '')) gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS parameter_name_trgm_idx ON parameters USING gin (LOWER(REPLACE(name, ' ', '')) gin_trgm_ops);
 

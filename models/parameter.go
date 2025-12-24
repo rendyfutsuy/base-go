@@ -21,5 +21,5 @@ type Parameter struct {
 }
 
 func (Parameter) TableName() string {
-	return "parameter"
+	return "parameters"
 }
