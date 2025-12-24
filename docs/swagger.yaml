@@ -70,6 +70,27 @@ definitions:
     - city_id
     - name
     type: object
+  dto.ReqCreateExpedition:
+    properties:
+      address:
+        maxLength: 255
+        type: string
+      expedition_name:
+        maxLength: 255
+        type: string
+      notes:
+        type: string
+      phone_numbers:
+        items:
+          type: string
+        type: array
+      telp_numbers:
+        items:
+          $ref: '#/definitions/dto.TelpNumberItem'
+        type: array
+    required:
+    - expedition_name
+    type: object
   dto.ReqCreateGroup:
     properties:
       name:
@@ -228,6 +249,27 @@ definitions:
     required:
     - city_id
     - name
+    type: object
+  dto.ReqUpdateExpedition:
+    properties:
+      address:
+        maxLength: 255
+        type: string
+      expedition_name:
+        maxLength: 255
+        type: string
+      notes:
+        type: string
+      phone_numbers:
+        items:
+          type: string
+        type: array
+      telp_numbers:
+        items:
+          $ref: '#/definitions/dto.TelpNumberItem'
+        type: array
+    required:
+    - expedition_name
     type: object
   dto.ReqUpdateGroup:
     properties:
@@ -516,6 +558,58 @@ definitions:
       updated_at:
         type: string
     type: object
+  dto.RespExpedition:
+    properties:
+      address:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      deletable:
+        type: boolean
+      expedition_code:
+        type: string
+      expedition_name:
+        type: string
+      id:
+        type: string
+      notes:
+        type: string
+      phone_numbers:
+        items:
+          type: string
+        type: array
+      telp_numbers:
+        items:
+          $ref: '#/definitions/dto.TelpNumberItem'
+        type: array
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+    type: object
+  dto.RespExpeditionIndex:
+    properties:
+      address:
+        type: string
+      created_at:
+        type: string
+      deletable:
+        type: boolean
+      expedition_code:
+        type: string
+      expedition_name:
+        type: string
+      id:
+        type: string
+      phone_number:
+        type: string
+      telp_number:
+        type: string
+      updated_at:
+        type: string
+    type: object
   dto.RespGroup:
     properties:
       created_at:
@@ -601,7 +695,7 @@ definitions:
           $ref: '#/definitions/dto.RespPermissionGroup'
         type: array
       name:
-        $ref: '#/definitions/utils.NullString'
+        type: string
     type: object
   dto.RespProvince:
     properties:
@@ -639,7 +733,7 @@ definitions:
       deletable:
         type: boolean
       description:
-        $ref: '#/definitions/utils.NullString'
+        type: string
       id:
         type: string
       modules:
@@ -663,7 +757,7 @@ definitions:
         type: string
       modules:
         items:
-          $ref: '#/definitions/utils.NullString'
+          type: string
         type: array
       role_name:
         type: string
@@ -829,6 +923,15 @@ definitions:
       username:
         type: string
     type: object
+  dto.TelpNumberItem:
+    properties:
+      area_code:
+        type: string
+      phone_number:
+        type: string
+    required:
+    - phone_number
+    type: object
   dto.UserProfile:
     properties:
       email:
@@ -844,7 +947,7 @@ definitions:
           type: string
         type: array
       role:
-        $ref: '#/definitions/utils.NullString'
+        type: string
       username:
         type: string
     type: object
@@ -859,6 +962,8 @@ definitions:
         type: string
       is_first_time_login:
         type: boolean
+      refresh_token:
+        type: string
     type: object
   response.NonPaginationResponse:
     properties:
@@ -892,14 +997,6 @@ definitions:
         $ref: '#/definitions/response.PaginationMeta'
       status:
         type: integer
-    type: object
-  utils.NullString:
-    properties:
-      string:
-        type: string
-      valid:
-        description: Valid is true if String is not NULL
-        type: boolean
     type: object
   utils.NullTime:
     properties:
@@ -1058,7 +1155,7 @@ paths:
       tags:
       - Authentication
   /v1/auth/refresh-token:
-    get:
+    post:
       consumes:
       - application/json
       description: Generates a new access token based on the provided bearer token.
@@ -2078,6 +2175,377 @@ paths:
       summary: Export districts to Excel
       tags:
       - Regency - District
+  /v1/expedition:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of expeditions with optional search and
+        filters. Supports multiple filter values for each field. Only returns non-deleted
+        expeditions. Requires 'api.master-data.expedition.view' permission.
+      parameters:
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Items per page (default: 10)'
+        in: query
+        name: per_page
+        type: integer
+      - description: 'Sort column (allowed: id, expedition_code, expedition_name,
+          address, created_at, updated_at)'
+        in: query
+        name: sort_by
+        type: string
+      - description: 'Sort order: asc or desc (default: desc)'
+        in: query
+        name: sort_order
+        type: string
+      - description: Search keyword (searches in expedition_name, expedition_code,
+          address, and phone numbers from contacts)
+        in: query
+        name: search
+        type: string
+      - collectionFormat: csv
+        description: Filter by expedition codes (multiple values)
+        in: query
+        items:
+          type: string
+        name: expedition_codes
+        type: array
+      - collectionFormat: csv
+        description: Filter by expedition names (multiple values)
+        in: query
+        items:
+          type: string
+        name: expedition_names
+        type: array
+      - collectionFormat: csv
+        description: Filter by addresses (multiple values)
+        in: query
+        items:
+          type: string
+        name: addresses
+        type: array
+      - collectionFormat: csv
+        description: Filter by telp numbers (multiple values)
+        in: query
+        items:
+          type: string
+        name: telp_numbers
+        type: array
+      - collectionFormat: csv
+        description: Filter by phone numbers (multiple values)
+        in: query
+        items:
+          type: string
+        name: phone_numbers
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved expeditions
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.PaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespExpeditionIndex'
+                  type: array
+              type: object
+        "400":
+          description: Bad request - invalid query parameters
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get list of expeditions with pagination
+      tags:
+      - Expedition
+    post:
+      consumes:
+      - application/json
+      description: 'Create a new expedition with provided information. Accepts JSON
+        body with telp_numbers (array of objects where area_code optional and phone_number
+        required, contoh: [{&quot;area_code&quot;:&quot;022&quot;,&quot;phone_number&quot;:&quot;1112223355&quot;},
+        {&quot;area_code&quot;:&quot;022&quot;,&quot;phone_number&quot;:&quot;1112223366&quot;}])
+        and phone_numbers arrays. First index of telp_numbers array will automatically
+        become primary telp, and first index of phone_numbers array will automatically
+        become primary hp. Phone numbers can be duplicated across different expeditions.
+        Expedition code is automatically generated by the system. Requires ''api.master-data.expedition.create''
+        permission.'
+      parameters:
+      - description: 'Expedition creation data. Fields: expedition_name (required),
+          address (max 255 chars), telp_numbers (array, first index becomes primary
+          telp), phone_numbers (array, first index becomes primary hp), notes (optional)'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCreateExpedition'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created expedition with full details including
+            contacts
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespExpedition'
+              type: object
+        "400":
+          description: Bad request - validation error or duplicate phone number/expedition
+            name
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new expedition
+      tags:
+      - Expedition
+  /v1/expedition/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete an existing expedition by ID. The expedition will be
+        marked as deleted (deleted_at is set) but remains in the database. Requires
+        'api.master-data.expedition.delete' permission.
+      parameters:
+      - description: Expedition UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully soft deleted expedition
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Expedition not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Soft delete expedition
+      tags:
+      - Expedition
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single expedition by its UUID. The response includes
+        full expedition details with all contacts (telp_numbers and phone_numbers
+        arrays). Only returns non-deleted expeditions. Requires 'api.master-data.expedition.view'
+        permission.
+      parameters:
+      - description: Expedition UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved expedition with full details including
+            contacts
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespExpedition'
+              type: object
+        "400":
+          description: Bad request - invalid UUID
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Expedition not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get expedition by ID
+      tags:
+      - Expedition
+    put:
+      consumes:
+      - application/json
+      description: 'Update an existing expedition''s information. Accepts JSON body
+        with telp_numbers (array of objects where area_code optional and phone_number
+        required, contoh: [{&quot;area_code&quot;:&quot;022&quot;,&quot;phone_number&quot;:&quot;1112223355&quot;},
+        {&quot;area_code&quot;:&quot;022&quot;,&quot;phone_number&quot;:&quot;1112223366&quot;}])
+        and phone_numbers arrays. First index of telp_numbers array will automatically
+        become primary telp, and first index of phone_numbers array will automatically
+        become primary hp. Phone numbers can be duplicated across different expeditions.
+        Existing contacts will be hard deleted before new ones are created. The response
+        includes full expedition details with all contacts. Requires ''api.master-data.expedition.update''
+        permission.'
+      parameters:
+      - description: Expedition UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 'Updated expedition data. Fields: expedition_name (required),
+          address (max 255 chars), telp_numbers (array, first index becomes primary
+          telp), phone_numbers (array, first index becomes primary hp), notes (optional)'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqUpdateExpedition'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated expedition with full details including
+            contacts
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespExpedition'
+              type: object
+        "400":
+          description: Bad request - validation error or duplicate phone number
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "404":
+          description: Expedition not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Update expedition
+      tags:
+      - Expedition
+  /v1/expedition/export:
+    get:
+      consumes:
+      - application/json
+      description: 'Export expeditions to Excel file (.xlsx) with optional search
+        and filter. Same search and filter logic as index but without pagination.
+        Supports multiple filter values for each field. Only exports non-deleted expeditions.
+        Excel file includes: Kode Ekspedisi, Nama Ekspedisi, Alamat, Telp, Phone,
+        Update Date. Requires ''api.master-data.expedition.export'' permission.'
+      parameters:
+      - description: Search keyword (searches in expedition_name, expedition_code,
+          address, and phone numbers from contacts)
+        in: query
+        name: search
+        type: string
+      - collectionFormat: csv
+        description: Filter by expedition codes (multiple values)
+        in: query
+        items:
+          type: string
+        name: expedition_codes
+        type: array
+      - collectionFormat: csv
+        description: Filter by expedition names (multiple values)
+        in: query
+        items:
+          type: string
+        name: expedition_names
+        type: array
+      - collectionFormat: csv
+        description: Filter by addresses (multiple values)
+        in: query
+        items:
+          type: string
+        name: addresses
+        type: array
+      - collectionFormat: csv
+        description: Filter by telp numbers (multiple values)
+        in: query
+        items:
+          type: string
+        name: telp_numbers
+        type: array
+      - collectionFormat: csv
+        description: Filter by phone numbers (multiple values)
+        in: query
+        items:
+          type: string
+        name: phone_numbers
+        type: array
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: Excel file (expeditions.xlsx) with expeditions data
+          schema:
+            type: file
+        "400":
+          description: Bad request - invalid query parameters
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Export expeditions to Excel
+      tags:
+      - Expedition
   /v1/group:
     get:
       consumes:
@@ -3236,10 +3704,10 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new sub-group with provided groups_id and name. Name
-        must be unique within the same groups. Subgroup code is automatically
-        generated by the database trigger with 2-digit format (e.g., "01", "02", "05",
-        "10"). The code is generated sequentially based on the sequence.
+      description: Create a new sub-group with provided groups_id and name. Name must
+        be unique within the same groups. Subgroup code is automatically generated
+        by the database trigger with 2-digit format (e.g., "01", "02", "05", "10").
+        The code is generated sequentially based on the sequence.
       parameters:
       - description: 'Sub-group creation data. Fields: groups_id (required, UUID),
           name (required, max 255 chars, uppercase letters only)'
@@ -3324,8 +3792,8 @@ paths:
       - application/json
       description: Retrieve a single sub-group by its UUID. The response includes
         subgroup_code in 2-digit string format (e.g., "01", "02", "05", "10") and
-        groups_name to identify which goods group this sub-group belongs to.
-        Only returns non-deleted sub-groups.
+        groups_name to identify which goods group this sub-group belongs to. Only
+        returns non-deleted sub-groups.
       parameters:
       - description: Sub-group UUID
         in: path

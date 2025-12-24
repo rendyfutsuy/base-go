@@ -242,7 +242,7 @@ const docTemplate = `{
             }
         },
         "/v1/auth/refresh-token": {
-            "get": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -1856,6 +1856,532 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "District not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/expedition": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a paginated list of expeditions with optional search and filters. Supports multiple filter values for each field. Only returns non-deleted expeditions. Requires 'api.master-data.expedition.view' permission.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Expedition"
+                ],
+                "summary": "Get list of expeditions with pagination",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page (default: 10)",
+                        "name": "per_page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort column (allowed: id, expedition_code, expedition_name, address, created_at, updated_at)",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order: asc or desc (default: desc)",
+                        "name": "sort_order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search keyword (searches in expedition_name, expedition_code, address, and phone numbers from contacts)",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by expedition codes (multiple values)",
+                        "name": "expedition_codes",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by expedition names (multiple values)",
+                        "name": "expedition_names",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by addresses (multiple values)",
+                        "name": "addresses",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by telp numbers (multiple values)",
+                        "name": "telp_numbers",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by phone numbers (multiple values)",
+                        "name": "phone_numbers",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved expeditions",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.PaginationResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.RespExpeditionIndex"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new expedition with provided information. Accepts JSON body with telp_numbers (array of objects where area_code optional and phone_number required, contoh: [{\u0026quot;area_code\u0026quot;:\u0026quot;022\u0026quot;,\u0026quot;phone_number\u0026quot;:\u0026quot;1112223355\u0026quot;}, {\u0026quot;area_code\u0026quot;:\u0026quot;022\u0026quot;,\u0026quot;phone_number\u0026quot;:\u0026quot;1112223366\u0026quot;}]) and phone_numbers arrays. First index of telp_numbers array will automatically become primary telp, and first index of phone_numbers array will automatically become primary hp. Phone numbers can be duplicated across different expeditions. Expedition code is automatically generated by the system. Requires 'api.master-data.expedition.create' permission.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Expedition"
+                ],
+                "summary": "Create a new expedition",
+                "parameters": [
+                    {
+                        "description": "Expedition creation data. Fields: expedition_name (required), address (max 255 chars), telp_numbers (array, first index becomes primary telp), phone_numbers (array, first index becomes primary hp), notes (optional)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ReqCreateExpedition"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully created expedition with full details including contacts",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.NonPaginationResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.RespExpedition"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - validation error or duplicate phone number/expedition name",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/expedition/export": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Export expeditions to Excel file (.xlsx) with optional search and filter. Same search and filter logic as index but without pagination. Supports multiple filter values for each field. Only exports non-deleted expeditions. Excel file includes: Kode Ekspedisi, Nama Ekspedisi, Alamat, Telp, Phone, Update Date. Requires 'api.master-data.expedition.export' permission.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                ],
+                "tags": [
+                    "Expedition"
+                ],
+                "summary": "Export expeditions to Excel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search keyword (searches in expedition_name, expedition_code, address, and phone numbers from contacts)",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by expedition codes (multiple values)",
+                        "name": "expedition_codes",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by expedition names (multiple values)",
+                        "name": "expedition_names",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by addresses (multiple values)",
+                        "name": "addresses",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by telp numbers (multiple values)",
+                        "name": "telp_numbers",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by phone numbers (multiple values)",
+                        "name": "phone_numbers",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Excel file (expeditions.xlsx) with expeditions data",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/expedition/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a single expedition by its UUID. The response includes full expedition details with all contacts (telp_numbers and phone_numbers arrays). Only returns non-deleted expeditions. Requires 'api.master-data.expedition.view' permission.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Expedition"
+                ],
+                "summary": "Get expedition by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Expedition UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved expedition with full details including contacts",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.NonPaginationResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.RespExpedition"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid UUID",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Expedition not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing expedition's information. Accepts JSON body with telp_numbers (array of objects where area_code optional and phone_number required, contoh: [{\u0026quot;area_code\u0026quot;:\u0026quot;022\u0026quot;,\u0026quot;phone_number\u0026quot;:\u0026quot;1112223355\u0026quot;}, {\u0026quot;area_code\u0026quot;:\u0026quot;022\u0026quot;,\u0026quot;phone_number\u0026quot;:\u0026quot;1112223366\u0026quot;}]) and phone_numbers arrays. First index of telp_numbers array will automatically become primary telp, and first index of phone_numbers array will automatically become primary hp. Phone numbers can be duplicated across different expeditions. Existing contacts will be hard deleted before new ones are created. The response includes full expedition details with all contacts. Requires 'api.master-data.expedition.update' permission.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Expedition"
+                ],
+                "summary": "Update expedition",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Expedition UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated expedition data. Fields: expedition_name (required), address (max 255 chars), telp_numbers (array, first index becomes primary telp), phone_numbers (array, first index becomes primary hp), notes (optional)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ReqUpdateExpedition"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated expedition with full details including contacts",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.NonPaginationResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.RespExpedition"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - validation error or duplicate phone number",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Expedition not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Soft delete an existing expedition by ID. The expedition will be marked as deleted (deleted_at is set) but remains in the database. Requires 'api.master-data.expedition.delete' permission.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Expedition"
+                ],
+                "summary": "Soft delete expedition",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Expedition UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully soft deleted expedition",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid UUID",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Expedition not found",
                         "schema": {
                             "$ref": "#/definitions/response.NonPaginationResponse"
                         }
@@ -5898,6 +6424,37 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ReqCreateExpedition": {
+            "type": "object",
+            "required": [
+                "expedition_name"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "expedition_name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "phone_numbers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "telp_numbers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.TelpNumberItem"
+                    }
+                }
+            }
+        },
         "dto.ReqCreateGroup": {
             "type": "object",
             "required": [
@@ -6125,6 +6682,37 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "maxLength": 255
+                }
+            }
+        },
+        "dto.ReqUpdateExpedition": {
+            "type": "object",
+            "required": [
+                "expedition_name"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "expedition_name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "phone_numbers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "telp_numbers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.TelpNumberItem"
+                    }
                 }
             }
         },
@@ -6556,6 +7144,85 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.RespExpedition": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "deletable": {
+                    "type": "boolean"
+                },
+                "expedition_code": {
+                    "type": "string"
+                },
+                "expedition_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "phone_numbers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "telp_numbers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.TelpNumberItem"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.RespExpeditionIndex": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "deletable": {
+                    "type": "boolean"
+                },
+                "expedition_code": {
+                    "type": "string"
+                },
+                "expedition_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "phone_number": {
+                    "type": "string"
+                },
+                "telp_number": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.RespGroup": {
             "type": "object",
             "properties": {
@@ -6684,7 +7351,7 @@ const docTemplate = `{
                     }
                 },
                 "name": {
-                    "$ref": "#/definitions/utils.NullString"
+                    "type": "string"
                 }
             }
         },
@@ -6743,7 +7410,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "description": {
-                    "$ref": "#/definitions/utils.NullString"
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"
@@ -6780,7 +7447,7 @@ const docTemplate = `{
                 "modules": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/utils.NullString"
+                        "type": "string"
                     }
                 },
                 "role_name": {
@@ -7034,6 +7701,20 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.TelpNumberItem": {
+            "type": "object",
+            "required": [
+                "phone_number"
+            ],
+            "properties": {
+                "area_code": {
+                    "type": "string"
+                },
+                "phone_number": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.UserProfile": {
             "type": "object",
             "properties": {
@@ -7056,7 +7737,7 @@ const docTemplate = `{
                     }
                 },
                 "role": {
-                    "$ref": "#/definitions/utils.NullString"
+                    "type": "string"
                 },
                 "username": {
                     "type": "string"
@@ -7079,6 +7760,9 @@ const docTemplate = `{
                 },
                 "is_first_time_login": {
                     "type": "boolean"
+                },
+                "refresh_token": {
+                    "type": "string"
                 }
             }
         },
@@ -7129,18 +7813,6 @@ const docTemplate = `{
                 },
                 "status": {
                     "type": "integer"
-                }
-            }
-        },
-        "utils.NullString": {
-            "type": "object",
-            "properties": {
-                "string": {
-                    "type": "string"
-                },
-                "valid": {
-                    "description": "Valid is true if String is not NULL",
-                    "type": "boolean"
                 }
             }
         },
