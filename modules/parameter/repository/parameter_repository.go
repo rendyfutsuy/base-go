@@ -9,6 +9,7 @@ import (
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/parameter/dto"
+	rsearchparam "github.com/rendyfutsuy/base-go/modules/parameter/repository/searches"
 	"gorm.io/gorm"
 )
 
@@ -17,7 +18,9 @@ type parameterRepository struct {
 }
 
 func NewParameterRepository(db *gorm.DB) *parameterRepository {
-	return &parameterRepository{DB: db}
+	return &parameterRepository{
+		DB: db,
+	}
 }
 
 func (r *parameterRepository) Create(ctx context.Context, code, name string, value, typeVal, desc *string) (*models.Parameter, error) {
@@ -113,12 +116,12 @@ func (r *parameterRepository) ExistsByName(ctx context.Context, name string, exc
 
 func (r *parameterRepository) GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqParameterIndexFilter) ([]models.Parameter, int, error) {
 	var parameters []models.Parameter
-	query := r.DB.WithContext(ctx).Table("parameter p").Select("p.id, p.code, p.name, p.value, p.type, p.description, p.created_at, p.updated_at").
+	query := r.DB.WithContext(ctx).Table("parameters p").Select("p.id, p.code, p.name, p.value, p.type, p.description, p.created_at, p.updated_at").
 		Where("p.deleted_at IS NULL")
 
-	// Apply search from PageRequest
+		// Apply search from PageRequest
 	searchQuery := req.Search
-	query = request.ApplySearchCondition(query, searchQuery, []string{"p.name", "p.code"})
+	query = request.ApplySearchConditionFromInterface(query, searchQuery, rsearchparam.NewParameterSearchHelper())
 
 	// Apply filters with multiple values support
 	query = r.ApplyFilters(query, filter)
@@ -139,11 +142,11 @@ func (r *parameterRepository) GetIndex(ctx context.Context, req request.PageRequ
 
 func (r *parameterRepository) GetAll(ctx context.Context, filter dto.ReqParameterIndexFilter) ([]models.Parameter, error) {
 	var parameters []models.Parameter
-	query := r.DB.WithContext(ctx).Table("parameter p").Select("p.id, p.code, p.name, p.value, p.type, p.description, p.created_at, p.updated_at").
+	query := r.DB.WithContext(ctx).Table("parameters p").Select("p.id, p.code, p.name, p.value, p.type, p.description, p.created_at, p.updated_at").
 		Where("p.deleted_at IS NULL")
 
 	// Apply search from filter
-	query = request.ApplySearchCondition(query, filter.Search, []string{"p.name", "p.code"})
+	query = request.ApplySearchConditionFromInterface(query, filter.Search, rsearchparam.NewParameterSearchHelper())
 
 	// Apply filters with multiple values support
 	query = r.ApplyFilters(query, filter)

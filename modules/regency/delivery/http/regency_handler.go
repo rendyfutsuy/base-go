@@ -106,6 +106,9 @@ func NewRegencyHandler(e *echo.Echo, uc regency.Usecase, mwP _reqContext.IMiddle
 // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/province [post]
 func (h *RegencyHandler) CreateProvince(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	req := new(dto.ReqCreateProvince)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -113,7 +116,7 @@ func (h *RegencyHandler) CreateProvince(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	res, err := h.Usecase.CreateProvince(c, req, "")
+	res, err := h.Usecase.CreateProvince(ctx, req, "")
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -137,6 +140,9 @@ func (h *RegencyHandler) CreateProvince(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Province not found"
 // @Router			/v1/province/{id} [put]
 func (h *RegencyHandler) UpdateProvince(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
 	req := new(dto.ReqUpdateProvince)
 	if err := c.Bind(req); err != nil {
@@ -145,7 +151,7 @@ func (h *RegencyHandler) UpdateProvince(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	res, err := h.Usecase.UpdateProvince(c, id, req, "")
+	res, err := h.Usecase.UpdateProvince(ctx, id, req, "")
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -168,8 +174,11 @@ func (h *RegencyHandler) UpdateProvince(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Province not found"
 // @Router			/v1/province/{id} [delete]
 func (h *RegencyHandler) DeleteProvince(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
-	if err := h.Usecase.DeleteProvince(c, id, ""); err != nil {
+	if err := h.Usecase.DeleteProvince(ctx, id, ""); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 	resp := response.NonPaginationResponse{}
@@ -193,6 +202,9 @@ func (h *RegencyHandler) DeleteProvince(c echo.Context) error {
 // @Failure		401			{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/province [get]
 func (h *RegencyHandler) GetProvinceIndex(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	pageRequest := c.Get("page_request").(*request.PageRequest)
 	filter := new(dto.ReqProvinceIndexFilter)
 	if err := c.Bind(filter); err != nil {
@@ -201,7 +213,7 @@ func (h *RegencyHandler) GetProvinceIndex(c echo.Context) error {
 	if err := c.Validate(filter); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	res, total, err := h.Usecase.GetProvinceIndex(c, *pageRequest, *filter)
+	res, total, err := h.Usecase.GetProvinceIndex(ctx, *pageRequest, *filter)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -231,8 +243,11 @@ func (h *RegencyHandler) GetProvinceIndex(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Province not found"
 // @Router			/v1/province/{id} [get]
 func (h *RegencyHandler) GetProvinceByID(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
-	res, err := h.Usecase.GetProvinceByID(c, id)
+	res, err := h.Usecase.GetProvinceByID(ctx, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -255,6 +270,9 @@ func (h *RegencyHandler) GetProvinceByID(c echo.Context) error {
 // @Failure		401			{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/province/export [get]
 func (h *RegencyHandler) ExportProvince(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	filter := new(dto.ReqProvinceIndexFilter)
 	if err := c.Bind(filter); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -262,7 +280,7 @@ func (h *RegencyHandler) ExportProvince(c echo.Context) error {
 	if err := c.Validate(filter); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	excelBytes, err := h.Usecase.ExportProvince(c, *filter)
+	excelBytes, err := h.Usecase.ExportProvince(ctx, *filter)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -286,6 +304,9 @@ func (h *RegencyHandler) ExportProvince(c echo.Context) error {
 // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/city [post]
 func (h *RegencyHandler) CreateCity(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	req := new(dto.ReqCreateCity)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -293,7 +314,7 @@ func (h *RegencyHandler) CreateCity(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	res, err := h.Usecase.CreateCity(c, req, "")
+	res, err := h.Usecase.CreateCity(ctx, req, "")
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -317,6 +338,9 @@ func (h *RegencyHandler) CreateCity(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"City not found"
 // @Router			/v1/city/{id} [put]
 func (h *RegencyHandler) UpdateCity(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
 	req := new(dto.ReqUpdateCity)
 	if err := c.Bind(req); err != nil {
@@ -325,7 +349,7 @@ func (h *RegencyHandler) UpdateCity(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	res, err := h.Usecase.UpdateCity(c, id, req, "")
+	res, err := h.Usecase.UpdateCity(ctx, id, req, "")
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -348,8 +372,11 @@ func (h *RegencyHandler) UpdateCity(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"City not found"
 // @Router			/v1/city/{id} [delete]
 func (h *RegencyHandler) DeleteCity(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
-	if err := h.Usecase.DeleteCity(c, id, ""); err != nil {
+	if err := h.Usecase.DeleteCity(ctx, id, ""); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 	resp := response.NonPaginationResponse{}
@@ -373,6 +400,9 @@ func (h *RegencyHandler) DeleteCity(c echo.Context) error {
 // @Failure		401			{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/city [get]
 func (h *RegencyHandler) GetCityIndex(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	pageRequest := c.Get("page_request").(*request.PageRequest)
 	filter := new(dto.ReqCityIndexFilter)
 	if err := c.Bind(filter); err != nil {
@@ -381,7 +411,7 @@ func (h *RegencyHandler) GetCityIndex(c echo.Context) error {
 	if err := c.Validate(filter); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	res, total, err := h.Usecase.GetCityIndex(c, *pageRequest, *filter)
+	res, total, err := h.Usecase.GetCityIndex(ctx, *pageRequest, *filter)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -410,8 +440,11 @@ func (h *RegencyHandler) GetCityIndex(c echo.Context) error {
 // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/city/area-codes [get]
 func (h *RegencyHandler) GetCityAreaCodes(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	search := c.QueryParam("search")
-	res, err := h.Usecase.GetCityAreaCodes(c, search)
+	res, err := h.Usecase.GetCityAreaCodes(ctx, search)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -440,8 +473,11 @@ func (h *RegencyHandler) GetCityAreaCodes(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"City not found"
 // @Router			/v1/city/{id} [get]
 func (h *RegencyHandler) GetCityByID(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
-	res, err := h.Usecase.GetCityByID(c, id)
+	res, err := h.Usecase.GetCityByID(ctx, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -464,6 +500,9 @@ func (h *RegencyHandler) GetCityByID(c echo.Context) error {
 // @Failure		401			{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/city/export [get]
 func (h *RegencyHandler) ExportCity(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	filter := new(dto.ReqCityIndexFilter)
 	if err := c.Bind(filter); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -471,7 +510,7 @@ func (h *RegencyHandler) ExportCity(c echo.Context) error {
 	if err := c.Validate(filter); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	excelBytes, err := h.Usecase.ExportCity(c, *filter)
+	excelBytes, err := h.Usecase.ExportCity(ctx, *filter)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -495,6 +534,9 @@ func (h *RegencyHandler) ExportCity(c echo.Context) error {
 // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/district [post]
 func (h *RegencyHandler) CreateDistrict(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	req := new(dto.ReqCreateDistrict)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -502,7 +544,7 @@ func (h *RegencyHandler) CreateDistrict(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	res, err := h.Usecase.CreateDistrict(c, req, "")
+	res, err := h.Usecase.CreateDistrict(ctx, req, "")
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -526,6 +568,9 @@ func (h *RegencyHandler) CreateDistrict(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"District not found"
 // @Router			/v1/district/{id} [put]
 func (h *RegencyHandler) UpdateDistrict(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
 	req := new(dto.ReqUpdateDistrict)
 	if err := c.Bind(req); err != nil {
@@ -534,7 +579,7 @@ func (h *RegencyHandler) UpdateDistrict(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	res, err := h.Usecase.UpdateDistrict(c, id, req, "")
+	res, err := h.Usecase.UpdateDistrict(ctx, id, req, "")
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -557,8 +602,11 @@ func (h *RegencyHandler) UpdateDistrict(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"District not found"
 // @Router			/v1/district/{id} [delete]
 func (h *RegencyHandler) DeleteDistrict(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
-	if err := h.Usecase.DeleteDistrict(c, id, ""); err != nil {
+	if err := h.Usecase.DeleteDistrict(ctx, id, ""); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 	resp := response.NonPaginationResponse{}
@@ -582,6 +630,9 @@ func (h *RegencyHandler) DeleteDistrict(c echo.Context) error {
 // @Failure		401			{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/district [get]
 func (h *RegencyHandler) GetDistrictIndex(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	pageRequest := c.Get("page_request").(*request.PageRequest)
 	filter := new(dto.ReqDistrictIndexFilter)
 	if err := c.Bind(filter); err != nil {
@@ -590,7 +641,7 @@ func (h *RegencyHandler) GetDistrictIndex(c echo.Context) error {
 	if err := c.Validate(filter); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	res, total, err := h.Usecase.GetDistrictIndex(c, *pageRequest, *filter)
+	res, total, err := h.Usecase.GetDistrictIndex(ctx, *pageRequest, *filter)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -620,8 +671,11 @@ func (h *RegencyHandler) GetDistrictIndex(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"District not found"
 // @Router			/v1/district/{id} [get]
 func (h *RegencyHandler) GetDistrictByID(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
-	res, err := h.Usecase.GetDistrictByID(c, id)
+	res, err := h.Usecase.GetDistrictByID(ctx, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -644,6 +698,9 @@ func (h *RegencyHandler) GetDistrictByID(c echo.Context) error {
 // @Failure		401			{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/district/export [get]
 func (h *RegencyHandler) ExportDistrict(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	filter := new(dto.ReqDistrictIndexFilter)
 	if err := c.Bind(filter); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -651,7 +708,7 @@ func (h *RegencyHandler) ExportDistrict(c echo.Context) error {
 	if err := c.Validate(filter); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	excelBytes, err := h.Usecase.ExportDistrict(c, *filter)
+	excelBytes, err := h.Usecase.ExportDistrict(ctx, *filter)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -675,6 +732,9 @@ func (h *RegencyHandler) ExportDistrict(c echo.Context) error {
 // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/subdistrict [post]
 func (h *RegencyHandler) CreateSubdistrict(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	req := new(dto.ReqCreateSubdistrict)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -682,7 +742,7 @@ func (h *RegencyHandler) CreateSubdistrict(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	res, err := h.Usecase.CreateSubdistrict(c, req, "")
+	res, err := h.Usecase.CreateSubdistrict(ctx, req, "")
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -706,6 +766,9 @@ func (h *RegencyHandler) CreateSubdistrict(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Subdistrict not found"
 // @Router			/v1/subdistrict/{id} [put]
 func (h *RegencyHandler) UpdateSubdistrict(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
 	req := new(dto.ReqUpdateSubdistrict)
 	if err := c.Bind(req); err != nil {
@@ -714,7 +777,7 @@ func (h *RegencyHandler) UpdateSubdistrict(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	res, err := h.Usecase.UpdateSubdistrict(c, id, req, "")
+	res, err := h.Usecase.UpdateSubdistrict(ctx, id, req, "")
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -737,8 +800,11 @@ func (h *RegencyHandler) UpdateSubdistrict(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Subdistrict not found"
 // @Router			/v1/subdistrict/{id} [delete]
 func (h *RegencyHandler) DeleteSubdistrict(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
-	if err := h.Usecase.DeleteSubdistrict(c, id, ""); err != nil {
+	if err := h.Usecase.DeleteSubdistrict(ctx, id, ""); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 	resp := response.NonPaginationResponse{}
@@ -762,6 +828,9 @@ func (h *RegencyHandler) DeleteSubdistrict(c echo.Context) error {
 // @Failure		401			{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/subdistrict [get]
 func (h *RegencyHandler) GetSubdistrictIndex(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	pageRequest := c.Get("page_request").(*request.PageRequest)
 	filter := new(dto.ReqSubdistrictIndexFilter)
 	if err := c.Bind(filter); err != nil {
@@ -770,7 +839,7 @@ func (h *RegencyHandler) GetSubdistrictIndex(c echo.Context) error {
 	if err := c.Validate(filter); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	res, total, err := h.Usecase.GetSubdistrictIndex(c, *pageRequest, *filter)
+	res, total, err := h.Usecase.GetSubdistrictIndex(ctx, *pageRequest, *filter)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -800,8 +869,11 @@ func (h *RegencyHandler) GetSubdistrictIndex(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Subdistrict not found"
 // @Router			/v1/subdistrict/{id} [get]
 func (h *RegencyHandler) GetSubdistrictByID(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
-	res, err := h.Usecase.GetSubdistrictByID(c, id)
+	res, err := h.Usecase.GetSubdistrictByID(ctx, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -824,6 +896,9 @@ func (h *RegencyHandler) GetSubdistrictByID(c echo.Context) error {
 // @Failure		401			{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/subdistrict/export [get]
 func (h *RegencyHandler) ExportSubdistrict(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	filter := new(dto.ReqSubdistrictIndexFilter)
 	if err := c.Bind(filter); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -831,7 +906,7 @@ func (h *RegencyHandler) ExportSubdistrict(c echo.Context) error {
 	if err := c.Validate(filter); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	excelBytes, err := h.Usecase.ExportSubdistrict(c, *filter)
+	excelBytes, err := h.Usecase.ExportSubdistrict(ctx, *filter)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/regency"
 	"github.com/rendyfutsuy/base-go/modules/regency/dto"
+	"github.com/rendyfutsuy/base-go/modules/regency/repository/searches"
 	"gorm.io/gorm"
 )
 
@@ -85,11 +86,11 @@ func (r *regencyRepository) ExistsProvinceByName(ctx context.Context, name strin
 
 func (r *regencyRepository) GetProvinceIndex(ctx context.Context, req request.PageRequest, filter dto.ReqProvinceIndexFilter) ([]models.Province, int, error) {
 	var provinces []models.Province
-	query := r.DB.WithContext(ctx).Table("province p").Select("p.id, p.name, p.created_at, p.updated_at").
+	query := r.DB.WithContext(ctx).Table("provinces p").Select("p.id, p.name, p.created_at, p.updated_at").
 		Where("p.deleted_at IS NULL")
 
 	searchQuery := req.Search
-	query = request.ApplySearchCondition(query, searchQuery, []string{"p.name"})
+	query = request.ApplySearchConditionFromInterface(query, searchQuery, searches.NewProvinceSearchHelper())
 
 	total, err := request.ApplyPagination(query, req, request.PaginationConfig{
 		DefaultSortBy:      "p.created_at",
@@ -107,10 +108,10 @@ func (r *regencyRepository) GetProvinceIndex(ctx context.Context, req request.Pa
 
 func (r *regencyRepository) GetAllProvince(ctx context.Context, filter dto.ReqProvinceIndexFilter) ([]models.Province, error) {
 	var provinces []models.Province
-	query := r.DB.WithContext(ctx).Table("province p").Select("p.id, p.name, p.created_at, p.updated_at").
+	query := r.DB.WithContext(ctx).Table("provinces p").Select("p.id, p.name, p.created_at, p.updated_at").
 		Where("p.deleted_at IS NULL")
 
-	query = request.ApplySearchCondition(query, filter.Search, []string{"p.name"})
+	query = request.ApplySearchConditionFromInterface(query, filter.Search, searches.NewProvinceSearchHelper())
 
 	if err := query.Order("p.created_at DESC").Find(&provinces).Error; err != nil {
 		return nil, err
@@ -186,11 +187,11 @@ func (r *regencyRepository) ExistsCityByName(ctx context.Context, provinceID uui
 
 func (r *regencyRepository) GetCityIndex(ctx context.Context, req request.PageRequest, filter dto.ReqCityIndexFilter) ([]models.City, int, error) {
 	var cities []models.City
-	query := r.DB.WithContext(ctx).Table("city c").Select("c.id, c.province_id, c.name, c.area_code, c.created_at, c.updated_at").
+	query := r.DB.WithContext(ctx).Table("cities c").Select("c.id, c.province_id, c.name, c.area_code, c.created_at, c.updated_at").
 		Where("c.deleted_at IS NULL")
 
 	searchQuery := req.Search
-	query = request.ApplySearchCondition(query, searchQuery, []string{"c.name", "c.area_code"})
+	query = request.ApplySearchConditionFromInterface(query, searchQuery, searches.NewCitySearchHelper())
 
 	// Apply filters with multiple values support
 	query = r.ApplyFilters(query, filter)
@@ -211,10 +212,10 @@ func (r *regencyRepository) GetCityIndex(ctx context.Context, req request.PageRe
 
 func (r *regencyRepository) GetAllCity(ctx context.Context, filter dto.ReqCityIndexFilter) ([]models.City, error) {
 	var cities []models.City
-	query := r.DB.WithContext(ctx).Table("city c").Select("c.id, c.province_id, c.name, c.area_code, c.created_at, c.updated_at").
+	query := r.DB.WithContext(ctx).Table("cities c").Select("c.id, c.province_id, c.name, c.area_code, c.created_at, c.updated_at").
 		Where("c.deleted_at IS NULL")
 
-	query = request.ApplySearchCondition(query, filter.Search, []string{"c.name"})
+	query = request.ApplySearchConditionFromInterface(query, filter.Search, searches.NewCitySearchHelper())
 
 	// Apply filters with multiple values support
 	query = r.ApplyFilters(query, filter)
@@ -228,7 +229,7 @@ func (r *regencyRepository) GetAllCity(ctx context.Context, filter dto.ReqCityIn
 func (r *regencyRepository) GetCityAreaCodes(ctx context.Context, search string) ([]string, error) {
 	var areaCodes []string
 
-	query := r.DB.WithContext(ctx).Table("city c").
+	query := r.DB.WithContext(ctx).Table("cities c").
 		Where("c.deleted_at IS NULL").
 		Where("c.area_code IS NOT NULL AND c.area_code <> ''")
 
@@ -309,11 +310,11 @@ func (r *regencyRepository) ExistsDistrictByName(ctx context.Context, cityID uui
 
 func (r *regencyRepository) GetDistrictIndex(ctx context.Context, req request.PageRequest, filter dto.ReqDistrictIndexFilter) ([]models.District, int, error) {
 	var districts []models.District
-	query := r.DB.WithContext(ctx).Table("district d").Select("d.id, d.city_id, d.name, d.created_at, d.updated_at").
+	query := r.DB.WithContext(ctx).Table("districts d").Select("d.id, d.city_id, d.name, d.created_at, d.updated_at").
 		Where("d.deleted_at IS NULL")
 
 	searchQuery := req.Search
-	query = request.ApplySearchCondition(query, searchQuery, []string{"d.name"})
+	query = request.ApplySearchConditionFromInterface(query, searchQuery, searches.NewDistrictSearchHelper())
 
 	// Apply filters with multiple values support
 	query = r.ApplyFilters(query, filter)
@@ -334,10 +335,10 @@ func (r *regencyRepository) GetDistrictIndex(ctx context.Context, req request.Pa
 
 func (r *regencyRepository) GetAllDistrict(ctx context.Context, filter dto.ReqDistrictIndexFilter) ([]models.District, error) {
 	var districts []models.District
-	query := r.DB.WithContext(ctx).Table("district d").Select("d.id, d.city_id, d.name, d.created_at, d.updated_at").
+	query := r.DB.WithContext(ctx).Table("districts d").Select("d.id, d.city_id, d.name, d.created_at, d.updated_at").
 		Where("d.deleted_at IS NULL")
 
-	query = request.ApplySearchCondition(query, filter.Search, []string{"d.name"})
+	query = request.ApplySearchConditionFromInterface(query, filter.Search, searches.NewDistrictSearchHelper())
 
 	// Apply filters with multiple values support
 	query = r.ApplyFilters(query, filter)
@@ -412,11 +413,11 @@ func (r *regencyRepository) ExistsSubdistrictByName(ctx context.Context, distric
 
 func (r *regencyRepository) GetSubdistrictIndex(ctx context.Context, req request.PageRequest, filter dto.ReqSubdistrictIndexFilter) ([]models.Subdistrict, int, error) {
 	var subdistricts []models.Subdistrict
-	query := r.DB.WithContext(ctx).Table("subdistrict s").Select("s.id, s.district_id, s.name, s.created_at, s.updated_at").
+	query := r.DB.WithContext(ctx).Table("subdistricts s").Select("s.id, s.district_id, s.name, s.created_at, s.updated_at").
 		Where("s.deleted_at IS NULL")
 
 	searchQuery := req.Search
-	query = request.ApplySearchCondition(query, searchQuery, []string{"s.name"})
+	query = request.ApplySearchConditionFromInterface(query, searchQuery, searches.NewSubdistrictSearchHelper())
 
 	// Apply filters with multiple values support
 	query = r.ApplyFilters(query, filter)
@@ -437,10 +438,10 @@ func (r *regencyRepository) GetSubdistrictIndex(ctx context.Context, req request
 
 func (r *regencyRepository) GetAllSubdistrict(ctx context.Context, filter dto.ReqSubdistrictIndexFilter) ([]models.Subdistrict, error) {
 	var subdistricts []models.Subdistrict
-	query := r.DB.WithContext(ctx).Table("subdistrict s").Select("s.id, s.district_id, s.name, s.created_at, s.updated_at").
+	query := r.DB.WithContext(ctx).Table("subdistricts s").Select("s.id, s.district_id, s.name, s.created_at, s.updated_at").
 		Where("s.deleted_at IS NULL")
 
-	query = request.ApplySearchCondition(query, filter.Search, []string{"s.name"})
+	query = request.ApplySearchConditionFromInterface(query, filter.Search, searches.NewSubdistrictSearchHelper())
 
 	// Apply filters with multiple values support
 	query = r.ApplyFilters(query, filter)

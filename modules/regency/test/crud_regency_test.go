@@ -295,7 +295,7 @@ func TestCreateProvince(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.CreateProvince(c, tt.req, tt.authId)
+			result, err := usecaseInstance.CreateProvince(ctx, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -378,7 +378,7 @@ func TestUpdateProvince(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.UpdateProvince(c, tt.id, tt.req, tt.authId)
+			result, err := usecaseInstance.UpdateProvince(ctx, tt.id, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -443,7 +443,7 @@ func TestDeleteProvince(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			err := usecaseInstance.DeleteProvince(c, tt.id, tt.authId)
+			err := usecaseInstance.DeleteProvince(ctx, tt.id, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -511,7 +511,7 @@ func TestGetProvinceByID(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.GetProvinceByID(c, tt.id)
+			result, err := usecaseInstance.GetProvinceByID(ctx, tt.id)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -587,7 +587,7 @@ func TestGetProvinceIndex(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, total, err := usecaseInstance.GetProvinceIndex(c, tt.req, tt.filter)
+			result, total, err := usecaseInstance.GetProvinceIndex(ctx, tt.req, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -666,7 +666,7 @@ func TestExportProvince(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.ExportProvince(c, tt.filter)
+			result, err := usecaseInstance.ExportProvince(ctx, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -760,7 +760,7 @@ func TestCreateCity(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.CreateCity(c, tt.req, tt.authId)
+			result, err := usecaseInstance.CreateCity(ctx, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -842,7 +842,7 @@ func TestUpdateCity(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.UpdateCity(c, tt.id, tt.req, tt.authId)
+			result, err := usecaseInstance.UpdateCity(ctx, tt.id, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -898,7 +898,7 @@ func TestDeleteCity(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			err := usecaseInstance.DeleteCity(c, tt.id, tt.authId)
+			err := usecaseInstance.DeleteCity(ctx, tt.id, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -960,7 +960,7 @@ func TestGetCityByID(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.GetCityByID(c, tt.id)
+			result, err := usecaseInstance.GetCityByID(ctx, tt.id)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -1030,7 +1030,7 @@ func TestGetCityIndex(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, total, err := usecaseInstance.GetCityIndex(c, tt.req, tt.filter)
+			result, total, err := usecaseInstance.GetCityIndex(ctx, tt.req, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -1103,7 +1103,7 @@ func TestExportCity(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.ExportCity(c, tt.filter)
+			result, err := usecaseInstance.ExportCity(ctx, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -1176,7 +1176,7 @@ func TestCreateDistrict(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.CreateDistrict(c, tt.req, tt.authId)
+			result, err := usecaseInstance.CreateDistrict(ctx, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -1255,7 +1255,7 @@ func TestUpdateDistrict(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.UpdateDistrict(c, tt.id, tt.req, tt.authId)
+			result, err := usecaseInstance.UpdateDistrict(ctx, tt.id, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -1311,7 +1311,7 @@ func TestDeleteDistrict(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			err := usecaseInstance.DeleteDistrict(c, tt.id, tt.authId)
+			err := usecaseInstance.DeleteDistrict(ctx, tt.id, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -1373,7 +1373,7 @@ func TestGetDistrictByID(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.GetDistrictByID(c, tt.id)
+			result, err := usecaseInstance.GetDistrictByID(ctx, tt.id)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -1443,7 +1443,7 @@ func TestGetDistrictIndex(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, total, err := usecaseInstance.GetDistrictIndex(c, tt.req, tt.filter)
+			result, total, err := usecaseInstance.GetDistrictIndex(ctx, tt.req, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -1516,7 +1516,7 @@ func TestExportDistrict(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.ExportDistrict(c, tt.filter)
+			result, err := usecaseInstance.ExportDistrict(ctx, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -1589,7 +1589,7 @@ func TestCreateSubdistrict(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.CreateSubdistrict(c, tt.req, tt.authId)
+			result, err := usecaseInstance.CreateSubdistrict(ctx, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -1668,7 +1668,7 @@ func TestUpdateSubdistrict(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.UpdateSubdistrict(c, tt.id, tt.req, tt.authId)
+			result, err := usecaseInstance.UpdateSubdistrict(ctx, tt.id, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -1724,7 +1724,7 @@ func TestDeleteSubdistrict(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			err := usecaseInstance.DeleteSubdistrict(c, tt.id, tt.authId)
+			err := usecaseInstance.DeleteSubdistrict(ctx, tt.id, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -1786,7 +1786,7 @@ func TestGetSubdistrictByID(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.GetSubdistrictByID(c, tt.id)
+			result, err := usecaseInstance.GetSubdistrictByID(ctx, tt.id)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -1856,7 +1856,7 @@ func TestGetSubdistrictIndex(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, total, err := usecaseInstance.GetSubdistrictIndex(c, tt.req, tt.filter)
+			result, total, err := usecaseInstance.GetSubdistrictIndex(ctx, tt.req, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -1929,7 +1929,7 @@ func TestExportSubdistrict(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.ExportSubdistrict(c, tt.filter)
+			result, err := usecaseInstance.ExportSubdistrict(ctx, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)

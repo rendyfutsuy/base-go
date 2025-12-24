@@ -1,12 +1,12 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
@@ -25,9 +25,7 @@ func NewParameterUsecase(repo mod.Repository) mod.Usecase {
 	return &parameterUsecase{repo: repo}
 }
 
-func (u *parameterUsecase) Create(c echo.Context, reqBody *dto.ReqCreateParameter, authId string) (*models.Parameter, error) {
-	ctx := c.Request().Context()
-
+func (u *parameterUsecase) Create(ctx context.Context, reqBody *dto.ReqCreateParameter, userID string) (*models.Parameter, error) {
 	// Check if code already exists
 	exists, err := u.repo.ExistsByCode(ctx, reqBody.Code, uuid.Nil)
 	if err != nil {
@@ -49,8 +47,7 @@ func (u *parameterUsecase) Create(c echo.Context, reqBody *dto.ReqCreateParamete
 	return u.repo.Create(ctx, reqBody.Code, reqBody.Name, reqBody.Value, reqBody.Type, reqBody.Desc)
 }
 
-func (u *parameterUsecase) Update(c echo.Context, id string, reqBody *dto.ReqUpdateParameter, authId string) (*models.Parameter, error) {
-	ctx := c.Request().Context()
+func (u *parameterUsecase) Update(ctx context.Context, id string, reqBody *dto.ReqUpdateParameter, userID string) (*models.Parameter, error) {
 	pid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
@@ -84,8 +81,7 @@ func (u *parameterUsecase) Update(c echo.Context, id string, reqBody *dto.ReqUpd
 	return res, nil
 }
 
-func (u *parameterUsecase) Delete(c echo.Context, id string, authId string) error {
-	ctx := c.Request().Context()
+func (u *parameterUsecase) Delete(ctx context.Context, id string, userID string) error {
 	pid, err := utils.StringToUUID(id)
 	if err != nil {
 		return err
@@ -93,8 +89,7 @@ func (u *parameterUsecase) Delete(c echo.Context, id string, authId string) erro
 	return u.repo.Delete(ctx, pid)
 }
 
-func (u *parameterUsecase) GetByID(c echo.Context, id string) (*models.Parameter, error) {
-	ctx := c.Request().Context()
+func (u *parameterUsecase) GetByID(ctx context.Context, id string) (*models.Parameter, error) {
 	pid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
@@ -102,19 +97,16 @@ func (u *parameterUsecase) GetByID(c echo.Context, id string) (*models.Parameter
 	return u.repo.GetByID(ctx, pid)
 }
 
-func (u *parameterUsecase) GetIndex(c echo.Context, req request.PageRequest, filter dto.ReqParameterIndexFilter) ([]models.Parameter, int, error) {
-	ctx := c.Request().Context()
+func (u *parameterUsecase) GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqParameterIndexFilter) ([]models.Parameter, int, error) {
 	// Search is already set in req.Search from PageRequest middleware
 	return u.repo.GetIndex(ctx, req, filter)
 }
 
-func (u *parameterUsecase) GetAll(c echo.Context, filter dto.ReqParameterIndexFilter) ([]models.Parameter, error) {
-	ctx := c.Request().Context()
+func (u *parameterUsecase) GetAll(ctx context.Context, filter dto.ReqParameterIndexFilter) ([]models.Parameter, error) {
 	return u.repo.GetAll(ctx, filter)
 }
 
-func (u *parameterUsecase) Export(c echo.Context, filter dto.ReqParameterIndexFilter) ([]byte, error) {
-	ctx := c.Request().Context()
+func (u *parameterUsecase) Export(ctx context.Context, filter dto.ReqParameterIndexFilter) ([]byte, error) {
 	// Use GetAll for export without pagination
 	list, err := u.repo.GetAll(ctx, filter)
 	if err != nil {
