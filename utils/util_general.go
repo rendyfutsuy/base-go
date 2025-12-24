@@ -6,7 +6,6 @@ import (
 	"math"
 	"math/rand/v2"
 	"reflect"
-	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -206,9 +205,7 @@ func GetDifferences(array1, array2 []string) []string {
 
 // IsNumericString memeriksa apakah string hanya berisi angka
 func IsNumericString(input string) bool {
-	// Gunakan ekspresi reguler untuk memeriksa hanya terdiri dari angka (0-9)
-	numericRegex := regexp.MustCompile("^[0-9]+$")
-	return numericRegex.MatchString(input)
+	return NumericRegex.MatchString(input)
 }
 
 // CheckStringValidity checks if the input string is valid.
@@ -488,9 +485,7 @@ func ToTitleCase(str string) string {
 
 // ToSnakeCase converts a string to snake_case.
 func ToSnakeCase(str string) string {
-	// Replace all uppercase letters with the lowercase letter and prepend an underscore
-	re := regexp.MustCompile(`([a-z0-9])([A-Z])`)
-	str = re.ReplaceAllString(str, `${1}_${2}`)
+	str = ToSnakeCaseRegex.ReplaceAllString(str, `${1}_${2}`)
 
 	// Convert the whole string to lowercase
 	return strings.ToLower(str)
@@ -573,24 +568,6 @@ func SanitizeFloat(value float64) float64 {
 	return value
 }
 
-func IsEndorseTrx(documentNumber string, parentId uuid.UUID) bool {
-	return EndorsedFacultativeRegex.MatchString(documentNumber) && parentId != uuid.Nil
-}
-
-func IsReplacedTrx(documentNumber string, parentId uuid.UUID) bool {
-	return regexp.MustCompile(`-RL\d+$`).MatchString(documentNumber) && parentId != uuid.Nil
-}
-
-// check if the document number just contain `FAC` letter
-// or the length of the document number is 15
-func IsDocumentNumberFACParent(documentNumber string) bool {
-	if len(documentNumber) == 15 {
-		return true
-	}
-
-	return regexp.MustCompile(`^FAC`).MatchString(documentNumber)
-}
-
 // SafeDivide safely divides a by b (a / b), returning 0 if b is 0 or if a panic occurs.
 func SafeDivide(a, b float64) (result float64) {
 	defer func() {
@@ -643,28 +620,6 @@ func SafeNumber(value float64) float64 {
 	}
 
 	return value
-}
-
-// check if the document number is a risk document: FAC...-R...
-func IsDocumentNumberRisk(documentNumber string) bool {
-	// Matches: FAC followed by digits, then -R followed by digits, and nothing else
-	matched, _ := regexp.MatchString(`^FAC\d+-R\d+$`, documentNumber)
-	return matched
-}
-
-// IsDocumentNumberRiskExtend checks if the document number is an extended risk document.
-// It matches patterns like: FAC...-R... followed by other characters.
-var documentNumberRiskExtendRegex = regexp.MustCompile(`^FAC\d+-R\d+.*$`)
-
-func IsDocumentNumberRiskExtend(documentNumber string) bool {
-	// Matches: FAC followed by digits, then -R followed by digits, and can be followed by other characters.
-	return documentNumberRiskExtendRegex.MatchString(documentNumber)
-}
-
-func IsDocumentNumberEndorse(documentNumber string) bool {
-	// Matches: FAC followed by digits, then -E followed by digits, and nothing else
-	matched, _ := regexp.MatchString(`^FAC\d+.*-E\d+$`, documentNumber)
-	return matched
 }
 
 // indexComma finds the index of the first comma in a tag string (e.g., "name,omitempty")

@@ -86,20 +86,20 @@ type MockGroupRepository struct {
 	mock.Mock
 }
 
-func (m *MockGroupRepository) Create(ctx context.Context, name string, createdBy string) (*models.GoodsGroup, error) {
+func (m *MockGroupRepository) Create(ctx context.Context, name string, createdBy string) (*models.Group, error) {
 	args := m.Called(ctx, name, createdBy)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.GoodsGroup), args.Error(1)
+	return args.Get(0).(*models.Group), args.Error(1)
 }
 
-func (m *MockGroupRepository) Update(ctx context.Context, id uuid.UUID, name string, updatedBy string) (*models.GoodsGroup, error) {
+func (m *MockGroupRepository) Update(ctx context.Context, id uuid.UUID, name string, updatedBy string) (*models.Group, error) {
 	args := m.Called(ctx, id, name, updatedBy)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.GoodsGroup), args.Error(1)
+	return args.Get(0).(*models.Group), args.Error(1)
 }
 
 func (m *MockGroupRepository) Delete(ctx context.Context, id uuid.UUID, deletedBy string) error {
@@ -107,28 +107,28 @@ func (m *MockGroupRepository) Delete(ctx context.Context, id uuid.UUID, deletedB
 	return args.Error(0)
 }
 
-func (m *MockGroupRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.GoodsGroup, error) {
+func (m *MockGroupRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Group, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.GoodsGroup), args.Error(1)
+	return args.Get(0).(*models.Group), args.Error(1)
 }
 
-func (m *MockGroupRepository) GetIndex(ctx context.Context, req request.PageRequest, filter groupDto.ReqGroupIndexFilter) ([]models.GoodsGroup, int, error) {
+func (m *MockGroupRepository) GetIndex(ctx context.Context, req request.PageRequest, filter groupDto.ReqGroupIndexFilter) ([]models.Group, int, error) {
 	args := m.Called(ctx, req, filter)
 	if args.Get(0) == nil {
 		return nil, args.Int(1), args.Error(2)
 	}
-	return args.Get(0).([]models.GoodsGroup), args.Int(1), args.Error(2)
+	return args.Get(0).([]models.Group), args.Int(1), args.Error(2)
 }
 
-func (m *MockGroupRepository) GetAll(ctx context.Context, filter groupDto.ReqGroupIndexFilter) ([]models.GoodsGroup, error) {
+func (m *MockGroupRepository) GetAll(ctx context.Context, filter groupDto.ReqGroupIndexFilter) ([]models.Group, error) {
 	args := m.Called(ctx, filter)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]models.GoodsGroup), args.Error(1)
+	return args.Get(0).([]models.Group), args.Error(1)
 }
 
 func (m *MockGroupRepository) ExistsByName(ctx context.Context, name string, excludeID uuid.UUID) (bool, error) {
@@ -159,19 +159,19 @@ func TestCreateSubGroup(t *testing.T) {
 		{
 			name: "success create sub-group",
 			req: &subGroupDto.ReqCreateSubGroup{
-				GoodsGroupID: goodsGroupID,
-				Name:         "Test Sub-Group",
+				GroupID: goodsGroupID,
+				Name:    "Test Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
-				mg.On("GetByID", ctx, goodsGroupID).Return(&models.GoodsGroup{
+				mg.On("GetByID", ctx, goodsGroupID).Return(&models.Group{
 					ID:   goodsGroupID,
 					Name: "Test Group",
 				}, nil).Once()
 				m.On("ExistsByName", ctx, goodsGroupID, "Test Sub-Group", uuid.Nil).Return(false, nil).Once()
 				m.On("Create", ctx, goodsGroupID, "Test Sub-Group", testUserID.String()).Return(&models.SubGroup{
 					ID:           uuid.New(),
-					GoodsGroupID: goodsGroupID,
+					GroupID:      goodsGroupID,
 					SubgroupCode: "01",
 					Name:         "Test Sub-Group",
 					CreatedAt:    time.Now(),
@@ -185,7 +185,7 @@ func TestCreateSubGroup(t *testing.T) {
 			},
 			expectedError: nil,
 			expectedResult: &models.SubGroup{
-				GoodsGroupID: goodsGroupID,
+				GroupID:      goodsGroupID,
 				SubgroupCode: "01",
 				Name:         "Test Sub-Group",
 			},
@@ -193,12 +193,12 @@ func TestCreateSubGroup(t *testing.T) {
 		{
 			name: "error when name already exists in group",
 			req: &subGroupDto.ReqCreateSubGroup{
-				GoodsGroupID: goodsGroupID,
-				Name:         "Existing Sub-Group",
+				GroupID: goodsGroupID,
+				Name:    "Existing Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
-				mg.On("GetByID", ctx, goodsGroupID).Return(&models.GoodsGroup{
+				mg.On("GetByID", ctx, goodsGroupID).Return(&models.Group{
 					ID:   goodsGroupID,
 					Name: "Test Group",
 				}, nil).Once()
@@ -213,12 +213,12 @@ func TestCreateSubGroup(t *testing.T) {
 		{
 			name: "error when repository check exists fails",
 			req: &subGroupDto.ReqCreateSubGroup{
-				GoodsGroupID: goodsGroupID,
-				Name:         "Test Sub-Group",
+				GroupID: goodsGroupID,
+				Name:    "Test Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
-				mg.On("GetByID", ctx, goodsGroupID).Return(&models.GoodsGroup{
+				mg.On("GetByID", ctx, goodsGroupID).Return(&models.Group{
 					ID:   goodsGroupID,
 					Name: "Test Group",
 				}, nil).Once()
@@ -233,12 +233,12 @@ func TestCreateSubGroup(t *testing.T) {
 		{
 			name: "error when repository create fails",
 			req: &subGroupDto.ReqCreateSubGroup{
-				GoodsGroupID: goodsGroupID,
-				Name:         "Test Sub-Group",
+				GroupID: goodsGroupID,
+				Name:    "Test Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
-				mg.On("GetByID", ctx, goodsGroupID).Return(&models.GoodsGroup{
+				mg.On("GetByID", ctx, goodsGroupID).Return(&models.Group{
 					ID:   goodsGroupID,
 					Name: "Test Group",
 				}, nil).Once()
@@ -269,7 +269,7 @@ func TestCreateSubGroup(t *testing.T) {
 				tt.setupContext(&c)
 			}
 
-			result, err := usecaseInstance.Create(c, tt.req, tt.authId)
+			result, err := usecaseInstance.Create(ctx, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -280,7 +280,7 @@ func TestCreateSubGroup(t *testing.T) {
 				assert.NotNil(t, result)
 				if tt.expectedResult != nil {
 					assert.Equal(t, tt.expectedResult.Name, result.Name)
-					assert.Equal(t, tt.expectedResult.GoodsGroupID, result.GoodsGroupID)
+					assert.Equal(t, tt.expectedResult.GroupID, result.GroupID)
 					assert.Equal(t, tt.expectedResult.SubgroupCode, result.SubgroupCode)
 				}
 			}
@@ -311,19 +311,19 @@ func TestUpdateSubGroup(t *testing.T) {
 			name: "success update sub-group",
 			id:   validID.String(),
 			req: &subGroupDto.ReqUpdateSubGroup{
-				GoodsGroupID: goodsGroupID,
-				Name:         "Updated Sub-Group",
+				GroupID: goodsGroupID,
+				Name:    "Updated Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
-				mg.On("GetByID", ctx, goodsGroupID).Return(&models.GoodsGroup{
+				mg.On("GetByID", ctx, goodsGroupID).Return(&models.Group{
 					ID:   goodsGroupID,
 					Name: "Test Group",
 				}, nil).Once()
 				m.On("ExistsByName", ctx, goodsGroupID, "Updated Sub-Group", validID).Return(false, nil).Once()
 				m.On("Update", ctx, validID, goodsGroupID, "Updated Sub-Group", testUserID.String()).Return(&models.SubGroup{
 					ID:           validID,
-					GoodsGroupID: goodsGroupID,
+					GroupID:      goodsGroupID,
 					SubgroupCode: "01",
 					Name:         "Updated Sub-Group",
 					UpdatedAt:    time.Now(),
@@ -336,7 +336,7 @@ func TestUpdateSubGroup(t *testing.T) {
 			expectedError: nil,
 			expectedResult: &models.SubGroup{
 				ID:           validID,
-				GoodsGroupID: goodsGroupID,
+				GroupID:      goodsGroupID,
 				SubgroupCode: "01",
 				Name:         "Updated Sub-Group",
 			},
@@ -345,10 +345,10 @@ func TestUpdateSubGroup(t *testing.T) {
 			name: "error when invalid UUID",
 			id:   "invalid-uuid",
 			req: &subGroupDto.ReqUpdateSubGroup{
-				GoodsGroupID: goodsGroupID,
-				Name:         "Updated Sub-Group",
+				GroupID: goodsGroupID,
+				Name:    "Updated Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				// No mock calls expected
 			},
@@ -362,12 +362,12 @@ func TestUpdateSubGroup(t *testing.T) {
 			name: "error when name already exists in group",
 			id:   validID.String(),
 			req: &subGroupDto.ReqUpdateSubGroup{
-				GoodsGroupID: goodsGroupID,
-				Name:         "Existing Sub-Group",
+				GroupID: goodsGroupID,
+				Name:    "Existing Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
-				mg.On("GetByID", ctx, goodsGroupID).Return(&models.GoodsGroup{
+				mg.On("GetByID", ctx, goodsGroupID).Return(&models.Group{
 					ID:   goodsGroupID,
 					Name: "Test Group",
 				}, nil).Once()
@@ -383,12 +383,12 @@ func TestUpdateSubGroup(t *testing.T) {
 			name: "error when repository update fails",
 			id:   validID.String(),
 			req: &subGroupDto.ReqUpdateSubGroup{
-				GoodsGroupID: goodsGroupID,
-				Name:         "Updated Sub-Group",
+				GroupID: goodsGroupID,
+				Name:    "Updated Sub-Group",
 			},
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
-				mg.On("GetByID", ctx, goodsGroupID).Return(&models.GoodsGroup{
+				mg.On("GetByID", ctx, goodsGroupID).Return(&models.Group{
 					ID:   goodsGroupID,
 					Name: "Test Group",
 				}, nil).Once()
@@ -421,7 +421,7 @@ func TestUpdateSubGroup(t *testing.T) {
 				tt.setupContext(&c)
 			}
 
-			result, err := usecaseInstance.Update(c, tt.id, tt.req, tt.authId)
+			result, err := usecaseInstance.Update(ctx, tt.id, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -432,7 +432,7 @@ func TestUpdateSubGroup(t *testing.T) {
 				assert.NotNil(t, result)
 				if tt.expectedResult != nil {
 					assert.Equal(t, tt.expectedResult.Name, result.Name)
-					assert.Equal(t, tt.expectedResult.GoodsGroupID, result.GoodsGroupID)
+					assert.Equal(t, tt.expectedResult.GroupID, result.GroupID)
 					assert.Equal(t, tt.expectedResult.SubgroupCode, result.SubgroupCode)
 				}
 			}
@@ -459,7 +459,7 @@ func TestDeleteSubGroup(t *testing.T) {
 		{
 			name:   "success delete sub-group",
 			id:     validID.String(),
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				m.On("ExistsInTypes", ctx, validID).Return(false, nil).Once()
 				m.On("Delete", ctx, validID, testUserID.String()).Return(nil).Once()
@@ -472,7 +472,7 @@ func TestDeleteSubGroup(t *testing.T) {
 		{
 			name:   "error when invalid UUID",
 			id:     "invalid-uuid",
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				// No mock calls expected
 			},
@@ -484,7 +484,7 @@ func TestDeleteSubGroup(t *testing.T) {
 		{
 			name:   "error when sub-group still used in types",
 			id:     validID.String(),
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				m.On("ExistsInTypes", ctx, validID).Return(true, nil).Once()
 			},
@@ -496,7 +496,7 @@ func TestDeleteSubGroup(t *testing.T) {
 		{
 			name:   "error when repository delete fails",
 			id:     validID.String(),
-			authId: "test-auth-id",
+			authId: testUserID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				m.On("ExistsInTypes", ctx, validID).Return(false, nil).Once()
 				m.On("Delete", ctx, validID, testUserID.String()).Return(errors.New("delete failed")).Once()
@@ -526,7 +526,7 @@ func TestDeleteSubGroup(t *testing.T) {
 				tt.setupContext(&c)
 			}
 
-			err := usecaseInstance.Delete(c, tt.id, tt.authId)
+			err := usecaseInstance.Delete(ctx, tt.id, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -558,22 +558,22 @@ func TestGetSubGroupByID(t *testing.T) {
 			id:   validID.String(),
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				m.On("GetByID", ctx, validID).Return(&models.SubGroup{
-					ID:             validID,
-					GoodsGroupID:   goodsGroupID,
-					GoodsGroupName: "Test Goods Group",
-					SubgroupCode:   "01",
-					Name:           "Test Sub-Group",
-					CreatedAt:      time.Now(),
-					UpdatedAt:      time.Now(),
+					ID:           validID,
+					GroupID:      goodsGroupID,
+					GroupName:    "Test Goods Group",
+					SubgroupCode: "01",
+					Name:         "Test Sub-Group",
+					CreatedAt:    time.Now(),
+					UpdatedAt:    time.Now(),
 				}, nil).Once()
 			},
 			expectedError: nil,
 			expectedResult: &models.SubGroup{
-				ID:             validID,
-				GoodsGroupID:   goodsGroupID,
-				GoodsGroupName: "Test Goods Group",
-				SubgroupCode:   "01",
-				Name:           "Test Sub-Group",
+				ID:           validID,
+				GroupID:      goodsGroupID,
+				GroupName:    "Test Goods Group",
+				SubgroupCode: "01",
+				Name:         "Test Sub-Group",
 			},
 		},
 		{
@@ -611,7 +611,7 @@ func TestGetSubGroupByID(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.GetByID(c, tt.id)
+			result, err := usecaseInstance.GetByID(ctx, tt.id)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -623,7 +623,7 @@ func TestGetSubGroupByID(t *testing.T) {
 				if tt.expectedResult != nil {
 					assert.Equal(t, tt.expectedResult.ID, result.ID)
 					assert.Equal(t, tt.expectedResult.Name, result.Name)
-					assert.Equal(t, tt.expectedResult.GoodsGroupID, result.GoodsGroupID)
+					assert.Equal(t, tt.expectedResult.GroupID, result.GroupID)
 					assert.Equal(t, tt.expectedResult.SubgroupCode, result.SubgroupCode)
 				}
 			}
@@ -658,14 +658,14 @@ func TestGetIndexSubGroup(t *testing.T) {
 				subGroups := []models.SubGroup{
 					{
 						ID:           uuid.New(),
-						GoodsGroupID: goodsGroupID,
+						GroupID:      goodsGroupID,
 						SubgroupCode: "01",
 						Name:         "Sub-Group 1",
 						CreatedAt:    time.Now(),
 					},
 					{
 						ID:           uuid.New(),
-						GoodsGroupID: goodsGroupID,
+						GroupID:      goodsGroupID,
 						SubgroupCode: "02",
 						Name:         "Sub-Group 2",
 						CreatedAt:    time.Now(),
@@ -675,8 +675,8 @@ func TestGetIndexSubGroup(t *testing.T) {
 			},
 			expectedError: nil,
 			expectedResult: []models.SubGroup{
-				{GoodsGroupID: goodsGroupID, SubgroupCode: "01", Name: "Sub-Group 1"},
-				{GoodsGroupID: goodsGroupID, SubgroupCode: "02", Name: "Sub-Group 2"},
+				{GroupID: goodsGroupID, SubgroupCode: "01", Name: "Sub-Group 1"},
+				{GroupID: goodsGroupID, SubgroupCode: "02", Name: "Sub-Group 2"},
 			},
 			expectedTotal: 2,
 		},
@@ -687,25 +687,25 @@ func TestGetIndexSubGroup(t *testing.T) {
 				PerPage: 10,
 			},
 			filter: subGroupDto.ReqSubGroupIndexFilter{
-				GoodsGroupIDs: []uuid.UUID{goodsGroupID},
+				GroupIDs: []uuid.UUID{goodsGroupID},
 			},
 			setupMock: func(m *MockSubGroupRepository, mg *MockGroupRepository) {
 				subGroups := []models.SubGroup{
 					{
 						ID:           uuid.New(),
-						GoodsGroupID: goodsGroupID,
+						GroupID:      goodsGroupID,
 						SubgroupCode: "01",
 						Name:         "Sub-Group 1",
 						CreatedAt:    time.Now(),
 					},
 				}
 				m.On("GetIndex", ctx, request.PageRequest{Page: 1, PerPage: 10}, subGroupDto.ReqSubGroupIndexFilter{
-					GoodsGroupIDs: []uuid.UUID{goodsGroupID},
+					GroupIDs: []uuid.UUID{goodsGroupID},
 				}).Return(subGroups, 1, nil).Once()
 			},
 			expectedError: nil,
 			expectedResult: []models.SubGroup{
-				{GoodsGroupID: goodsGroupID, SubgroupCode: "01", Name: "Sub-Group 1"},
+				{GroupID: goodsGroupID, SubgroupCode: "01", Name: "Sub-Group 1"},
 			},
 			expectedTotal: 1,
 		},
@@ -738,7 +738,7 @@ func TestGetIndexSubGroup(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, total, err := usecaseInstance.GetIndex(c, tt.req, tt.filter)
+			result, total, err := usecaseInstance.GetIndex(ctx, tt.req, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -752,7 +752,7 @@ func TestGetIndexSubGroup(t *testing.T) {
 				assert.Equal(t, len(tt.expectedResult), len(result))
 				if len(tt.expectedResult) > 0 {
 					assert.Equal(t, tt.expectedResult[0].Name, result[0].Name)
-					assert.Equal(t, tt.expectedResult[0].GoodsGroupID, result[0].GoodsGroupID)
+					assert.Equal(t, tt.expectedResult[0].GroupID, result[0].GroupID)
 					assert.Equal(t, tt.expectedResult[0].SubgroupCode, result[0].SubgroupCode)
 				}
 			}
@@ -783,14 +783,14 @@ func TestExportSubGroup(t *testing.T) {
 				subGroups := []models.SubGroup{
 					{
 						ID:           uuid.New(),
-						GoodsGroupID: goodsGroupID,
+						GroupID:      goodsGroupID,
 						SubgroupCode: "01",
 						Name:         "Sub-Group 1",
 						CreatedAt:    time.Now(),
 					},
 					{
 						ID:           uuid.New(),
-						GoodsGroupID: goodsGroupID,
+						GroupID:      goodsGroupID,
 						SubgroupCode: "02",
 						Name:         "Sub-Group 2",
 						CreatedAt:    time.Now(),
@@ -800,8 +800,8 @@ func TestExportSubGroup(t *testing.T) {
 			},
 			expectedError: nil,
 			expectedResult: []models.SubGroup{
-				{GoodsGroupID: goodsGroupID, SubgroupCode: "01", Name: "Sub-Group 1"},
-				{GoodsGroupID: goodsGroupID, SubgroupCode: "02", Name: "Sub-Group 2"},
+				{GroupID: goodsGroupID, SubgroupCode: "01", Name: "Sub-Group 1"},
+				{GroupID: goodsGroupID, SubgroupCode: "02", Name: "Sub-Group 2"},
 			},
 		},
 		{
@@ -812,7 +812,7 @@ func TestExportSubGroup(t *testing.T) {
 				subGroups := []models.SubGroup{
 					{
 						ID:           uuid.New(),
-						GoodsGroupID: goodsGroupID,
+						GroupID:      goodsGroupID,
 						SubgroupCode: "01",
 						Name:         "Sub-Group 1",
 						CreatedAt:    time.Now(),
@@ -822,7 +822,7 @@ func TestExportSubGroup(t *testing.T) {
 			},
 			expectedError: nil,
 			expectedResult: []models.SubGroup{
-				{GoodsGroupID: goodsGroupID, SubgroupCode: "01", Name: "Sub-Group 1"},
+				{GroupID: goodsGroupID, SubgroupCode: "01", Name: "Sub-Group 1"},
 			},
 		},
 		{
@@ -856,7 +856,7 @@ func TestExportSubGroup(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.Export(c, tt.filter)
+			result, err := usecaseInstance.Export(ctx, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)

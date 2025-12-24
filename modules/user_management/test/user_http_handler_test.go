@@ -2,6 +2,7 @@ package test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"mime/multipart"
 	"net/http"
@@ -27,95 +28,95 @@ type mockUserManagementUsecase struct {
 	mock.Mock
 }
 
-func (m *mockUserManagementUsecase) CreateUser(c echo.Context, req *dto.ReqCreateUser, authId string) (*models.User, error) {
-	args := m.Called(c, req, authId)
+func (m *mockUserManagementUsecase) CreateUser(ctx context.Context, req *dto.ReqCreateUser, userID string) (*models.User, error) {
+	args := m.Called(ctx, req, userID)
 	if user := args.Get(0); user != nil {
 		return user.(*models.User), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockUserManagementUsecase) GetUserByID(c echo.Context, id string) (*models.User, error) {
-	args := m.Called(c, id)
+func (m *mockUserManagementUsecase) GetUserByID(ctx context.Context, id string) (*models.User, error) {
+	args := m.Called(ctx, id)
 	if user := args.Get(0); user != nil {
 		return user.(*models.User), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockUserManagementUsecase) GetAllUser(c echo.Context) ([]models.User, error) {
-	args := m.Called(c)
+func (m *mockUserManagementUsecase) GetAllUser(ctx context.Context) ([]models.User, error) {
+	args := m.Called(ctx)
 	if users := args.Get(0); users != nil {
 		return users.([]models.User), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockUserManagementUsecase) GetIndexUser(c echo.Context, req request.PageRequest, filter dto.ReqUserIndexFilter) ([]models.User, int, error) {
-	args := m.Called(c, req, filter)
+func (m *mockUserManagementUsecase) GetIndexUser(ctx context.Context, req request.PageRequest, filter dto.ReqUserIndexFilter) ([]models.User, int, error) {
+	args := m.Called(ctx, req, filter)
 	if users := args.Get(0); users != nil {
 		return users.([]models.User), args.Int(1), args.Error(2)
 	}
 	return nil, 0, args.Error(2)
 }
 
-func (m *mockUserManagementUsecase) UpdateUser(c echo.Context, id string, req *dto.ReqUpdateUser, authId string) (*models.User, error) {
-	args := m.Called(c, id, req, authId)
+func (m *mockUserManagementUsecase) UpdateUser(ctx context.Context, id string, req *dto.ReqUpdateUser, userID string) (*models.User, error) {
+	args := m.Called(ctx, id, req, userID)
 	if user := args.Get(0); user != nil {
 		return user.(*models.User), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockUserManagementUsecase) SoftDeleteUser(c echo.Context, id string, authId string) (*models.User, error) {
-	args := m.Called(c, id, authId)
+func (m *mockUserManagementUsecase) SoftDeleteUser(ctx context.Context, id string, userID string) (*models.User, error) {
+	args := m.Called(ctx, id, userID)
 	if user := args.Get(0); user != nil {
 		return user.(*models.User), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockUserManagementUsecase) UserNameIsNotDuplicated(c echo.Context, name string, id uuid.UUID) (*models.User, error) {
-	args := m.Called(c, name, id)
+func (m *mockUserManagementUsecase) UserNameIsNotDuplicated(ctx context.Context, name string, id uuid.UUID) (*models.User, error) {
+	args := m.Called(ctx, name, id)
 	if user := args.Get(0); user != nil {
 		return user.(*models.User), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockUserManagementUsecase) BlockUser(c echo.Context, id string, req *dto.ReqBlockUser) (*models.User, error) {
-	args := m.Called(c, id, req)
+func (m *mockUserManagementUsecase) BlockUser(ctx context.Context, id string, req *dto.ReqBlockUser) (*models.User, error) {
+	args := m.Called(ctx, id, req)
 	if user := args.Get(0); user != nil {
 		return user.(*models.User), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockUserManagementUsecase) ActivateUser(c echo.Context, id string, req *dto.ReqActivateUser) (*models.User, error) {
-	args := m.Called(c, id, req)
+func (m *mockUserManagementUsecase) ActivateUser(ctx context.Context, id string, req *dto.ReqActivateUser) (*models.User, error) {
+	args := m.Called(ctx, id, req)
 	if user := args.Get(0); user != nil {
 		return user.(*models.User), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockUserManagementUsecase) UpdateUserPassword(c echo.Context, userId string, passwordChunks *dto.ReqUpdateUserPassword) error {
-	args := m.Called(c, userId, passwordChunks)
+func (m *mockUserManagementUsecase) UpdateUserPassword(ctx context.Context, userId string, passwordChunks *dto.ReqUpdateUserPassword) error {
+	args := m.Called(ctx, userId, passwordChunks)
 	return args.Error(0)
 }
 
-func (m *mockUserManagementUsecase) UpdateUserPasswordNoCheckRequired(c echo.Context, userId string, passwordChunks *dto.ReqUpdateUserPassword) error {
-	args := m.Called(c, userId, passwordChunks)
+func (m *mockUserManagementUsecase) UpdateUserPasswordNoCheckRequired(ctx context.Context, userId string, passwordChunks *dto.ReqUpdateUserPassword) error {
+	args := m.Called(ctx, userId, passwordChunks)
 	return args.Error(0)
 }
 
-func (m *mockUserManagementUsecase) AssertCurrentUserPassword(c echo.Context, id string, inputtedPassword string) error {
-	args := m.Called(c, id, inputtedPassword)
+func (m *mockUserManagementUsecase) AssertCurrentUserPassword(ctx context.Context, id string, inputtedPassword string) error {
+	args := m.Called(ctx, id, inputtedPassword)
 	return args.Error(0)
 }
 
-func (m *mockUserManagementUsecase) ImportUsersFromExcel(c echo.Context, filePath string) (*dto.ResImportUsers, error) {
-	args := m.Called(c, filePath)
+func (m *mockUserManagementUsecase) ImportUsersFromExcel(ctx context.Context, filePath string) (*dto.ResImportUsers, error) {
+	args := m.Called(ctx, filePath)
 	if res := args.Get(0); res != nil {
 		return res.(*dto.ResImportUsers), args.Error(1)
 	}

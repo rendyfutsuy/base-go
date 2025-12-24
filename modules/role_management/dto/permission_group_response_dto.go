@@ -27,11 +27,11 @@ type RespPermissionGroupIndex struct {
 }
 
 type RespPermissionGroupDetail struct {
-	ID          uuid.UUID          `json:"id"`
-	Name        string             `json:"name"`
-	Permissions []utils.NullString `json:"permissions"`
-	CreatedAt   time.Time          `json:"created_at"`
-	UpdatedAt   utils.NullTime     `json:"updated_at"`
+	ID          uuid.UUID      `json:"id"`
+	Name        string         `json:"name"`
+	Permissions []string       `json:"permissions"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   utils.NullTime `json:"updated_at"`
 }
 
 // to get role info for compact use
@@ -59,12 +59,12 @@ func ToRespPermissionGroupIndex(roleDb models.PermissionGroup) RespPermissionGro
 // to get role info with references
 func ToRespPermissionGroupDetail(roleDb models.PermissionGroup) RespPermissionGroupDetail {
 
-	permissions := make([]utils.NullString, 0)
+	permissions := make([]string, 0)
 	for _, permission := range roleDb.PermissionNames {
 		// Check if the permission is null or empty, continue to the next entry if it is
 		if permission.Valid && permission.String != "" {
 			// If the permission is valid and not empty, append it to the permissions slice
-			permissions = append(permissions, permission)
+			permissions = append(permissions, permission.String)
 		}
 	}
 

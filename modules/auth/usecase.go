@@ -2,7 +2,9 @@ package auth
 
 import (
 	"context"
+	"time"
 
+	"github.com/google/uuid"
 	models "github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 )
@@ -10,7 +12,20 @@ import (
 // AuthenticateResult represents the result of authentication
 type AuthenticateResult struct {
 	AccessToken      string
+	RefreshToken     string
 	IsFirstTimeLogin bool
+}
+
+type RefreshResult struct {
+	AccessToken  string
+	RefreshToken string
+}
+
+type RefreshTokenMeta struct {
+	UserID    uuid.UUID
+	ExpiresAt time.Time
+	Used      bool
+	AccessJTI string
 }
 
 // Usecase represent the auth's usecases
@@ -28,5 +43,5 @@ type Usecase interface {
 	ResetUserPassword(ctx context.Context, newPassword string, token string) error
 
 	// for refresh token
-	RefreshToken(ctx context.Context, accessToken string) (string, error)
+	RefreshToken(ctx context.Context, refreshToken string) (RefreshResult, error)
 }

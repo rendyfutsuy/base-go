@@ -13,6 +13,7 @@ import (
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
+	rsearchuser "github.com/rendyfutsuy/base-go/modules/user_management/repository/searches"
 	"github.com/rendyfutsuy/base-go/utils"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -153,14 +154,8 @@ func (repo *userRepository) GetIndexUser(ctx context.Context, req request.PageRe
 		Joins("JOIN roles rl ON rl.id = usr.role_id").
 		Where("usr.deleted_at IS NULL")
 
-	// Apply search query with parameter binding
-	query = request.ApplySearchCondition(query, searchQuery, []string{
-		"usr.full_name",
-		"usr.gender",
-		"usr.email",
-		"rl.name",
-		"usr.username",
-	})
+	// Apply search query with parameter binding using centralized helper
+	query = request.ApplySearchConditionFromInterface(query, searchQuery, rsearchuser.NewUserSearchHelper())
 
 	// Apply role IDs filter
 	if len(filter.RoleIds) > 0 {

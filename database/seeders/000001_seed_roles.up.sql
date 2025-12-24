@@ -14,7 +14,7 @@ VALUES
     (
         'a43a5e5f-a172-42d1-a70e-8834bf653eb0',
         '2023-09-25 15:33:01.881',
-        'system',
+        NULL,
         NULL,
         NULL,
         NULL,
@@ -25,7 +25,7 @@ VALUES
     (
        '0199dc4e-6455-7b8d-b48b-409dbece678b',
         '2023-09-25 15:33:01.881',
-        'system',
+        NULL,
         NULL,
         NULL,
         NULL,

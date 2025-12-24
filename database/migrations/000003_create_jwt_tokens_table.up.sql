@@ -12,4 +12,5 @@ CREATE TABLE IF NOT EXISTS jwt_tokens (
 
 CREATE INDEX jwt_tokens_created_at_index ON jwt_tokens (created_at);
 CREATE INDEX jwt_tokens_updated_at_index ON jwt_tokens (updated_at);
+CREATE INDEX jwt_tokens_deleted_at_index ON jwt_tokens (deleted_at);
 CREATE INDEX jwt_tokens_user_id_index ON jwt_tokens (user_id);

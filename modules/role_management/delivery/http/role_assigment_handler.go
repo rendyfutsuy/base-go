@@ -15,6 +15,9 @@ import (
 // assign users to role
 
 func (handler *RoleManagementHandler) ReAssignPermissionByGroup(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
 
 	// validate id
@@ -34,7 +37,7 @@ func (handler *RoleManagementHandler) ReAssignPermissionByGroup(c echo.Context) 
 	}
 
 	// Re-assign Permission groups to role
-	res, err := handler.RoleUseCase.ReAssignPermissionByGroup(c, id, req)
+	res, err := handler.RoleUseCase.ReAssignPermissionByGroup(ctx, id, req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -42,7 +45,7 @@ func (handler *RoleManagementHandler) ReAssignPermissionByGroup(c echo.Context) 
 	// if name already uses by existing account info, return Role object
 	modules := []dto.RespPermissionGroupByModule{}
 
-	modules, err = handler.buildPermissionGroupsByModule(c, id)
+	modules, err = handler.buildPermissionGroupsByModule(ctx, id)
 	if err != nil {
 		// Handle specific error for UUID parsing
 		if id != "" {
@@ -61,6 +64,9 @@ func (handler *RoleManagementHandler) ReAssignPermissionByGroup(c echo.Context) 
 }
 
 func (handler *RoleManagementHandler) AssignUsersToRole(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
 
 	// validate id
@@ -80,7 +86,7 @@ func (handler *RoleManagementHandler) AssignUsersToRole(c echo.Context) error {
 	}
 
 	// Re-assign Permission groups to role
-	res, err := handler.RoleUseCase.AssignUsersToRole(c, id, req)
+	res, err := handler.RoleUseCase.AssignUsersToRole(ctx, id, req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}

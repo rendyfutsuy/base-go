@@ -19,14 +19,14 @@ func mapSubGroupIndexSortColumn(sortBy string) string {
 	}
 
 	mapping := map[string]string{
-		"id":               "sg.id",
-		"subgroup_id":      "sg.id",
-		"goods_group_id":   "sg.goods_group_id",
-		"subgroup_code":    "sg.subgroup_code",
-		"name":             "sg.name",
-		"goods_group_name": "goods_group_name",
-		"created_at":       "sg.created_at",
-		"updated_at":       "sg.updated_at",
+		"id":            "sg.id",
+		"subgroup_id":   "sg.id",
+		"groups_id":     "sg.groups_id",
+		"subgroup_code": "sg.subgroup_code",
+		"name":          "sg.name",
+		"groups_name":   "groups_name",
+		"created_at":    "sg.created_at",
+		"updated_at":    "sg.updated_at",
 	}
 
 	return mapping[normalized]

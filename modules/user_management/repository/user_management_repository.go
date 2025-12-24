@@ -13,7 +13,9 @@ type userRepository struct {
 }
 
 func NewUserManagementRepository(DB *gorm.DB) user.Repository {
-	return &userRepository{DB}
+	return &userRepository{
+		DB: DB,
+	}
 }
 
 func (repo *userRepository) CreateTable(sqlFilePath string) (err error) {

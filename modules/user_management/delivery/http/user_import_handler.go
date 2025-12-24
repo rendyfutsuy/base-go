@@ -28,6 +28,9 @@ import (
 // @Failure		500		{object}	response.NonPaginationResponse	"Internal server error"
 // @Router			/v1/user-management/user/import [post]
 func (handler *UserManagementHandler) ImportUsersFromExcel(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	// Get uploaded file
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -67,7 +70,7 @@ func (handler *UserManagementHandler) ImportUsersFromExcel(c echo.Context) error
 	}
 
 	// Process Excel file
-	res, err := handler.UserUseCase.ImportUsersFromExcel(c, tempFilePath)
+	res, err := handler.UserUseCase.ImportUsersFromExcel(ctx, tempFilePath)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}

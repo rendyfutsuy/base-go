@@ -1,12 +1,12 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
@@ -27,16 +27,7 @@ func NewBackingUsecase(repo mod.Repository, typeRepo typeRepo.Repository) mod.Us
 	return &backingUsecase{repo: repo, typeRepo: typeRepo}
 }
 
-func (u *backingUsecase) Create(c echo.Context, reqBody *dto.ReqCreateBacking, authId string) (*models.Backing, error) {
-	ctx := c.Request().Context()
-	user := c.Get("user")
-	userID := ""
-	if user != nil {
-		if userModel, ok := user.(models.User); ok {
-			userID = userModel.ID.String()
-		}
-	}
-
+func (u *backingUsecase) Create(ctx context.Context, reqBody *dto.ReqCreateBacking, userID string) (*models.Backing, error) {
 	// Check if type_id exists
 	typeObject, err := u.typeRepo.GetByID(ctx, reqBody.TypeID)
 	if err != nil {
@@ -60,18 +51,10 @@ func (u *backingUsecase) Create(c echo.Context, reqBody *dto.ReqCreateBacking, a
 	return u.repo.Create(ctx, reqBody.TypeID, reqBody.Name, userID)
 }
 
-func (u *backingUsecase) Update(c echo.Context, id string, reqBody *dto.ReqUpdateBacking, authId string) (*models.Backing, error) {
-	ctx := c.Request().Context()
+func (u *backingUsecase) Update(ctx context.Context, id string, reqBody *dto.ReqUpdateBacking, userID string) (*models.Backing, error) {
 	bid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
-	}
-	user := c.Get("user")
-	userID := ""
-	if user != nil {
-		if userModel, ok := user.(models.User); ok {
-			userID = userModel.ID.String()
-		}
 	}
 
 	// Check if type_id exists
@@ -104,8 +87,7 @@ func (u *backingUsecase) Update(c echo.Context, id string, reqBody *dto.ReqUpdat
 	return res, nil
 }
 
-func (u *backingUsecase) Delete(c echo.Context, id string, authId string) error {
-	ctx := c.Request().Context()
+func (u *backingUsecase) Delete(ctx context.Context, id string, userID string) error {
 	bid, err := utils.StringToUUID(id)
 	if err != nil {
 		return err
@@ -113,8 +95,7 @@ func (u *backingUsecase) Delete(c echo.Context, id string, authId string) error 
 	return u.repo.Delete(ctx, bid)
 }
 
-func (u *backingUsecase) GetByID(c echo.Context, id string) (*models.Backing, error) {
-	ctx := c.Request().Context()
+func (u *backingUsecase) GetByID(ctx context.Context, id string) (*models.Backing, error) {
 	bid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
@@ -122,19 +103,16 @@ func (u *backingUsecase) GetByID(c echo.Context, id string) (*models.Backing, er
 	return u.repo.GetByID(ctx, bid)
 }
 
-func (u *backingUsecase) GetIndex(c echo.Context, req request.PageRequest, filter dto.ReqBackingIndexFilter) ([]models.Backing, int, error) {
-	ctx := c.Request().Context()
+func (u *backingUsecase) GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqBackingIndexFilter) ([]models.Backing, int, error) {
 	// Search is already set in req.Search from PageRequest middleware
 	return u.repo.GetIndex(ctx, req, filter)
 }
 
-func (u *backingUsecase) GetAll(c echo.Context, filter dto.ReqBackingIndexFilter) ([]models.Backing, error) {
-	ctx := c.Request().Context()
+func (u *backingUsecase) GetAll(ctx context.Context, filter dto.ReqBackingIndexFilter) ([]models.Backing, error) {
 	return u.repo.GetAll(ctx, filter)
 }
 
-func (u *backingUsecase) Export(c echo.Context, filter dto.ReqBackingIndexFilter) ([]byte, error) {
-	ctx := c.Request().Context()
+func (u *backingUsecase) Export(ctx context.Context, filter dto.ReqBackingIndexFilter) ([]byte, error) {
 	// Extract search from query param and set to filter (filter.Search is already set from Bind)
 	// Use GetAll for export without pagination
 	list, err := u.repo.GetAll(ctx, filter)

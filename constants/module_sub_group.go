@@ -4,7 +4,7 @@ const (
 	// SubGroup validation errors
 	SubGroupNameAlreadyExists    = "Sub-group name already exists in this group"
 	SubGroupCreateFailedIDNotSet = "failed to create sub-group: ID not set"
-	SubGroupGoodsGroupNotFound   = "Goods group not found"
+	SubGroupGroupNotFound        = "Goods group not found"
 	SubGroupNotFound             = "sub-group with id %s not found"
 
 	// Success messages

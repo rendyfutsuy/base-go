@@ -35,6 +35,8 @@ import (
 // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/user-management/user [post]
 func (handler *UserManagementHandler) CreateUser(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
 
 	// get auth ID
 	user := c.Get("user")
@@ -52,7 +54,7 @@ func (handler *UserManagementHandler) CreateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	res, err := handler.UserUseCase.CreateUser(c, req, authId)
+	res, err := handler.UserUseCase.CreateUser(ctx, req, authId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -82,6 +84,9 @@ func (handler *UserManagementHandler) CreateUser(c echo.Context) error {
 // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/user-management/user [get]
 func (handler *UserManagementHandler) GetIndexUser(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	pageRequest := c.Get("page_request").(*request.PageRequest)
 
 	// validate filter req.
@@ -98,7 +103,7 @@ func (handler *UserManagementHandler) GetIndexUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	res, total, err := handler.UserUseCase.GetIndexUser(c, *pageRequest, *filter)
+	res, total, err := handler.UserUseCase.GetIndexUser(ctx, *pageRequest, *filter)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -132,8 +137,10 @@ func (handler *UserManagementHandler) GetIndexUser(c echo.Context) error {
 // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/user-management/user/all [get]
 func (handler *UserManagementHandler) GetAllUser(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
 
-	res, err := handler.UserUseCase.GetAllUser(c)
+	res, err := handler.UserUseCase.GetAllUser(ctx)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -164,6 +171,8 @@ func (handler *UserManagementHandler) GetAllUser(c echo.Context) error {
 // @Failure		404	{object}	response.NonPaginationResponse	"User not found"
 // @Router			/v1/user-management/user/{id} [get]
 func (handler *UserManagementHandler) GetUserByID(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
 
 	id := c.Param("id")
 
@@ -173,7 +182,7 @@ func (handler *UserManagementHandler) GetUserByID(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.ErrorUUIDNotRecognized))
 	}
 
-	res, err := handler.UserUseCase.GetUserByID(c, id)
+	res, err := handler.UserUseCase.GetUserByID(ctx, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -200,6 +209,8 @@ func (handler *UserManagementHandler) GetUserByID(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"User not found"
 // @Router			/v1/user-management/user/{id} [put]
 func (handler *UserManagementHandler) UpdateUser(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
 
 	// get auth ID
 	user := c.Get("user")
@@ -223,7 +234,7 @@ func (handler *UserManagementHandler) UpdateUser(c echo.Context) error {
 	}
 
 	// update user data
-	res, err := handler.UserUseCase.UpdateUser(c, id, req, authId)
+	res, err := handler.UserUseCase.UpdateUser(ctx, id, req, authId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -238,7 +249,7 @@ func (handler *UserManagementHandler) UpdateUser(c echo.Context) error {
 		reqPassword.PasswordConfirmation = req.PasswordConfirmation
 
 		// update Update User Password By Passed ID
-		err = handler.UserUseCase.UpdateUserPasswordNoCheckRequired(c, id, reqPassword)
+		err = handler.UserUseCase.UpdateUserPasswordNoCheckRequired(ctx, id, reqPassword)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 		}
@@ -265,6 +276,9 @@ func (handler *UserManagementHandler) UpdateUser(c echo.Context) error {
 // @Failure		200		{object}	response.NonPaginationResponse	"User with such name is not found"
 // @Router			/v1/user-management/user/check-name [post]
 func (handler *UserManagementHandler) GetDuplicatedUser(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	req := new(dto.ReqCheckDuplicatedUser)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -284,7 +298,7 @@ func (handler *UserManagementHandler) GetDuplicatedUser(c echo.Context) error {
 		uid = req.ExcludedUserId
 	}
 
-	res, err := handler.UserUseCase.UserNameIsNotDuplicated(c, req.UserName, uid)
+	res, err := handler.UserUseCase.UserNameIsNotDuplicated(ctx, req.UserName, uid)
 
 	// if name havent been uses by existing account info, return not found error
 	if res == nil {
@@ -320,6 +334,9 @@ func (handler *UserManagementHandler) GetDuplicatedUser(c echo.Context) error {
 // // @Failure		404		{object}	response.NonPaginationResponse	"User not found"
 // // @Router			/v1/user-management/user/{id}/block [patch]
 func (handler *UserManagementHandler) BlockUser(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	req := new(dto.ReqBlockUser)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -340,7 +357,7 @@ func (handler *UserManagementHandler) BlockUser(c echo.Context) error {
 
 	// get Block User
 	// add revoke all user auth token
-	res, err := handler.UserUseCase.BlockUser(c, id, req)
+	res, err := handler.UserUseCase.BlockUser(ctx, id, req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -370,6 +387,9 @@ func (handler *UserManagementHandler) BlockUser(c echo.Context) error {
 // // @Failure		404		{object}	response.NonPaginationResponse	"User not found"
 // // @Router			/v1/user-management/user/{id}/assign-status [patch]
 func (handler *UserManagementHandler) ActivateUser(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	req := new(dto.ReqActivateUser)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -390,7 +410,7 @@ func (handler *UserManagementHandler) ActivateUser(c echo.Context) error {
 
 	// get Active User
 	// add revoke all user auth token
-	res, err := handler.UserUseCase.ActivateUser(c, id, req)
+	res, err := handler.UserUseCase.ActivateUser(ctx, id, req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -419,6 +439,9 @@ func (handler *UserManagementHandler) ActivateUser(c echo.Context) error {
 // @Failure		404	{object}	response.NonPaginationResponse	"User not found"
 // @Router			/v1/user-management/user/{id} [delete]
 func (handler *UserManagementHandler) DeleteUser(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
 
 	// validate id
@@ -431,7 +454,7 @@ func (handler *UserManagementHandler) DeleteUser(c echo.Context) error {
 	user := c.Get("user")
 	authId := user.(models.User).ID.String()
 
-	res, err := handler.UserUseCase.SoftDeleteUser(c, id, authId)
+	res, err := handler.UserUseCase.SoftDeleteUser(ctx, id, authId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}

@@ -10,6 +10,7 @@ import (
 	_reqContext "github.com/rendyfutsuy/base-go/helpers/middleware/request"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/helpers/response"
+	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/backing"
 	"github.com/rendyfutsuy/base-go/modules/backing/dto"
 )
@@ -80,6 +81,9 @@ func NewBackingHandler(e *echo.Echo, uc backing.Usecase, mwP _reqContext.IMiddle
 // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/backing [post]
 func (h *BackingHandler) Create(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	req := new(dto.ReqCreateBacking)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -87,9 +91,15 @@ func (h *BackingHandler) Create(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
+
+	// get user from context
 	user := c.Get("user")
-	_ = user // not used; keep signature parity
-	res, err := h.Usecase.Create(c, req, "")
+	userID := ""
+	if userModel, ok := user.(models.User); ok {
+		userID = userModel.ID.String()
+	}
+
+	res, err := h.Usecase.Create(ctx, req, userID)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -113,6 +123,9 @@ func (h *BackingHandler) Create(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Backing not found"
 // @Router			/v1/backing/{id} [put]
 func (h *BackingHandler) Update(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
 	req := new(dto.ReqUpdateBacking)
 	if err := c.Bind(req); err != nil {
@@ -121,7 +134,15 @@ func (h *BackingHandler) Update(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	res, err := h.Usecase.Update(c, id, req, "")
+
+	// get user from context
+	user := c.Get("user")
+	userID := ""
+	if userModel, ok := user.(models.User); ok {
+		userID = userModel.ID.String()
+	}
+
+	res, err := h.Usecase.Update(ctx, id, req, userID)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -144,8 +165,18 @@ func (h *BackingHandler) Update(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Backing not found"
 // @Router			/v1/backing/{id} [delete]
 func (h *BackingHandler) Delete(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
+	// get user from context
+	user := c.Get("user")
+	userID := ""
+	if userModel, ok := user.(models.User); ok {
+		userID = userModel.ID.String()
+	}
+
 	id := c.Param("id")
-	if err := h.Usecase.Delete(c, id, ""); err != nil {
+	if err := h.Usecase.Delete(ctx, id, userID); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 	resp := response.NonPaginationResponse{}
@@ -174,6 +205,9 @@ func (h *BackingHandler) Delete(c echo.Context) error {
 // @Failure		401				{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/backing [get]
 func (h *BackingHandler) GetIndex(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	pageRequest := c.Get("page_request").(*request.PageRequest)
 
 	// validate filter req.
@@ -190,7 +224,7 @@ func (h *BackingHandler) GetIndex(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	res, total, err := h.Usecase.GetIndex(c, *pageRequest, *filter)
+	res, total, err := h.Usecase.GetIndex(ctx, *pageRequest, *filter)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -226,8 +260,11 @@ func (h *BackingHandler) GetIndex(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Backing not found"
 // @Router			/v1/backing/{id} [get]
 func (h *BackingHandler) GetByID(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
-	res, err := h.Usecase.GetByID(c, id)
+	res, err := h.Usecase.GetByID(ctx, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -253,6 +290,9 @@ func (h *BackingHandler) GetByID(c echo.Context) error {
 // @Failure		401				{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/backing/export [get]
 func (h *BackingHandler) Export(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	// validate filter req.
 	// initialize filter
 	filter := new(dto.ReqBackingIndexFilter)
@@ -267,7 +307,7 @@ func (h *BackingHandler) Export(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	excelBytes, err := h.Usecase.Export(c, *filter)
+	excelBytes, err := h.Usecase.Export(ctx, *filter)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}

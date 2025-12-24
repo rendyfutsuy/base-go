@@ -80,6 +80,9 @@ func NewParameterHandler(e *echo.Echo, uc parameter.Usecase, mwP _reqContext.IMi
 // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/parameter [post]
 func (h *ParameterHandler) Create(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	req := new(dto.ReqCreateParameter)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -89,7 +92,7 @@ func (h *ParameterHandler) Create(c echo.Context) error {
 	}
 	user := c.Get("user")
 	_ = user // not used; keep signature parity
-	res, err := h.Usecase.Create(c, req, "")
+	res, err := h.Usecase.Create(ctx, req, "")
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -113,6 +116,9 @@ func (h *ParameterHandler) Create(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Parameter not found"
 // @Router			/v1/parameter/{id} [put]
 func (h *ParameterHandler) Update(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
 	req := new(dto.ReqUpdateParameter)
 	if err := c.Bind(req); err != nil {
@@ -121,7 +127,7 @@ func (h *ParameterHandler) Update(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	res, err := h.Usecase.Update(c, id, req, "")
+	res, err := h.Usecase.Update(ctx, id, req, "")
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -144,8 +150,11 @@ func (h *ParameterHandler) Update(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Parameter not found"
 // @Router			/v1/parameter/{id} [delete]
 func (h *ParameterHandler) Delete(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
-	if err := h.Usecase.Delete(c, id, ""); err != nil {
+	if err := h.Usecase.Delete(ctx, id, ""); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 	resp := response.NonPaginationResponse{}
@@ -170,6 +179,9 @@ func (h *ParameterHandler) Delete(c echo.Context) error {
 // @Failure		401			{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/parameter [get]
 func (h *ParameterHandler) GetIndex(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	pageRequest := c.Get("page_request").(*request.PageRequest)
 
 	// validate filter req.
@@ -186,7 +198,7 @@ func (h *ParameterHandler) GetIndex(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	res, total, err := h.Usecase.GetIndex(c, *pageRequest, *filter)
+	res, total, err := h.Usecase.GetIndex(ctx, *pageRequest, *filter)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -222,8 +234,11 @@ func (h *ParameterHandler) GetIndex(c echo.Context) error {
 // @Failure		404		{object}	response.NonPaginationResponse	"Parameter not found"
 // @Router			/v1/parameter/{id} [get]
 func (h *ParameterHandler) GetByID(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	id := c.Param("id")
-	res, err := h.Usecase.GetByID(c, id)
+	res, err := h.Usecase.GetByID(ctx, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -247,6 +262,9 @@ func (h *ParameterHandler) GetByID(c echo.Context) error {
 // @Failure		401			{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/parameter/export [get]
 func (h *ParameterHandler) Export(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	// validate filter req.
 	// initialize filter
 	filter := new(dto.ReqParameterIndexFilter)
@@ -261,7 +279,7 @@ func (h *ParameterHandler) Export(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	excelBytes, err := h.Usecase.Export(c, *filter)
+	excelBytes, err := h.Usecase.Export(ctx, *filter)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}

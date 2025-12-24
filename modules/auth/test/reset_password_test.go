@@ -21,10 +21,11 @@ func TestRequestResetPassword(t *testing.T) {
 	ctx := context.Background()
 	mockRepo := new(MockAuthRepository)
 	signingKey := []byte("test-secret-key")
+	refreshSigningKey := []byte("test-secret-refresh-key")
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, 24*time.Hour)
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, refreshSigningKey, 24*time.Hour)
 
 	testUser := models.User{
 		ID:    uuid.New(),
@@ -122,10 +123,11 @@ func TestResetUserPassword(t *testing.T) {
 	ctx := context.Background()
 	mockRepo := new(MockAuthRepository)
 	signingKey := []byte("test-secret-key")
+	refreshSigningKey := []byte("test-secret-refresh-key")
 	hashSalt := "test-salt"
 	timeout := 5 * time.Second
 
-	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, 24*time.Hour)
+	usecaseInstance := usecase.NewTestAuthUsecase(mockRepo, nil, timeout, hashSalt, signingKey, refreshSigningKey, 24*time.Hour)
 
 	testUserID := uuid.New()
 	hashedOldPassword, _ := bcrypt.GenerateFromPassword([]byte("oldpassword123"), bcrypt.DefaultCost)

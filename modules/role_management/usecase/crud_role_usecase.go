@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -11,11 +12,9 @@ import (
 	"github.com/rendyfutsuy/base-go/utils"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 )
 
-func (u *roleUsecase) CreateRole(c echo.Context, req *dto.ReqCreateRole, authId string) (roleRes *models.Role, err error) {
-	ctx := c.Request().Context()
+func (u *roleUsecase) CreateRole(ctx context.Context, req *dto.ReqCreateRole, userID string) (roleRes *models.Role, err error) {
 	isSuperAdminRole := isSuperAdminRoleName(req.Name)
 
 	// assert each Permission group exists
@@ -52,7 +51,7 @@ func (u *roleUsecase) CreateRole(c echo.Context, req *dto.ReqCreateRole, authId 
 
 	formatCount := fmt.Sprintf("%07d", *count+1)
 
-	roleDb := req.ToDBCreateRole(formatCount, authId)
+	roleDb := req.ToDBCreateRole(formatCount, userID)
 
 	roleRes, err = u.roleRepo.CreateRole(ctx, roleDb)
 	if err != nil {
@@ -62,9 +61,7 @@ func (u *roleUsecase) CreateRole(c echo.Context, req *dto.ReqCreateRole, authId 
 	return roleRes, err
 }
 
-func (u *roleUsecase) GetRoleByID(c echo.Context, id string) (role *models.Role, err error) {
-	ctx := c.Request().Context()
-
+func (u *roleUsecase) GetRoleByID(ctx context.Context, id string) (role *models.Role, err error) {
 	uId, err := utils.StringToUUID(id)
 	if err != nil {
 		utils.Logger.Error(err.Error())
@@ -74,18 +71,15 @@ func (u *roleUsecase) GetRoleByID(c echo.Context, id string) (role *models.Role,
 	return u.roleRepo.GetRoleByID(ctx, uId)
 }
 
-func (u *roleUsecase) GetIndexRole(c echo.Context, req request.PageRequest) (role_infos []models.Role, total int, err error) {
-	ctx := c.Request().Context()
+func (u *roleUsecase) GetIndexRole(ctx context.Context, req request.PageRequest) (role_infos []models.Role, total int, err error) {
 	return u.roleRepo.GetIndexRole(ctx, req)
 }
 
-func (u *roleUsecase) GetAllRole(c echo.Context) (role_infos []models.Role, err error) {
-	ctx := c.Request().Context()
+func (u *roleUsecase) GetAllRole(ctx context.Context) (role_infos []models.Role, err error) {
 	return u.roleRepo.GetAllRole(ctx)
 }
 
-func (u *roleUsecase) UpdateRole(c echo.Context, id string, req *dto.ReqUpdateRole, authId string) (roleRes *models.Role, err error) {
-	ctx := c.Request().Context()
+func (u *roleUsecase) UpdateRole(ctx context.Context, id string, req *dto.ReqUpdateRole, userID string) (roleRes *models.Role, err error) {
 	isSuperAdminRole := isSuperAdminRoleName(req.Name)
 
 	// assert each Permission group exists
@@ -132,11 +126,9 @@ func (u *roleUsecase) UpdateRole(c echo.Context, id string, req *dto.ReqUpdateRo
 	return u.roleRepo.UpdateRole(ctx, uId, roleDb)
 }
 
-func (u *roleUsecase) SoftDeleteRole(c echo.Context, id string, authId string) (roleRes *models.Role, err error) {
-	ctx := c.Request().Context()
-
+func (u *roleUsecase) SoftDeleteRole(ctx context.Context, id string, userID string) (roleRes *models.Role, err error) {
 	// if role has user, return error
-	role, err := u.GetRoleByID(c, id)
+	role, err := u.GetRoleByID(ctx, id)
 	if err != nil {
 		return nil, errors.New(constants.RoleNotFound)
 	}
@@ -150,14 +142,11 @@ func (u *roleUsecase) SoftDeleteRole(c echo.Context, id string, authId string) (
 	return u.roleRepo.SoftDeleteRole(ctx, role.ID, roleDb)
 }
 
-func (u *roleUsecase) RoleNameIsNotDuplicated(c echo.Context, name string, id uuid.UUID) (roleRes *models.Role, err error) {
-	ctx := c.Request().Context()
+func (u *roleUsecase) RoleNameIsNotDuplicated(ctx context.Context, name string, id uuid.UUID) (roleRes *models.Role, err error) {
 	return u.roleRepo.GetDuplicatedRole(ctx, name, id)
 }
 
-func (u *roleUsecase) MyPermissionsByUserToken(c echo.Context, token string) (role *models.Role, err error) {
-	ctx := c.Request().Context()
-
+func (u *roleUsecase) MyPermissionsByUserToken(ctx context.Context, token string) (role *models.Role, err error) {
 	// get user id from token
 	user, err := u.authRepo.GetUserByAccessToken(ctx, token)
 	if err != nil {

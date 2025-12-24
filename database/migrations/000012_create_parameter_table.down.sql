@@ -7,5 +7,5 @@ DROP INDEX IF EXISTS parameter_code_index;
 DROP INDEX IF EXISTS parameter_id_index;
 
 -- Drop table
-DROP TABLE IF EXISTS parameter;
+DROP TABLE IF EXISTS parameters;
 

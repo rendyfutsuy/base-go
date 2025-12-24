@@ -12,4 +12,5 @@ CREATE TABLE IF NOT EXISTS password_histories (
 
 CREATE INDEX password_histories_created_at_index ON password_histories (created_at);
 CREATE INDEX password_histories_updated_at_index ON password_histories (updated_at);
+CREATE INDEX password_histories_deleted_at_index ON password_histories (deleted_at);
 CREATE INDEX password_histories_user_id_index ON password_histories (user_id);

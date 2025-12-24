@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	models "github.com/rendyfutsuy/base-go/models"
@@ -35,4 +36,12 @@ type Repository interface {
 
 	// Get user is_first_time_login status
 	GetIsFirstTimeLogin(ctx context.Context, userId uuid.UUID) (bool, error)
+	// StoreRefreshToken persists refresh token jti -> user and sets TTL (expire)
+	StoreRefreshToken(ctx context.Context, jti string, userID uuid.UUID, accessJTI string, ttl time.Duration) error
+	// GetRefreshTokenMetadata returns RefreshTokenMeta; return redis.Nil if not found
+	GetRefreshTokenMetadata(ctx context.Context, jti string) (RefreshTokenMeta, error)
+	// MarkRefreshTokenUsed marks the token record as Used=true (and optionally sets a short TTL)
+	MarkRefreshTokenUsed(ctx context.Context, jti string) error
+	// RevokeAllUserSessions destroys all sessions / refresh tokens for a user (used on reuse detection)
+	RevokeAllUserSessions(ctx context.Context, userID uuid.UUID) error
 }

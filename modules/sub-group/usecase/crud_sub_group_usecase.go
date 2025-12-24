@@ -1,12 +1,12 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
@@ -27,82 +27,61 @@ func NewSubGroupUsecase(repo mod.Repository, groupRepo groupRepo.Repository) mod
 	return &subGroupUsecase{repo: repo, groupRepo: groupRepo}
 }
 
-func (u *subGroupUsecase) Create(c echo.Context, reqBody *dto.ReqCreateSubGroup, authId string) (*models.SubGroup, error) {
-	ctx := c.Request().Context()
-
-	// Get user ID from context
-	user := c.Get("user")
-	userID := ""
-	if user != nil {
-		if userModel, ok := user.(models.User); ok {
-			userID = userModel.ID.String()
-		}
-	}
-
-	// Check if goods_group_id exists
-	if reqBody.GoodsGroupID != uuid.Nil {
-		groupObject, err := u.groupRepo.GetByID(ctx, reqBody.GoodsGroupID)
+func (u *subGroupUsecase) Create(ctx context.Context, reqBody *dto.ReqCreateSubGroup, userID string) (*models.SubGroup, error) {
+	// Check if groups_id exists
+	if reqBody.GroupID != uuid.Nil {
+		groupObject, err := u.groupRepo.GetByID(ctx, reqBody.GroupID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, errors.New(constants.SubGroupGoodsGroupNotFound)
+				return nil, errors.New(constants.SubGroupGroupNotFound)
 			}
 			return nil, err
 		}
 		// Additional check: ensure groupObject is valid
 		if groupObject == nil || groupObject.ID == uuid.Nil {
-			return nil, errors.New(constants.SubGroupGoodsGroupNotFound)
+			return nil, errors.New(constants.SubGroupGroupNotFound)
 		}
 	}
 
-	exists, err := u.repo.ExistsByName(ctx, reqBody.GoodsGroupID, reqBody.Name, uuid.Nil)
+	exists, err := u.repo.ExistsByName(ctx, reqBody.GroupID, reqBody.Name, uuid.Nil)
 	if err != nil {
 		return nil, err
 	}
 	if exists {
 		return nil, errors.New(constants.SubGroupNameAlreadyExists)
 	}
-	return u.repo.Create(ctx, reqBody.GoodsGroupID, reqBody.Name, userID)
+	return u.repo.Create(ctx, reqBody.GroupID, reqBody.Name, userID)
 }
 
-func (u *subGroupUsecase) Update(c echo.Context, id string, reqBody *dto.ReqUpdateSubGroup, authId string) (*models.SubGroup, error) {
-	ctx := c.Request().Context()
+func (u *subGroupUsecase) Update(ctx context.Context, id string, reqBody *dto.ReqUpdateSubGroup, userID string) (*models.SubGroup, error) {
 	sgid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get user ID from context
-	user := c.Get("user")
-	userID := ""
-	if user != nil {
-		if userModel, ok := user.(models.User); ok {
-			userID = userModel.ID.String()
-		}
-	}
-
-	// Check if goods_group_id exists
-	if reqBody.GoodsGroupID != uuid.Nil {
-		groupObject, err := u.groupRepo.GetByID(ctx, reqBody.GoodsGroupID)
+	// Check if groups_id exists
+	if reqBody.GroupID != uuid.Nil {
+		groupObject, err := u.groupRepo.GetByID(ctx, reqBody.GroupID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, errors.New(constants.SubGroupGoodsGroupNotFound)
+				return nil, errors.New(constants.SubGroupGroupNotFound)
 			}
 			return nil, err
 		}
 		// Additional check: ensure groupObject is valid
 		if groupObject == nil || groupObject.ID == uuid.Nil {
-			return nil, errors.New(constants.SubGroupGoodsGroupNotFound)
+			return nil, errors.New(constants.SubGroupGroupNotFound)
 		}
 	}
 
-	exists, err := u.repo.ExistsByName(ctx, reqBody.GoodsGroupID, reqBody.Name, sgid)
+	exists, err := u.repo.ExistsByName(ctx, reqBody.GroupID, reqBody.Name, sgid)
 	if err != nil {
 		return nil, err
 	}
 	if exists {
 		return nil, errors.New(constants.SubGroupNameAlreadyExists)
 	}
-	res, err := u.repo.Update(ctx, sgid, reqBody.GoodsGroupID, reqBody.Name, userID)
+	res, err := u.repo.Update(ctx, sgid, reqBody.GroupID, reqBody.Name, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf(constants.SubGroupNotFound, id)
@@ -112,8 +91,7 @@ func (u *subGroupUsecase) Update(c echo.Context, id string, reqBody *dto.ReqUpda
 	return res, nil
 }
 
-func (u *subGroupUsecase) Delete(c echo.Context, id string, authId string) error {
-	ctx := c.Request().Context()
+func (u *subGroupUsecase) Delete(ctx context.Context, id string, userID string) error {
 	sgid, err := utils.StringToUUID(id)
 	if err != nil {
 		return err
@@ -128,20 +106,10 @@ func (u *subGroupUsecase) Delete(c echo.Context, id string, authId string) error
 		return errors.New(constants.SubGroupStillUsedInTypes)
 	}
 
-	// Get user ID from context
-	user := c.Get("user")
-	userID := ""
-	if user != nil {
-		if userModel, ok := user.(models.User); ok {
-			userID = userModel.ID.String()
-		}
-	}
-
 	return u.repo.Delete(ctx, sgid, userID)
 }
 
-func (u *subGroupUsecase) ExistsInTypes(c echo.Context, subGroupID string) (bool, error) {
-	ctx := c.Request().Context()
+func (u *subGroupUsecase) ExistsInTypes(ctx context.Context, subGroupID string) (bool, error) {
 	sgid, err := utils.StringToUUID(subGroupID)
 	if err != nil {
 		return false, err
@@ -149,8 +117,7 @@ func (u *subGroupUsecase) ExistsInTypes(c echo.Context, subGroupID string) (bool
 	return u.repo.ExistsInTypes(ctx, sgid)
 }
 
-func (u *subGroupUsecase) GetByID(c echo.Context, id string) (*models.SubGroup, error) {
-	ctx := c.Request().Context()
+func (u *subGroupUsecase) GetByID(ctx context.Context, id string) (*models.SubGroup, error) {
 	sgid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
@@ -158,19 +125,16 @@ func (u *subGroupUsecase) GetByID(c echo.Context, id string) (*models.SubGroup, 
 	return u.repo.GetByID(ctx, sgid)
 }
 
-func (u *subGroupUsecase) GetIndex(c echo.Context, req request.PageRequest, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, int, error) {
-	ctx := c.Request().Context()
+func (u *subGroupUsecase) GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, int, error) {
 	// Search is already set in req.Search from PageRequest middleware
 	return u.repo.GetIndex(ctx, req, filter)
 }
 
-func (u *subGroupUsecase) GetAll(c echo.Context, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, error) {
-	ctx := c.Request().Context()
+func (u *subGroupUsecase) GetAll(ctx context.Context, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, error) {
 	return u.repo.GetAll(ctx, filter)
 }
 
-func (u *subGroupUsecase) Export(c echo.Context, filter dto.ReqSubGroupIndexFilter) ([]byte, error) {
-	ctx := c.Request().Context()
+func (u *subGroupUsecase) Export(ctx context.Context, filter dto.ReqSubGroupIndexFilter) ([]byte, error) {
 	// Use GetAll for export without pagination
 	list, err := u.repo.GetAll(ctx, filter)
 	if err != nil {
@@ -210,8 +174,8 @@ func (u *subGroupUsecase) Export(c echo.Context, filter dto.ReqSubGroupIndexFilt
 
 		setCell(sg.SubgroupCode)
 		setCell(sg.Name)
-		if sg.GoodsGroupName != "" {
-			setCell(sg.GoodsGroupName)
+		if sg.GroupName != "" {
+			setCell(sg.GroupName)
 		} else {
 			setCell("-")
 		}

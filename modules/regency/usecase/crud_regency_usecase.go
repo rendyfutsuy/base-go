@@ -1,12 +1,12 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
@@ -26,9 +26,7 @@ func NewRegencyUsecase(repo mod.Repository) mod.Usecase {
 }
 
 // Province Usecase
-func (u *regencyUsecase) CreateProvince(c echo.Context, reqBody *dto.ReqCreateProvince, authId string) (*models.Province, error) {
-	ctx := c.Request().Context()
-
+func (u *regencyUsecase) CreateProvince(ctx context.Context, reqBody *dto.ReqCreateProvince, userID string) (*models.Province, error) {
 	exists, err := u.repo.ExistsProvinceByName(ctx, reqBody.Name, uuid.Nil)
 	if err != nil {
 		return nil, err
@@ -40,8 +38,7 @@ func (u *regencyUsecase) CreateProvince(c echo.Context, reqBody *dto.ReqCreatePr
 	return u.repo.CreateProvince(ctx, reqBody.Name)
 }
 
-func (u *regencyUsecase) UpdateProvince(c echo.Context, id string, reqBody *dto.ReqUpdateProvince, authId string) (*models.Province, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) UpdateProvince(ctx context.Context, id string, reqBody *dto.ReqUpdateProvince, userID string) (*models.Province, error) {
 	pid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
@@ -65,8 +62,7 @@ func (u *regencyUsecase) UpdateProvince(c echo.Context, id string, reqBody *dto.
 	return res, nil
 }
 
-func (u *regencyUsecase) DeleteProvince(c echo.Context, id string, authId string) error {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) DeleteProvince(ctx context.Context, id string, userID string) error {
 	pid, err := utils.StringToUUID(id)
 	if err != nil {
 		return err
@@ -74,8 +70,7 @@ func (u *regencyUsecase) DeleteProvince(c echo.Context, id string, authId string
 	return u.repo.DeleteProvince(ctx, pid)
 }
 
-func (u *regencyUsecase) GetProvinceByID(c echo.Context, id string) (*models.Province, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) GetProvinceByID(ctx context.Context, id string) (*models.Province, error) {
 	pid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
@@ -83,18 +78,15 @@ func (u *regencyUsecase) GetProvinceByID(c echo.Context, id string) (*models.Pro
 	return u.repo.GetProvinceByID(ctx, pid)
 }
 
-func (u *regencyUsecase) GetProvinceIndex(c echo.Context, req request.PageRequest, filter dto.ReqProvinceIndexFilter) ([]models.Province, int, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) GetProvinceIndex(ctx context.Context, req request.PageRequest, filter dto.ReqProvinceIndexFilter) ([]models.Province, int, error) {
 	return u.repo.GetProvinceIndex(ctx, req, filter)
 }
 
-func (u *regencyUsecase) GetAllProvince(c echo.Context, filter dto.ReqProvinceIndexFilter) ([]models.Province, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) GetAllProvince(ctx context.Context, filter dto.ReqProvinceIndexFilter) ([]models.Province, error) {
 	return u.repo.GetAllProvince(ctx, filter)
 }
 
-func (u *regencyUsecase) ExportProvince(c echo.Context, filter dto.ReqProvinceIndexFilter) ([]byte, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) ExportProvince(ctx context.Context, filter dto.ReqProvinceIndexFilter) ([]byte, error) {
 	list, err := u.repo.GetAllProvince(ctx, filter)
 	if err != nil {
 		return nil, err
@@ -121,9 +113,7 @@ func (u *regencyUsecase) ExportProvince(c echo.Context, filter dto.ReqProvinceIn
 }
 
 // City Usecase
-func (u *regencyUsecase) CreateCity(c echo.Context, reqBody *dto.ReqCreateCity, authId string) (*models.City, error) {
-	ctx := c.Request().Context()
-
+func (u *regencyUsecase) CreateCity(ctx context.Context, reqBody *dto.ReqCreateCity, userID string) (*models.City, error) {
 	// Check if province_id exists
 	if reqBody.ProvinceID != uuid.Nil {
 		provinceObject, err := u.repo.GetProvinceByID(ctx, reqBody.ProvinceID)
@@ -150,8 +140,7 @@ func (u *regencyUsecase) CreateCity(c echo.Context, reqBody *dto.ReqCreateCity, 
 	return u.repo.CreateCity(ctx, reqBody.ProvinceID, reqBody.Name, reqBody.AreaCode)
 }
 
-func (u *regencyUsecase) UpdateCity(c echo.Context, id string, reqBody *dto.ReqUpdateCity, authId string) (*models.City, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) UpdateCity(ctx context.Context, id string, reqBody *dto.ReqUpdateCity, userID string) (*models.City, error) {
 	cid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
@@ -190,8 +179,7 @@ func (u *regencyUsecase) UpdateCity(c echo.Context, id string, reqBody *dto.ReqU
 	return res, nil
 }
 
-func (u *regencyUsecase) DeleteCity(c echo.Context, id string, authId string) error {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) DeleteCity(ctx context.Context, id string, userID string) error {
 	cid, err := utils.StringToUUID(id)
 	if err != nil {
 		return err
@@ -199,8 +187,7 @@ func (u *regencyUsecase) DeleteCity(c echo.Context, id string, authId string) er
 	return u.repo.DeleteCity(ctx, cid)
 }
 
-func (u *regencyUsecase) GetCityByID(c echo.Context, id string) (*models.City, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) GetCityByID(ctx context.Context, id string) (*models.City, error) {
 	cid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
@@ -208,18 +195,15 @@ func (u *regencyUsecase) GetCityByID(c echo.Context, id string) (*models.City, e
 	return u.repo.GetCityByID(ctx, cid)
 }
 
-func (u *regencyUsecase) GetCityIndex(c echo.Context, req request.PageRequest, filter dto.ReqCityIndexFilter) ([]models.City, int, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) GetCityIndex(ctx context.Context, req request.PageRequest, filter dto.ReqCityIndexFilter) ([]models.City, int, error) {
 	return u.repo.GetCityIndex(ctx, req, filter)
 }
 
-func (u *regencyUsecase) GetAllCity(c echo.Context, filter dto.ReqCityIndexFilter) ([]models.City, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) GetAllCity(ctx context.Context, filter dto.ReqCityIndexFilter) ([]models.City, error) {
 	return u.repo.GetAllCity(ctx, filter)
 }
 
-func (u *regencyUsecase) ExportCity(c echo.Context, filter dto.ReqCityIndexFilter) ([]byte, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) ExportCity(ctx context.Context, filter dto.ReqCityIndexFilter) ([]byte, error) {
 	list, err := u.repo.GetAllCity(ctx, filter)
 	if err != nil {
 		return nil, err
@@ -253,15 +237,12 @@ func (u *regencyUsecase) ExportCity(c echo.Context, filter dto.ReqCityIndexFilte
 	return buf.Bytes(), nil
 }
 
-func (u *regencyUsecase) GetCityAreaCodes(c echo.Context, search string) ([]string, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) GetCityAreaCodes(ctx context.Context, search string) ([]string, error) {
 	return u.repo.GetCityAreaCodes(ctx, search)
 }
 
 // District Usecase
-func (u *regencyUsecase) CreateDistrict(c echo.Context, reqBody *dto.ReqCreateDistrict, authId string) (*models.District, error) {
-	ctx := c.Request().Context()
-
+func (u *regencyUsecase) CreateDistrict(ctx context.Context, reqBody *dto.ReqCreateDistrict, userID string) (*models.District, error) {
 	// Check if city_id exists
 	if reqBody.CityID != uuid.Nil {
 		cityObject, err := u.repo.GetCityByID(ctx, reqBody.CityID)
@@ -288,8 +269,7 @@ func (u *regencyUsecase) CreateDistrict(c echo.Context, reqBody *dto.ReqCreateDi
 	return u.repo.CreateDistrict(ctx, reqBody.CityID, reqBody.Name)
 }
 
-func (u *regencyUsecase) UpdateDistrict(c echo.Context, id string, reqBody *dto.ReqUpdateDistrict, authId string) (*models.District, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) UpdateDistrict(ctx context.Context, id string, reqBody *dto.ReqUpdateDistrict, userID string) (*models.District, error) {
 	did, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
@@ -328,8 +308,7 @@ func (u *regencyUsecase) UpdateDistrict(c echo.Context, id string, reqBody *dto.
 	return res, nil
 }
 
-func (u *regencyUsecase) DeleteDistrict(c echo.Context, id string, authId string) error {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) DeleteDistrict(ctx context.Context, id string, userID string) error {
 	did, err := utils.StringToUUID(id)
 	if err != nil {
 		return err
@@ -337,8 +316,7 @@ func (u *regencyUsecase) DeleteDistrict(c echo.Context, id string, authId string
 	return u.repo.DeleteDistrict(ctx, did)
 }
 
-func (u *regencyUsecase) GetDistrictByID(c echo.Context, id string) (*models.District, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) GetDistrictByID(ctx context.Context, id string) (*models.District, error) {
 	did, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
@@ -346,18 +324,15 @@ func (u *regencyUsecase) GetDistrictByID(c echo.Context, id string) (*models.Dis
 	return u.repo.GetDistrictByID(ctx, did)
 }
 
-func (u *regencyUsecase) GetDistrictIndex(c echo.Context, req request.PageRequest, filter dto.ReqDistrictIndexFilter) ([]models.District, int, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) GetDistrictIndex(ctx context.Context, req request.PageRequest, filter dto.ReqDistrictIndexFilter) ([]models.District, int, error) {
 	return u.repo.GetDistrictIndex(ctx, req, filter)
 }
 
-func (u *regencyUsecase) GetAllDistrict(c echo.Context, filter dto.ReqDistrictIndexFilter) ([]models.District, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) GetAllDistrict(ctx context.Context, filter dto.ReqDistrictIndexFilter) ([]models.District, error) {
 	return u.repo.GetAllDistrict(ctx, filter)
 }
 
-func (u *regencyUsecase) ExportDistrict(c echo.Context, filter dto.ReqDistrictIndexFilter) ([]byte, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) ExportDistrict(ctx context.Context, filter dto.ReqDistrictIndexFilter) ([]byte, error) {
 	list, err := u.repo.GetAllDistrict(ctx, filter)
 	if err != nil {
 		return nil, err
@@ -386,9 +361,7 @@ func (u *regencyUsecase) ExportDistrict(c echo.Context, filter dto.ReqDistrictIn
 }
 
 // Subdistrict Usecase
-func (u *regencyUsecase) CreateSubdistrict(c echo.Context, reqBody *dto.ReqCreateSubdistrict, authId string) (*models.Subdistrict, error) {
-	ctx := c.Request().Context()
-
+func (u *regencyUsecase) CreateSubdistrict(ctx context.Context, reqBody *dto.ReqCreateSubdistrict, userID string) (*models.Subdistrict, error) {
 	// Check if district_id exists
 	if reqBody.DistrictID != uuid.Nil {
 		districtObject, err := u.repo.GetDistrictByID(ctx, reqBody.DistrictID)
@@ -415,8 +388,7 @@ func (u *regencyUsecase) CreateSubdistrict(c echo.Context, reqBody *dto.ReqCreat
 	return u.repo.CreateSubdistrict(ctx, reqBody.DistrictID, reqBody.Name)
 }
 
-func (u *regencyUsecase) UpdateSubdistrict(c echo.Context, id string, reqBody *dto.ReqUpdateSubdistrict, authId string) (*models.Subdistrict, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) UpdateSubdistrict(ctx context.Context, id string, reqBody *dto.ReqUpdateSubdistrict, userID string) (*models.Subdistrict, error) {
 	sid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
@@ -455,8 +427,7 @@ func (u *regencyUsecase) UpdateSubdistrict(c echo.Context, id string, reqBody *d
 	return res, nil
 }
 
-func (u *regencyUsecase) DeleteSubdistrict(c echo.Context, id string, authId string) error {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) DeleteSubdistrict(ctx context.Context, id string, userID string) error {
 	sid, err := utils.StringToUUID(id)
 	if err != nil {
 		return err
@@ -464,8 +435,7 @@ func (u *regencyUsecase) DeleteSubdistrict(c echo.Context, id string, authId str
 	return u.repo.DeleteSubdistrict(ctx, sid)
 }
 
-func (u *regencyUsecase) GetSubdistrictByID(c echo.Context, id string) (*models.Subdistrict, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) GetSubdistrictByID(ctx context.Context, id string) (*models.Subdistrict, error) {
 	sid, err := utils.StringToUUID(id)
 	if err != nil {
 		return nil, err
@@ -473,18 +443,15 @@ func (u *regencyUsecase) GetSubdistrictByID(c echo.Context, id string) (*models.
 	return u.repo.GetSubdistrictByID(ctx, sid)
 }
 
-func (u *regencyUsecase) GetSubdistrictIndex(c echo.Context, req request.PageRequest, filter dto.ReqSubdistrictIndexFilter) ([]models.Subdistrict, int, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) GetSubdistrictIndex(ctx context.Context, req request.PageRequest, filter dto.ReqSubdistrictIndexFilter) ([]models.Subdistrict, int, error) {
 	return u.repo.GetSubdistrictIndex(ctx, req, filter)
 }
 
-func (u *regencyUsecase) GetAllSubdistrict(c echo.Context, filter dto.ReqSubdistrictIndexFilter) ([]models.Subdistrict, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) GetAllSubdistrict(ctx context.Context, filter dto.ReqSubdistrictIndexFilter) ([]models.Subdistrict, error) {
 	return u.repo.GetAllSubdistrict(ctx, filter)
 }
 
-func (u *regencyUsecase) ExportSubdistrict(c echo.Context, filter dto.ReqSubdistrictIndexFilter) ([]byte, error) {
-	ctx := c.Request().Context()
+func (u *regencyUsecase) ExportSubdistrict(ctx context.Context, filter dto.ReqSubdistrictIndexFilter) ([]byte, error) {
 	list, err := u.repo.GetAllSubdistrict(ctx, filter)
 	if err != nil {
 		return nil, err

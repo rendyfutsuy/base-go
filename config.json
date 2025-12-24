@@ -1,0 +1,70 @@
+{
+  "app_name": "base v2.0",
+  "app_env": "development",
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "user": "",
+    "password": "",
+    "db_name": "",
+    "sslmode": "disable"
+  },
+  "user": {
+    "default_password_template": "temp"
+  },
+  "format": {
+    "time": "2006-01-02T15:04:05.999Z07:00"
+  },
+  "app_port": 9090,
+  "queue_port": 9091,
+  "jwt_key": "",
+  "jwt_refresh_key": "",
+  "email": {
+    "smtp_host":"mail.roketin.com",
+    "smtp_port":"587",
+    "smtp_sender_mail":"",
+    "smtp_auth_email":"",
+    "smtp_password":"",
+    "reset_password_url":"http://localhost:3000/reset-password",
+    "validation_scope": "gmail.com|mailinator.com|company.com"
+  },
+  "redis": {
+    "addr": "127.0.0.1:6379",
+    "password": "",
+    "db": "db0",
+    "concurrency": 10
+  },
+  "auth": {
+    "redis_ttl_seconds": 172800,
+    "access_token_ttl_seconds": 1800,
+    "refresh_token_ttl_seconds": 604800
+  },
+    "file": {
+    "max_size": "30000000",
+    "driver": "minio"
+  },
+  "minio": {
+    "endpoint": "storage.roketinapp.com",
+    "bucket_name": "",
+    "access_key_id": "",
+    "secret_access_key": "",
+    "use_ssl": true,
+    "origin_endpoint": "https://storage.roketinapp.com"
+  },
+   "aws": {
+    "aws_endpoint": "",
+    "aws_access_key": "",
+    "aws_access_secret": "",
+    "aws_bucket": "",
+    "aws_region": "",
+    "aws_origin_endpoint": "",
+    "aws_cdn": "",
+    "aws_delete_cycle_days": 30
+  },
+  "newrelic":{
+    "enable_new_relic_logging": true,
+    "app_name": "base-v2",
+    "license": "",
+    "identifier": ""
+  }
+}

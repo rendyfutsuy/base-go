@@ -230,7 +230,7 @@ func TestCreateParameter(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.Create(c, tt.req, tt.authId)
+			result, err := usecaseInstance.Create(ctx, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -385,7 +385,7 @@ func TestUpdateParameter(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.Update(c, tt.id, tt.req, tt.authId)
+			result, err := usecaseInstance.Update(ctx, tt.id, tt.req, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -460,7 +460,7 @@ func TestDeleteParameter(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			err := usecaseInstance.Delete(c, tt.id, tt.authId)
+			err := usecaseInstance.Delete(ctx, tt.id, tt.authId)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -549,7 +549,7 @@ func TestGetParameterByID(t *testing.T) {
 			c.SetParamValues(tt.id)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.GetByID(c, tt.id)
+			result, err := usecaseInstance.GetByID(ctx, tt.id)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -677,7 +677,7 @@ func TestGetIndexParameter(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, total, err := usecaseInstance.GetIndex(c, tt.req, tt.filter)
+			result, total, err := usecaseInstance.GetIndex(ctx, tt.req, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -800,7 +800,7 @@ func TestExportParameter(t *testing.T) {
 			c := e.NewContext(req, rec)
 			c.SetRequest(req.WithContext(ctx))
 
-			result, err := usecaseInstance.Export(c, tt.filter)
+			result, err := usecaseInstance.Export(ctx, tt.filter)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)

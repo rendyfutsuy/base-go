@@ -1,19 +1,20 @@
 package sub_group
 
 import (
-	"github.com/labstack/echo/v4"
+	"context"
+
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/sub-group/dto"
 )
 
 type Usecase interface {
-	Create(c echo.Context, req *dto.ReqCreateSubGroup, authId string) (*models.SubGroup, error)
-	Update(c echo.Context, id string, req *dto.ReqUpdateSubGroup, authId string) (*models.SubGroup, error)
-	Delete(c echo.Context, id string, authId string) error
-	GetByID(c echo.Context, id string) (*models.SubGroup, error)
-	GetIndex(c echo.Context, req request.PageRequest, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, int, error)
-	GetAll(c echo.Context, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, error)
-	Export(c echo.Context, filter dto.ReqSubGroupIndexFilter) ([]byte, error)
-	ExistsInTypes(c echo.Context, subGroupID string) (bool, error)
+	Create(ctx context.Context, req *dto.ReqCreateSubGroup, authId string) (*models.SubGroup, error)
+	Update(ctx context.Context, id string, req *dto.ReqUpdateSubGroup, authId string) (*models.SubGroup, error)
+	Delete(ctx context.Context, id string, authId string) error
+	GetByID(ctx context.Context, id string) (*models.SubGroup, error)
+	GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, int, error)
+	GetAll(ctx context.Context, filter dto.ReqSubGroupIndexFilter) ([]models.SubGroup, error)
+	Export(ctx context.Context, filter dto.ReqSubGroupIndexFilter) ([]byte, error)
+	ExistsInTypes(ctx context.Context, subGroupID string) (bool, error)
 }

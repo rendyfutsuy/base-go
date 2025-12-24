@@ -1,5 +1,5 @@
 -- Seed Parameters for Supplier Module
-INSERT INTO "parameter" (
+INSERT INTO "parameters" (
     "id",
     "code",
     "name",

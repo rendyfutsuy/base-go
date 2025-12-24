@@ -18,6 +18,14 @@ type CustomValidator struct {
 	Validator *validator.Validate
 }
 
+var EmailDomainRegex *regexp.Regexp
+
+func InitEmailDomainRegex() {
+	emailScope := ConfigVars.String("email.validation-scope")
+	regexPattern := `^.*@(` + emailScope + `)$`
+	EmailDomainRegex = regexp.MustCompile(regexPattern)
+}
+
 func (cv *CustomValidator) Validate(i interface{}) error {
 	return ValidateRequest(i, cv.Validator)
 }

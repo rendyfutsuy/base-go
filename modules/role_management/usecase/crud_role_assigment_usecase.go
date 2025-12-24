@@ -1,19 +1,17 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
-	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/role_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
 )
 
-func (u *roleUsecase) ReAssignPermissionByGroup(c echo.Context, roleId string, req *dto.ReqUpdatePermissionGroupAssignmentToRole) (roleRes *models.Role, err error) {
-	ctx := c.Request().Context()
-
+func (u *roleUsecase) ReAssignPermissionByGroup(ctx context.Context, roleId string, req *dto.ReqUpdatePermissionGroupAssignmentToRole) (roleRes *models.Role, err error) {
 	// parsing UUID
 	uId, err := utils.StringToUUID(roleId)
 	if err != nil {
@@ -57,9 +55,7 @@ func (u *roleUsecase) ReAssignPermissionByGroup(c echo.Context, roleId string, r
 	return u.roleRepo.GetRoleByID(ctx, uId)
 }
 
-func (u *roleUsecase) AssignUsersToRole(c echo.Context, roleId string, req *dto.ReqUpdateAssignUsersToRole) (roleRes *models.Role, err error) {
-	ctx := c.Request().Context()
-
+func (u *roleUsecase) AssignUsersToRole(ctx context.Context, roleId string, req *dto.ReqUpdateAssignUsersToRole) (roleRes *models.Role, err error) {
 	// assert each User exists
 	for _, userId := range req.UserIds {
 		// check user availability on DB

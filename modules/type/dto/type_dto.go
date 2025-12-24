@@ -18,56 +18,56 @@ type ReqUpdateType struct {
 }
 
 type RespType struct {
-	ID             uuid.UUID `json:"id"`
-	SubgroupID     uuid.UUID `json:"subgroup_id"`
-	SubgroupName   string    `json:"subgroup_name"`
-	GoodsGroupID   uuid.UUID `json:"group_id"`
-	GoodsGroupName string    `json:"group_name"`
-	TypeCode       string    `json:"type_code"`
-	Name           string    `json:"name"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
-	Deletable      bool      `json:"deletable"`
+	ID           uuid.UUID `json:"id"`
+	SubgroupID   uuid.UUID `json:"subgroup_id"`
+	SubgroupName string    `json:"subgroup_name"`
+	GroupID      uuid.UUID `json:"group_id"`
+	GroupName    string    `json:"group_name"`
+	TypeCode     string    `json:"type_code"`
+	Name         string    `json:"name"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	Deletable    bool      `json:"deletable"`
 }
 
 func ToRespType(m models.Type) RespType {
 	return RespType{
-		ID:             m.ID,
-		SubgroupID:     m.SubgroupID,
-		SubgroupName:   m.SubgroupName,
-		GoodsGroupID:   m.GoodsGroupID,
-		GoodsGroupName: m.GoodsGroupName,
-		TypeCode:       m.TypeCode,
-		Name:           m.Name,
-		CreatedAt:      m.CreatedAt,
-		UpdatedAt:      m.UpdatedAt,
-		Deletable:      m.Deletable,
+		ID:           m.ID,
+		SubgroupID:   m.SubgroupID,
+		SubgroupName: m.SubgroupName,
+		GroupID:      m.GroupID,
+		GroupName:    m.GroupName,
+		TypeCode:     m.TypeCode,
+		Name:         m.Name,
+		CreatedAt:    m.CreatedAt,
+		UpdatedAt:    m.UpdatedAt,
+		Deletable:    m.Deletable,
 	}
 }
 
 type RespTypeIndex struct {
-	ID             uuid.UUID `json:"id"`
-	SubgroupID     uuid.UUID `json:"subgroup_id"`
-	SubgroupName   string    `json:"subgroup_name"`
-	GoodsGroupName string    `json:"group_name"`
-	TypeCode       string    `json:"type_code"`
-	Name           string    `json:"name"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
-	Deletable      bool      `json:"deletable"`
+	ID           uuid.UUID `json:"id"`
+	SubgroupID   uuid.UUID `json:"subgroup_id"`
+	SubgroupName string    `json:"subgroup_name"`
+	GroupName    string    `json:"group_name"`
+	TypeCode     string    `json:"type_code"`
+	Name         string    `json:"name"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	Deletable    bool      `json:"deletable"`
 }
 
 func ToRespTypeIndex(m models.Type) RespTypeIndex {
 	return RespTypeIndex{
-		ID:             m.ID,
-		SubgroupID:     m.SubgroupID,
-		SubgroupName:   m.SubgroupName,
-		GoodsGroupName: m.GoodsGroupName,
-		TypeCode:       m.TypeCode,
-		Name:           m.Name,
-		CreatedAt:      m.CreatedAt,
-		UpdatedAt:      m.UpdatedAt,
-		Deletable:      m.Deletable,
+		ID:           m.ID,
+		SubgroupID:   m.SubgroupID,
+		SubgroupName: m.SubgroupName,
+		GroupName:    m.GroupName,
+		TypeCode:     m.TypeCode,
+		Name:         m.Name,
+		CreatedAt:    m.CreatedAt,
+		UpdatedAt:    m.UpdatedAt,
+		Deletable:    m.Deletable,
 	}
 }
 

@@ -18,38 +18,38 @@ type ReqUpdateBacking struct {
 }
 
 type RespBacking struct {
-	ID             uuid.UUID `json:"id"`
-	TypeID         uuid.UUID `json:"type_id"`
-	BackingCode    string    `json:"backing_code,omitempty"` // omit when creating new backing
-	Name           string    `json:"name"`
-	TypeName       string    `json:"type_name"`
-	SubgroupID     uuid.UUID `json:"subgroup_id"`
-	SubgroupName   string    `json:"subgroup_name"`
-	GoodsGroupID   uuid.UUID `json:"goods_group_id"`
-	GoodsGroupName string    `json:"goods_group_name"`
-	CreatedAt      time.Time `json:"created_at"`
-	CreatedBy      string    `json:"created_by"`
-	UpdatedAt      time.Time `json:"updated_at"`
-	UpdatedBy      string    `json:"updated_by"`
-	Deletable      bool      `json:"deletable"`
+	ID           uuid.UUID `json:"id"`
+	TypeID       uuid.UUID `json:"type_id"`
+	BackingCode  string    `json:"backing_code,omitempty"` // omit when creating new backing
+	Name         string    `json:"name"`
+	TypeName     string    `json:"type_name"`
+	SubgroupID   uuid.UUID `json:"subgroup_id"`
+	SubgroupName string    `json:"subgroup_name"`
+	GroupID      uuid.UUID `json:"groups_id"`
+	GroupName    string    `json:"groups_name"`
+	CreatedAt    time.Time `json:"created_at"`
+	CreatedBy    string    `json:"created_by"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	UpdatedBy    string    `json:"updated_by"`
+	Deletable    bool      `json:"deletable"`
 }
 
 func ToRespBacking(m models.Backing) RespBacking {
 	return RespBacking{
-		ID:             m.ID,
-		TypeID:         m.TypeID,
-		BackingCode:    m.BackingCode,
-		Name:           m.Name,
-		TypeName:       m.TypeName,
-		SubgroupID:     m.SubgroupID,
-		SubgroupName:   m.SubgroupName,
-		GoodsGroupID:   m.GoodsGroupID,
-		GoodsGroupName: m.GroupName,
-		CreatedAt:      m.CreatedAt,
-		CreatedBy:      m.CreatedBy,
-		UpdatedAt:      m.UpdatedAt,
-		UpdatedBy:      m.UpdatedBy,
-		Deletable:      true, // placeholder
+		ID:           m.ID,
+		TypeID:       m.TypeID,
+		BackingCode:  m.BackingCode,
+		Name:         m.Name,
+		TypeName:     m.TypeName,
+		SubgroupID:   m.SubgroupID,
+		SubgroupName: m.SubgroupName,
+		GroupID:      m.GroupID,
+		GroupName:    m.GroupName,
+		CreatedAt:    m.CreatedAt,
+		CreatedBy:    m.CreatedBy,
+		UpdatedAt:    m.UpdatedAt,
+		UpdatedBy:    m.UpdatedBy,
+		Deletable:    true, // placeholder
 	}
 }
 

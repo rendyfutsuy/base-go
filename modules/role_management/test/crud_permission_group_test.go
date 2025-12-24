@@ -105,7 +105,7 @@ func TestGetPermissionGroupByID(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			result, err := usecaseInstance.GetPermissionGroupByID(c, tt.id)
+			result, err := usecaseInstance.GetPermissionGroupByID(c.Request().Context(), tt.id)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -227,7 +227,7 @@ func TestGetIndexPermissionGroup(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			permissionGroups, total, err := usecaseInstance.GetIndexPermissionGroup(c, tt.req)
+			permissionGroups, total, err := usecaseInstance.GetIndexPermissionGroup(c.Request().Context(), tt.req)
 
 			if tt.expectedError {
 				assert.Error(t, err)
@@ -293,7 +293,7 @@ func TestGetAllPermissionGroup(t *testing.T) {
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
 
-			permissionGroups, err := usecaseInstance.GetAllPermissionGroup(c)
+			permissionGroups, err := usecaseInstance.GetAllPermissionGroup(c.Request().Context())
 
 			if tt.expectedError {
 				assert.Error(t, err)

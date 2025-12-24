@@ -54,22 +54,28 @@ func NewAuthRepository(DB *gorm.DB, EmailService *services.EmailService, RedisCl
 // Returns:
 // - user: The retrieved user.
 // - err:  An error if the retrieval fails.
-func (repo *authRepository) FindByEmailOrUsername(ctx context.Context, login string) (user models.User, err error) {
-	err = repo.DB.WithContext(ctx).
-		Select("id, email, password").
-		Where("(email = ? OR username = ?) AND deleted_at IS NULL AND is_active = ?", login, login, true).
-		First(&user).Error
+func (repo *authRepository) FindByEmailOrUsername(ctx context.Context, login string) (models.User, error) {
+	var dbUser models.User
+
+	// Query actual table "users"
+	err := repo.DB.WithContext(ctx).
+		Where("(email = ? OR username = ?) AND deleted_at IS NULL AND is_active = ?",
+			login, login, true).
+		First(&dbUser).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Printf("No user found with email/username: %s", login)
-			return user, errors.New(constants.UserInvalid)
+			return models.User{}, errors.New(constants.UserInvalid)
 		}
-		log.Printf("Error querying user: %v", err)
-		return user, err
+		return models.User{}, fmt.Errorf("failed querying user: %w", err)
 	}
 
-	return user, nil
+	// Map DB struct → models.User for usecase
+	return models.User{
+		ID:       dbUser.ID,
+		Email:    dbUser.Email,
+		Username: dbUser.Username,
+	}, nil
 }
 
 // AssertPasswordRight checks if the provided password matches the hashed password in the database for the given user ID.
@@ -297,7 +303,7 @@ func (repo *authRepository) AddUserAccessToken(ctx context.Context, accessToken 
 	}
 
 	// Get TTL from config
-	ttlSeconds := utils.ConfigVars.Int("auth.access_token_ttl_seconds")
+	ttlSeconds := utils.ConfigVars.Int("auth.redis_ttl_seconds")
 	if ttlSeconds <= 0 {
 		ttlSeconds = 2 * 24 * 60 * 60 // Default 2 days
 	}
@@ -597,6 +603,120 @@ func (repo *authRepository) DestroyAllToken(ctx context.Context, userId uuid.UUI
 
 	// Delete the user token set itself
 	_ = repo.Redis.Del(ctx, userSetKey).Err()
+
+	return nil
+}
+
+func (repo *authRepository) StoreRefreshToken(
+	ctx context.Context,
+	refreshJTI string,
+	userID uuid.UUID,
+	accessJTI string,
+	ttl time.Duration,
+) error {
+
+	tokenKey := fmt.Sprintf("auth:refresh:%s", refreshJTI)
+	userSetKey := fmt.Sprintf("auth:user_refresh_tokens:%s", userID.String())
+
+	expiresAt := time.Now().UTC().Add(ttl).Format(time.RFC3339)
+
+	pipe := repo.Redis.TxPipeline()
+
+	pipe.HSet(ctx, tokenKey, map[string]interface{}{
+		"user_id":    userID.String(),
+		"expires_at": expiresAt,
+		"used":       "0",
+		"access_jti": accessJTI, // NEW
+	})
+	pipe.Expire(ctx, tokenKey, ttl)
+
+	pipe.SAdd(ctx, userSetKey, refreshJTI)
+	pipe.ExpireNX(ctx, userSetKey, ttl)
+
+	_, err := pipe.Exec(ctx)
+	return err
+}
+
+func (repo *authRepository) GetRefreshTokenMetadata(
+	ctx context.Context,
+	jti string,
+) (auth.RefreshTokenMeta, error) {
+
+	tokenKey := fmt.Sprintf("auth:refresh:%s", jti)
+	data, err := repo.Redis.HGetAll(ctx, tokenKey).Result()
+	if err != nil || len(data) == 0 {
+		return auth.RefreshTokenMeta{}, redis.Nil
+	}
+
+	uid, _ := uuid.Parse(data["user_id"])
+	expAt, _ := time.Parse(time.RFC3339, data["expires_at"])
+	used := data["used"] == "1"
+	accessJTI := data["access_jti"]
+
+	return auth.RefreshTokenMeta{
+		UserID:    uid,
+		ExpiresAt: expAt,
+		Used:      used,
+		AccessJTI: accessJTI,
+	}, nil
+}
+
+func (repo *authRepository) MarkRefreshTokenUsed(ctx context.Context, jti string) error {
+	tokenKey := fmt.Sprintf("auth:refresh:%s", jti)
+
+	pipe := repo.Redis.TxPipeline()
+
+	// Mark token as used
+	pipe.HSet(ctx, tokenKey, "used", "1")
+
+	// Optional: shorten TTL so used refresh tokens disappear faster
+	// Set to e.g. 24 hours (or keep original TTL — your choice)
+	pipe.Expire(ctx, tokenKey, 24*time.Hour)
+
+	if _, err := pipe.Exec(ctx); err != nil {
+		return fmt.Errorf("failed to mark refresh token used: %w", err)
+	}
+
+	return nil
+}
+
+func (repo *authRepository) RevokeAllUserSessions(ctx context.Context, userID uuid.UUID) error {
+
+	accessSetKey := fmt.Sprintf("auth:user_tokens:%s", userID.String())
+	refreshSetKey := fmt.Sprintf("auth:user_refresh_tokens:%s", userID.String())
+
+	// 1) Get all access token JTIs
+	accessJTIs, err := repo.Redis.SMembers(ctx, accessSetKey).Result()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return fmt.Errorf("failed to read user access tokens: %w", err)
+	}
+
+	// 2) Get all refresh token JTIs
+	refreshJTIs, err := repo.Redis.SMembers(ctx, refreshSetKey).Result()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return fmt.Errorf("failed to read user refresh tokens: %w", err)
+	}
+
+	pipe := repo.Redis.TxPipeline()
+
+	// --- Delete all access token sessions ---
+	for _, jti := range accessJTIs {
+		pipe.Del(ctx, fmt.Sprintf("auth:session:%s", jti))
+	}
+
+	// --- Delete all refresh token metadata ---
+	for _, jti := range refreshJTIs {
+		pipe.Del(ctx, fmt.Sprintf("auth:refresh:%s", jti))
+	}
+
+	// --- Clear user token sets ---
+	pipe.Del(ctx, accessSetKey)
+	pipe.Del(ctx, refreshSetKey)
+
+	// Execute pipeline
+	if _, err := pipe.Exec(ctx); err != nil {
+		return fmt.Errorf("failed to revoke all user sessions: %w", err)
+	}
 
 	return nil
 }

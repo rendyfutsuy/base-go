@@ -24,7 +24,7 @@ type RespGroup struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func ToRespGroup(m models.GoodsGroup) RespGroup {
+func ToRespGroup(m models.Group) RespGroup {
 	return RespGroup{
 		ID:        m.ID,
 		GroupCode: m.GroupCode,
@@ -44,7 +44,7 @@ type RespGroupIndex struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func ToRespGroupIndex(m models.GoodsGroup) RespGroupIndex {
+func ToRespGroupIndex(m models.Group) RespGroupIndex {
 	return RespGroupIndex{
 		ID:        m.ID,
 		GroupCode: m.GroupCode,

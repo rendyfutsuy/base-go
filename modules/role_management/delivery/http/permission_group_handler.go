@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"net/http"
 	"sort"
 	"strings"
@@ -27,9 +28,12 @@ type ModuleFunction struct {
 // export all account based on type
 
 func (handler *RoleManagementHandler) GetIndexPermissionGroup(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	pageRequest := c.Get("page_request").(*request.PageRequest)
 
-	res, total, err := handler.RoleUseCase.GetIndexPermissionGroup(c, *pageRequest)
+	res, total, err := handler.RoleUseCase.GetIndexPermissionGroup(ctx, *pageRequest)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -52,8 +56,10 @@ func (handler *RoleManagementHandler) GetIndexPermissionGroup(c echo.Context) er
 }
 
 func (handler *RoleManagementHandler) GetAllPermissionGroup(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
 
-	res, err := handler.RoleUseCase.GetAllPermissionGroup(c)
+	res, err := handler.RoleUseCase.GetAllPermissionGroup(ctx)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -71,6 +77,8 @@ func (handler *RoleManagementHandler) GetAllPermissionGroup(c echo.Context) erro
 }
 
 func (handler *RoleManagementHandler) GetPermissionGroupByID(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
 
 	id := c.Param("id")
 
@@ -80,7 +88,7 @@ func (handler *RoleManagementHandler) GetPermissionGroupByID(c echo.Context) err
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.ErrorUUIDNotRecognized))
 	}
 
-	res, err := handler.RoleUseCase.GetPermissionGroupByID(c, id)
+	res, err := handler.RoleUseCase.GetPermissionGroupByID(ctx, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -93,6 +101,9 @@ func (handler *RoleManagementHandler) GetPermissionGroupByID(c echo.Context) err
 }
 
 func (handler *RoleManagementHandler) GetDuplicatedPermissionGroup(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	req := new(dto.ReqCheckDuplicatedPermissionGroup)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
@@ -112,7 +123,7 @@ func (handler *RoleManagementHandler) GetDuplicatedPermissionGroup(c echo.Contex
 		uid = req.ExcludedPermissionGroupId
 	}
 
-	res, err := handler.RoleUseCase.PermissionGroupNameIsNotDuplicated(c, req.Name, uid)
+	res, err := handler.RoleUseCase.PermissionGroupNameIsNotDuplicated(ctx, req.Name, uid)
 
 	// if name havent been uses by existing account info, return not found error
 	if res == nil {
@@ -134,7 +145,7 @@ func (handler *RoleManagementHandler) GetDuplicatedPermissionGroup(c echo.Contex
 // buildPermissionGroupsByModule builds permission groups grouped by module with assignment status
 // It takes an echo context, optional roleID string, and returns permission groups organized by module
 // If roleID is provided, it will mark which permission groups are assigned to that role
-func (handler *RoleManagementHandler) buildPermissionGroupsByModule(c echo.Context, roleIDStr string) ([]dto.RespPermissionGroupByModule, error) {
+func (handler *RoleManagementHandler) buildPermissionGroupsByModule(ctx context.Context, roleIDStr string) ([]dto.RespPermissionGroupByModule, error) {
 	var role *models.Role
 	var rolePermissionGroups map[uuid.UUID]bool
 	isSuperAdminRole := false
@@ -147,7 +158,7 @@ func (handler *RoleManagementHandler) buildPermissionGroupsByModule(c echo.Conte
 		}
 
 		// Validate role_id exists in database
-		role, err = handler.RoleUseCase.GetRoleByID(c, roleID.String())
+		role, err = handler.RoleUseCase.GetRoleByID(ctx, roleID.String())
 		if err != nil {
 			return nil, err
 		}
@@ -168,7 +179,7 @@ func (handler *RoleManagementHandler) buildPermissionGroupsByModule(c echo.Conte
 	}
 
 	// Get all permission groups
-	res, err := handler.RoleUseCase.GetAllPermissionGroup(c)
+	res, err := handler.RoleUseCase.GetAllPermissionGroup(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +227,7 @@ func (handler *RoleManagementHandler) buildPermissionGroupsByModule(c echo.Conte
 		})
 
 		respPermissionGroup = append(respPermissionGroup, dto.RespPermissionGroupByModule{
-			Name:             module,
+			Name:             module.String,
 			PermissionGroups: modules[module], // Assign the slice of functions
 		})
 	}
@@ -237,10 +248,13 @@ func (handler *RoleManagementHandler) buildPermissionGroupsByModule(c echo.Conte
 // @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
 // @Router			/v1/role-management/role/module-access [get]
 func (handler *RoleManagementHandler) GetAllPermissionGroupByModule(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
 	// Get role_id from query parameter (optional)
 	roleIDStr := c.QueryParam("role_id")
 
-	respPermissionGroup, err := handler.buildPermissionGroupsByModule(c, roleIDStr)
+	respPermissionGroup, err := handler.buildPermissionGroupsByModule(ctx, roleIDStr)
 	if err != nil {
 		// Handle specific error for UUID parsing
 		if roleIDStr != "" {

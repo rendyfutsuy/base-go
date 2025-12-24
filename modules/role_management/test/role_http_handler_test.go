@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -26,144 +27,144 @@ type mockRoleManagementUsecase struct {
 	mock.Mock
 }
 
-func (m *mockRoleManagementUsecase) CreateRole(c echo.Context, req *dto.ReqCreateRole, authId string) (*models.Role, error) {
-	args := m.Called(c, req, authId)
+func (m *mockRoleManagementUsecase) CreateRole(ctx context.Context, req *dto.ReqCreateRole, userID string) (*models.Role, error) {
+	args := m.Called(ctx, req, userID)
 	if role := args.Get(0); role != nil {
 		return role.(*models.Role), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockRoleManagementUsecase) GetRoleByID(c echo.Context, id string) (*models.Role, error) {
-	args := m.Called(c, id)
+func (m *mockRoleManagementUsecase) GetRoleByID(ctx context.Context, id string) (*models.Role, error) {
+	args := m.Called(ctx, id)
 	if role := args.Get(0); role != nil {
 		return role.(*models.Role), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockRoleManagementUsecase) GetAllRole(c echo.Context) ([]models.Role, error) {
-	args := m.Called(c)
+func (m *mockRoleManagementUsecase) GetAllRole(ctx context.Context) ([]models.Role, error) {
+	args := m.Called(ctx)
 	if roles := args.Get(0); roles != nil {
 		return roles.([]models.Role), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockRoleManagementUsecase) GetIndexRole(c echo.Context, req request.PageRequest) ([]models.Role, int, error) {
-	args := m.Called(c, req)
+func (m *mockRoleManagementUsecase) GetIndexRole(ctx context.Context, req request.PageRequest) ([]models.Role, int, error) {
+	args := m.Called(ctx, req)
 	if roles := args.Get(0); roles != nil {
 		return roles.([]models.Role), args.Int(1), args.Error(2)
 	}
 	return nil, 0, args.Error(2)
 }
 
-func (m *mockRoleManagementUsecase) UpdateRole(c echo.Context, id string, req *dto.ReqUpdateRole, authId string) (*models.Role, error) {
-	args := m.Called(c, id, req, authId)
+func (m *mockRoleManagementUsecase) UpdateRole(ctx context.Context, id string, req *dto.ReqUpdateRole, userID string) (*models.Role, error) {
+	args := m.Called(ctx, id, req, userID)
 	if role := args.Get(0); role != nil {
 		return role.(*models.Role), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockRoleManagementUsecase) SoftDeleteRole(c echo.Context, id string, authId string) (*models.Role, error) {
-	args := m.Called(c, id, authId)
+func (m *mockRoleManagementUsecase) SoftDeleteRole(ctx context.Context, id string, userID string) (*models.Role, error) {
+	args := m.Called(ctx, id, userID)
 	if role := args.Get(0); role != nil {
 		return role.(*models.Role), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockRoleManagementUsecase) RoleNameIsNotDuplicated(c echo.Context, name string, id uuid.UUID) (*models.Role, error) {
-	args := m.Called(c, name, id)
+func (m *mockRoleManagementUsecase) RoleNameIsNotDuplicated(ctx context.Context, name string, id uuid.UUID) (*models.Role, error) {
+	args := m.Called(ctx, name, id)
 	if role := args.Get(0); role != nil {
 		return role.(*models.Role), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockRoleManagementUsecase) MyPermissionsByUserToken(c echo.Context, token string) (*models.Role, error) {
-	args := m.Called(c, token)
+func (m *mockRoleManagementUsecase) MyPermissionsByUserToken(ctx context.Context, token string) (*models.Role, error) {
+	args := m.Called(ctx, token)
 	if role := args.Get(0); role != nil {
 		return role.(*models.Role), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockRoleManagementUsecase) ReAssignPermissionByGroup(c echo.Context, roleId string, req *dto.ReqUpdatePermissionGroupAssignmentToRole) (*models.Role, error) {
-	args := m.Called(c, roleId, req)
+func (m *mockRoleManagementUsecase) ReAssignPermissionByGroup(ctx context.Context, roleId string, req *dto.ReqUpdatePermissionGroupAssignmentToRole) (*models.Role, error) {
+	args := m.Called(ctx, roleId, req)
 	if role := args.Get(0); role != nil {
 		return role.(*models.Role), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockRoleManagementUsecase) AssignUsersToRole(c echo.Context, roleId string, req *dto.ReqUpdateAssignUsersToRole) (*models.Role, error) {
-	args := m.Called(c, roleId, req)
+func (m *mockRoleManagementUsecase) AssignUsersToRole(ctx context.Context, roleId string, req *dto.ReqUpdateAssignUsersToRole) (*models.Role, error) {
+	args := m.Called(ctx, roleId, req)
 	if role := args.Get(0); role != nil {
 		return role.(*models.Role), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockRoleManagementUsecase) GetPermissionGroupByID(c echo.Context, id string) (*models.PermissionGroup, error) {
-	args := m.Called(c, id)
+func (m *mockRoleManagementUsecase) GetPermissionGroupByID(ctx context.Context, id string) (*models.PermissionGroup, error) {
+	args := m.Called(ctx, id)
 	if pg := args.Get(0); pg != nil {
 		return pg.(*models.PermissionGroup), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockRoleManagementUsecase) GetAllPermissionGroup(c echo.Context) ([]models.PermissionGroup, error) {
-	args := m.Called(c)
+func (m *mockRoleManagementUsecase) GetAllPermissionGroup(ctx context.Context) ([]models.PermissionGroup, error) {
+	args := m.Called(ctx)
 	if groups := args.Get(0); groups != nil {
 		return groups.([]models.PermissionGroup), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockRoleManagementUsecase) GetIndexPermissionGroup(c echo.Context, req request.PageRequest) ([]models.PermissionGroup, int, error) {
-	args := m.Called(c, req)
+func (m *mockRoleManagementUsecase) GetIndexPermissionGroup(ctx context.Context, req request.PageRequest) ([]models.PermissionGroup, int, error) {
+	args := m.Called(ctx, req)
 	if groups := args.Get(0); groups != nil {
 		return groups.([]models.PermissionGroup), args.Int(1), args.Error(2)
 	}
 	return nil, 0, args.Error(2)
 }
 
-func (m *mockRoleManagementUsecase) PermissionGroupNameIsNotDuplicated(c echo.Context, name string, id uuid.UUID) (*models.PermissionGroup, error) {
-	args := m.Called(c, name, id)
+func (m *mockRoleManagementUsecase) PermissionGroupNameIsNotDuplicated(ctx context.Context, name string, id uuid.UUID) (*models.PermissionGroup, error) {
+	args := m.Called(ctx, name, id)
 	if pg := args.Get(0); pg != nil {
 		return pg.(*models.PermissionGroup), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockRoleManagementUsecase) GetPermissionByID(c echo.Context, id string) (*models.Permission, error) {
-	args := m.Called(c, id)
+func (m *mockRoleManagementUsecase) GetPermissionByID(ctx context.Context, id string) (*models.Permission, error) {
+	args := m.Called(ctx, id)
 	if perm := args.Get(0); perm != nil {
 		return perm.(*models.Permission), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockRoleManagementUsecase) GetAllPermission(c echo.Context) ([]models.Permission, error) {
-	args := m.Called(c)
+func (m *mockRoleManagementUsecase) GetAllPermission(ctx context.Context) ([]models.Permission, error) {
+	args := m.Called(ctx)
 	if perms := args.Get(0); perms != nil {
 		return perms.([]models.Permission), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *mockRoleManagementUsecase) GetIndexPermission(c echo.Context, req request.PageRequest) ([]models.Permission, int, error) {
-	args := m.Called(c, req)
+func (m *mockRoleManagementUsecase) GetIndexPermission(ctx context.Context, req request.PageRequest) ([]models.Permission, int, error) {
+	args := m.Called(ctx, req)
 	if perms := args.Get(0); perms != nil {
 		return perms.([]models.Permission), args.Int(1), args.Error(2)
 	}
 	return nil, 0, args.Error(2)
 }
 
-func (m *mockRoleManagementUsecase) PermissionNameIsNotDuplicated(c echo.Context, name string, id uuid.UUID) (*models.Permission, error) {
-	args := m.Called(c, name, id)
+func (m *mockRoleManagementUsecase) PermissionNameIsNotDuplicated(ctx context.Context, name string, id uuid.UUID) (*models.Permission, error) {
+	args := m.Called(ctx, name, id)
 	if perm := args.Get(0); perm != nil {
 		return perm.(*models.Permission), args.Error(1)
 	}
@@ -560,7 +561,7 @@ func TestPermissionGroupHandler_GetAllPermissionGroupByModuleFiltersUserOps(t *t
 	}
 	require.NoError(t, json.NewDecoder(rec.Body).Decode(&resp))
 	require.Len(t, resp.Data, 1)
-	require.Equal(t, "General", resp.Data[0].Name.String)
+	require.Equal(t, "General", resp.Data[0].Name)
 	assert.Len(t, resp.Data[0].PermissionGroups, 1)
 	mockUC.AssertExpectations(t)
 }

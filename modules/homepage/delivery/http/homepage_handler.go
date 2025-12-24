@@ -45,7 +45,7 @@ func DefaultHomepage(c echo.Context) error {
 
 	data := HomepageData{
 		Version:         constants.Version,
-		LastUpdated:     "2025/11/27 09:25 WIB",
+		LastUpdated:     "2025/12/24 13:33 WIB",
 		ShowSwaggerLink: showSwaggerLink,
 	}
 

@@ -10,6 +10,7 @@ import (
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/type/dto"
+	typesearch "github.com/rendyfutsuy/base-go/modules/type/repository/searches"
 	"gorm.io/gorm"
 )
 
@@ -18,7 +19,9 @@ type typeRepository struct {
 }
 
 func NewTypeRepository(db *gorm.DB) *typeRepository {
-	return &typeRepository{DB: db}
+	return &typeRepository{
+		DB: db,
+	}
 }
 
 func (r *typeRepository) Create(ctx context.Context, subgroupID uuid.UUID, name string, createdBy string) (*models.Type, error) {
@@ -87,15 +90,15 @@ func (r *typeRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Typ
 			t.updated_at,
 			t.updated_by,
 			sg.name as subgroup_name,
-			sg.goods_group_id as goods_group_id,
-			gg.name as goods_group_name,
+			sg.groups_id as groups_id,
+			gg.name as groups_name,
 			NOT EXISTS (
 				SELECT 1 FROM backings b
 				WHERE b.type_id = t.id AND b.deleted_at IS NULL
 			) as deletable
 		`).
 		Joins("LEFT JOIN sub_groups sg ON t.subgroup_id = sg.id AND sg.deleted_at IS NULL").
-		Joins("LEFT JOIN goods_group gg ON sg.goods_group_id = gg.id AND gg.deleted_at IS NULL").
+		Joins("LEFT JOIN groups gg ON sg.groups_id = gg.id AND gg.deleted_at IS NULL").
 		Where("t.id = ? AND t.deleted_at IS NULL", id)
 
 	err := query.Scan(t).Error
@@ -145,18 +148,18 @@ func (r *typeRepository) GetIndex(ctx context.Context, req request.PageRequest, 
 			t.created_at,
 			t.updated_at,
 			sg.name as subgroup_name,
-			gg.name as goods_group_name,
+			gg.name as groups_name,
 			NOT EXISTS (
 				SELECT 1 FROM backings b
 				WHERE b.type_id = t.id AND b.deleted_at IS NULL
 			) as deletable
 		`).
 		Joins("LEFT JOIN sub_groups sg ON t.subgroup_id = sg.id AND sg.deleted_at IS NULL").
-		Joins("LEFT JOIN goods_group gg ON sg.goods_group_id = gg.id AND gg.deleted_at IS NULL").
+		Joins("LEFT JOIN groups gg ON sg.groups_id = gg.id AND gg.deleted_at IS NULL").
 		Where("t.deleted_at IS NULL")
 
 	// Apply search from PageRequest
-	query = request.ApplySearchConditionWithSubqueriesFromInterface(query, req.Search, r)
+	query = request.ApplySearchConditionFromInterface(query, req.Search, typesearch.NewTypeSearchHelper())
 
 	// Apply filters with multiple values support
 	query = r.ApplyFilters(query, filter)
@@ -188,18 +191,18 @@ func (r *typeRepository) GetAll(ctx context.Context, filter dto.ReqTypeIndexFilt
 			t.created_at,
 			t.updated_at,
 			sg.name as subgroup_name,
-			gg.name as goods_group_name,
+			gg.name as groups_name,
 			NOT EXISTS (
 				SELECT 1 FROM backings b
 				WHERE b.type_id = t.id AND b.deleted_at IS NULL
 			) as deletable
 		`).
 		Joins("LEFT JOIN sub_groups sg ON t.subgroup_id = sg.id AND sg.deleted_at IS NULL").
-		Joins("LEFT JOIN goods_group gg ON sg.goods_group_id = gg.id AND gg.deleted_at IS NULL").
+		Joins("LEFT JOIN groups gg ON sg.groups_id = gg.id AND gg.deleted_at IS NULL").
 		Where("t.deleted_at IS NULL")
 
 	// Apply search from filter
-	query = request.ApplySearchCondition(query, filter.Search, []string{"t.type_code", "t.name"})
+	query = request.ApplySearchConditionFromInterface(query, filter.Search, typesearch.NewTypeSearchHelper())
 
 	// Apply filters with multiple values support
 	query = r.ApplyFilters(query, filter)
@@ -227,24 +230,3 @@ func (r *typeRepository) GetAll(ctx context.Context, filter dto.ReqTypeIndexFilt
 	}
 	return types, nil
 }
-
-// GetSearchColumns returns the list of direct column names for type search
-// Implements NeedSubqueryPredefine interface
-func (r *typeRepository) GetSearchColumns() []string {
-	return []string{
-		"t.type_code",
-		"t.name",
-	}
-}
-
-// GetSearchExistsSubqueries returns the list of EXISTS subqueries for type search
-// Implements NeedSubqueryPredefine interface
-func (r *typeRepository) GetSearchExistsSubqueries() []string {
-	return []string{
-		"EXISTS (SELECT 1 FROM sub_groups sg WHERE sg.id = t.subgroup_id AND sg.deleted_at IS NULL AND REPLACE(sg.name, ' ', '') ILIKE ?)",
-		"EXISTS (SELECT 1 FROM goods_group gg JOIN sub_groups sg2 ON gg.id = sg2.goods_group_id WHERE sg2.id = t.subgroup_id AND gg.deleted_at IS NULL AND sg2.deleted_at IS NULL AND REPLACE(gg.name, ' ', '') ILIKE ?)",
-	}
-}
-
-// Compile-time check to ensure typeRepository implements NeedSubqueryPredefine interface
-var _ request.NeedSubqueryPredefine = (*typeRepository)(nil)

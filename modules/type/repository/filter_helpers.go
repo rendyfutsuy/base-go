@@ -66,7 +66,7 @@ func (r *typeRepository) ApplyFilters(query *gorm.DB, filter interface{}) *gorm.
 			}
 		}
 		if len(groupUUIDs) > 0 {
-			query = query.Where("sg.goods_group_id IN (?)", groupUUIDs)
+			query = query.Where("sg.groups_id IN (?)", groupUUIDs)
 		}
 	}
 	return applyTypeFilters(query, typeFilter)

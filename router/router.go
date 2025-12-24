@@ -9,7 +9,6 @@
 package router
 
 import (
-	"database/sql"
 	"net/http"
 	"time"
 
@@ -68,9 +67,17 @@ import (
 	_typeController "github.com/rendyfutsuy/base-go/modules/type/delivery/http"
 	_typeRepo "github.com/rendyfutsuy/base-go/modules/type/repository"
 	_typeService "github.com/rendyfutsuy/base-go/modules/type/usecase"
+
+	_expeditionController "github.com/rendyfutsuy/base-go/modules/expedition/delivery/http"
+	_expeditionRepo "github.com/rendyfutsuy/base-go/modules/expedition/repository"
+	_expeditionService "github.com/rendyfutsuy/base-go/modules/expedition/usecase"
+
+	_backingController "github.com/rendyfutsuy/base-go/modules/backing/delivery/http"
+	_backingRepo "github.com/rendyfutsuy/base-go/modules/backing/repository"
+	_backingService "github.com/rendyfutsuy/base-go/modules/backing/usecase"
 )
 
-func InitializedRouter(db *sql.DB, gormDB *gorm.DB, redisClient *redis.Client, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
+func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
 	router := echo.New()
 
 	// queries := sqlc.New(db)
@@ -119,6 +126,10 @@ func InitializedRouter(db *sql.DB, gormDB *gorm.DB, redisClient *redis.Client, t
 
 	typeRepo := _typeRepo.NewTypeRepository(gormDB) // Using GORM for type
 
+	backingRepo := _backingRepo.NewBackingRepository(gormDB) // Using GORM for backing
+
+	expeditionRepo := _expeditionRepo.NewExpeditionRepository(gormDB) // Using GORM for expedition
+
 	// Middlewares ------------------------------------------------------------------------------------------------------------------------------------------------------
 	middlewareAuth := authmiddleware.NewMiddlewareAuth(authRepo)
 	middlewarePermission := roleMiddleware.NewMiddlewarePermission(
@@ -135,6 +146,7 @@ func InitializedRouter(db *sql.DB, gormDB *gorm.DB, redisClient *redis.Client, t
 		timeoutContext,
 		utils.ConfigVars.String("jwt_key"),
 		[]byte(utils.ConfigVars.String("jwt_key")),
+		[]byte(utils.ConfigVars.String("jwt_refresh_key")),
 	)
 	_authController.NewAuthHandler(
 		router,
@@ -217,6 +229,26 @@ func InitializedRouter(db *sql.DB, gormDB *gorm.DB, redisClient *redis.Client, t
 	_typeController.NewTypeHandler(
 		router,
 		typeService,
+		middlewarePageRequest,
+		middlewareAuth,
+		middlewarePermission,
+	)
+
+	// backing management
+	backingService := _backingService.NewBackingUsecase(backingRepo, typeRepo)
+	_backingController.NewBackingHandler(
+		router,
+		backingService,
+		middlewarePageRequest,
+		middlewareAuth,
+		middlewarePermission,
+	)
+
+	// expedition management
+	expeditionService := _expeditionService.NewExpeditionUsecase(expeditionRepo)
+	_expeditionController.NewExpeditionHandler(
+		router,
+		expeditionService,
 		middlewarePageRequest,
 		middlewareAuth,
 		middlewarePermission,
