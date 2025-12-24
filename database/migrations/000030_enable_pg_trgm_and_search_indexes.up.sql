@@ -6,8 +6,8 @@ CREATE INDEX IF NOT EXISTS city_name_trgm_idx ON city USING gin (LOWER(REPLACE(n
 CREATE INDEX IF NOT EXISTS subdistrict_name_trgm_idx ON subdistrict USING gin (LOWER(REPLACE(name, ' ', '')) gin_trgm_ops);
 
 -- Goods Group (search: name, group_code)
-CREATE INDEX IF NOT EXISTS goods_group_name_trgm_idx ON goods_group USING gin (LOWER(REPLACE(name, ' ', '')) gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS goods_group_group_code_trgm_idx ON goods_group USING gin (LOWER(REPLACE(group_code, ' ', '')) gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS groups_name_trgm_idx ON groups USING gin (LOWER(REPLACE(name, ' ', '')) gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS groups_group_code_trgm_idx ON groups USING gin (LOWER(REPLACE(group_code, ' ', '')) gin_trgm_ops);
 
 -- Sub Groups (search via goods and other modules by name)
 CREATE INDEX IF NOT EXISTS sub_groups_name_trgm_idx ON sub_groups USING gin (LOWER(REPLACE(name, ' ', '')) gin_trgm_ops);

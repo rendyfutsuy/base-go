@@ -1,13 +1,13 @@
 package models
 
 import (
-    "time"
+	"time"
 
-    "github.com/google/uuid"
-    "gorm.io/gorm"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
-// GoodsGroup represents goods_group table
+// GoodsGroup represents groups table
 type GoodsGroup struct {
 	ID        uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id" validate:"required"`
 	GroupCode string         `gorm:"column:group_code;type:varchar(255);unique;not null" json:"group_code"`
@@ -24,7 +24,5 @@ type GoodsGroup struct {
 }
 
 func (GoodsGroup) TableName() string {
-    return "goods_group"
+	return "groups"
 }
-
-

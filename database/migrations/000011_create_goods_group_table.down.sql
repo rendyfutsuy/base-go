@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS goods_group;
+DROP TABLE IF EXISTS groups;
 DROP FUNCTION IF EXISTS generate_group_code();
-DROP SEQUENCE IF EXISTS goods_group_code_seq;
+DROP SEQUENCE IF EXISTS groups_code_seq;
 
