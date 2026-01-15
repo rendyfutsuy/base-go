@@ -388,7 +388,7 @@ func (repo *authRepository) GetUserByAccessToken(ctx context.Context, accessToke
 	// Fetch user
 	err = repo.DB.WithContext(ctx).
 		Table("users").
-		Select("id", "full_name", "email", "username", "is_active", "gender", "role_id", "is_first_time_login").
+		Select("id", "full_name", "email", "username", "is_active", "gender", "role_id", "is_first_time_login", "avatar").
 		Where("username = ? AND deleted_at IS NULL", userData.Username).
 		First(&user).Error
 
@@ -465,7 +465,7 @@ func (repo *authRepository) FindByCurrentSession(ctx context.Context, accessToke
 	// Fetch user
 	err = repo.DB.WithContext(ctx).
 		Table("users").
-		Select("id", "full_name", "email", "username", "is_active", "gender", "role_id", "is_first_time_login").
+		Select("id", "full_name", "email", "username", "is_active", "gender", "role_id", "is_first_time_login", "avatar").
 		Where("username = ? AND deleted_at IS NULL", userData.Username).
 		First(&user).Error
 

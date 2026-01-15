@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/utils"
+	utilsServices "github.com/rendyfutsuy/base-go/utils/services"
 	"gorm.io/gorm"
 )
 
@@ -40,4 +41,13 @@ type User struct {
 // TableName specifies table name for GORM
 func (User) TableName() string {
 	return "users"
+}
+
+func (user User) GetAvatarURL() string {
+	presignedURL, err := utilsServices.GeneratePresignedURL(user.Avatar)
+	if err != nil {
+		return ""
+	}
+
+	return presignedURL
 }
