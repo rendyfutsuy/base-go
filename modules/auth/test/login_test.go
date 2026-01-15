@@ -144,6 +144,11 @@ func (m *MockAuthRepository) DestroyAllResetPasswordToken(ctx context.Context, u
 	return args.Error(0)
 }
 
+func (m *MockAuthRepository) UpdateAvatarById(ctx context.Context, avatarURL string, userId uuid.UUID) (bool, error) {
+	args := m.Called(ctx, avatarURL, userId)
+	return args.Bool(0), args.Error(1)
+}
+
 func TestAuthenticate(t *testing.T) {
 	// Initialize ConfigVars for test to avoid nil pointer
 	// Create empty koanf instance for testing if ConfigVars is nil
