@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bytes"
+	"context"
 )
 
 // Storage defines the interface that any storage provider (local, AWS S3, MinIO) must implement.
@@ -13,4 +14,7 @@ type Storage interface {
 	GeneratePresignedURLWithPreview(fullURL string) (string, error)
 	DownloadFile(fileURL string) (*bytes.Buffer, error)
 	CopyFile(originalFileURL string, overrideName *string) (string, error)
+
+	// HealthCheck verifies storage availability
+	HealthCheck(ctx context.Context) error
 }

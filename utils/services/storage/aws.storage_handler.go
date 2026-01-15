@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"mime"
 	"net/url"
@@ -18,6 +19,11 @@ import (
 
 type S3Storage struct {
 	svc *s3.S3
+}
+
+func (s *S3Storage) HealthCheck(ctx context.Context) error {
+	// TBA ...
+	return nil
 }
 
 func NewS3Storage() (*S3Storage, error) {

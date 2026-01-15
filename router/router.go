@@ -99,6 +99,7 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 	router.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(100)))
 
 	router.GET("/", _homepageController.DefaultHomepage)
+	router.GET("/health/storage", _homepageController.StorageHealth)
 
 	// Swagger documentation - hanya tersedia di development environment
 	if utils.ConfigVars.String("app_env") == "development" {
