@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
+	"mime/multipart"
 
 	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/constants"
@@ -164,8 +166,37 @@ func (u *authUsecase) UpdateMyPassword(ctx context.Context, passwordChunks dto.R
 	return nil
 }
 
+func (u *authUsecase) UpdateMyAvatar(ctx context.Context, user models.User, file *multipart.FileHeader) error {
+	// parse file
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	fileData, err := io.ReadAll(src)
+	if err != nil {
+		return err
+	}
+
+	// upload file
+	url, err := u.UploadAvatar(fileData, file.Filename, user)
+	if err != nil {
+		return err
+	}
+
+	// update avatar
+	userUUID := user.ID
+	_, err = u.authRepo.UpdateAvatarById(ctx, url, userUUID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // UploadAvatar uploads avatar file using storage service
-func UploadAvatar(fileData []byte, fileName string, user models.User) (string, error) {
+func (u *authUsecase) UploadAvatar(fileData []byte, fileName string, user models.User) (string, error) {
 	var buf bytes.Buffer
 	buf.Write(fileData)
 
