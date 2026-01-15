@@ -12,6 +12,7 @@ import (
 	"github.com/rendyfutsuy/base-go/database"
 	"github.com/rendyfutsuy/base-go/router"
 	"github.com/rendyfutsuy/base-go/utils"
+	utilsServices "github.com/rendyfutsuy/base-go/utils/services"
 	"gorm.io/gorm"
 )
 
@@ -28,6 +29,9 @@ var (
 
 func init() {
 	utils.InitConfig("config.json")
+	if err := utilsServices.InitStorage(utils.ConfigVars.String("file.driver")); err != nil {
+		panic("Can't initialize storage: " + err.Error())
+	}
 	if utils.ConfigVars.Exists("newrelic.enable_new_relic_logging") {
 		if utils.ConfigVars.Bool("newrelic.enable_new_relic_logging") {
 			app.NewRelicApp = utils.InitializeNewRelic()

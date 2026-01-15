@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/rendyfutsuy/base-go/utils/services/storage"
 	"go.uber.org/zap"
 )
@@ -26,20 +25,27 @@ func GetStorage(driver string) (storage.Storage, error) {
 	}
 }
 
+var defaultStorage storage.Storage
+
+func InitStorage(driver string) error {
+	s, err := GetStorage(driver)
+	if err != nil {
+		return err
+	}
+	defaultStorage = s
+	return nil
+}
+
 // GetFullURL return full URL of a relative path based on storage driver.
 //
 // It takes the document relative path as parameter.
 //
 // It returns a string representing the URL of the uploaded file, and an error.
 func GetFullURL(path string) (string, error) {
-	driver := utils.ConfigVars.String("file.driver")
-	storage, err := GetStorage(driver)
-	if err != nil {
-		utils.Logger.Error(err.Error())
-		return "", err
+	if defaultStorage == nil {
+		return "", fmt.Errorf("storage not initialized")
 	}
-
-	return storage.GetFullURL(path), nil
+	return defaultStorage.GetFullURL(path), nil
 }
 
 // UploadFile uploads a file to the configured storage provider.
@@ -49,13 +55,10 @@ func GetFullURL(path string) (string, error) {
 //
 // It returns a string representing the URL of the uploaded file, and an error.
 func UploadFile(buf bytes.Buffer, fileName string, destinatedPath string) (string, error) {
-	driver := utils.ConfigVars.String("file.driver")
-	storage, err := GetStorage(driver)
-	if err != nil {
-		utils.Logger.Error(err.Error())
-		return "", err
+	if defaultStorage == nil {
+		return "", fmt.Errorf("storage not initialized")
 	}
-	return storage.UploadFile(buf, fileName, destinatedPath)
+	return defaultStorage.UploadFile(buf, fileName, destinatedPath)
 }
 
 // DeleteFile deletes a file from the configured storage provider.
@@ -64,13 +67,10 @@ func UploadFile(buf bytes.Buffer, fileName string, destinatedPath string) (strin
 //
 // It returns an error.
 func DeleteFile(fileURL string) error {
-	driver := utils.ConfigVars.String("file.driver")
-	storage, err := GetStorage(driver)
-	if err != nil {
-		utils.Logger.Error(err.Error())
-		return err
+	if defaultStorage == nil {
+		return fmt.Errorf("storage not initialized")
 	}
-	return storage.DeleteFile(fileURL)
+	return defaultStorage.DeleteFile(fileURL)
 }
 
 // GeneratePresignedURL generates a presigned URL for accessing the uploaded file.
@@ -86,13 +86,10 @@ func GeneratePresignedURL(fullURL string) (string, error) {
 		return "", nil
 	}
 
-	driver := utils.ConfigVars.String("file.driver")
-	storage, err := GetStorage(driver)
-	if err != nil {
-		utils.Logger.Error(err.Error())
-		return "", err
+	if defaultStorage == nil {
+		return "", fmt.Errorf("storage not initialized")
 	}
-	return storage.GeneratePresignedURL(fullURL)
+	return defaultStorage.GeneratePresignedURL(fullURL)
 }
 
 // GeneratePresignedURL generates a presigned URL for accessing the uploaded file. With Preview
@@ -108,32 +105,22 @@ func GeneratePresignedURLWithPreview(fullURL string) (string, error) {
 		return "", nil
 	}
 
-	driver := utils.ConfigVars.String("file.driver")
-	storage, err := GetStorage(driver)
-	if err != nil {
-		utils.Logger.Error(err.Error())
-		return "", err
+	if defaultStorage == nil {
+		return "", fmt.Errorf("storage not initialized")
 	}
-	return storage.GeneratePresignedURLWithPreview(fullURL)
+	return defaultStorage.GeneratePresignedURLWithPreview(fullURL)
 }
 
 func DownloadFile(fileURL string) (*bytes.Buffer, error) {
-	driver := utils.ConfigVars.String("file.driver")
-	storage, err := GetStorage(driver)
-	if err != nil {
-		utils.Logger.Error(err.Error())
-		return nil, err
+	if defaultStorage == nil {
+		return nil, fmt.Errorf("storage not initialized")
 	}
-	return storage.DownloadFile(fileURL)
+	return defaultStorage.DownloadFile(fileURL)
 }
 
 func CopyFile(path string, overrideName *string) (string, error) {
-	driver := utils.ConfigVars.String("file.driver")
-	storage, err := GetStorage(driver)
-	if err != nil {
-		utils.Logger.Error(err.Error())
-		return "", err
+	if defaultStorage == nil {
+		return "", fmt.Errorf("storage not initialized")
 	}
-
-	return storage.CopyFile(path, overrideName)
+	return defaultStorage.CopyFile(path, overrideName)
 }
