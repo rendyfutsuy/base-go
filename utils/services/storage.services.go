@@ -2,7 +2,9 @@ package services
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"sync"
 
 	"github.com/rendyfutsuy/base-go/utils/services/storage"
 	"go.uber.org/zap"
@@ -12,6 +14,19 @@ const (
 	AWS   = "s3"
 	MINIO = "minio"
 )
+
+var (
+	storageOnce sync.Once
+	storageInst storage.Storage
+	storageErr  error
+)
+
+func StorageHealthCheck(ctx context.Context) error {
+	if defaultStorage == nil {
+		return fmt.Errorf("storage not initialized")
+	}
+	return defaultStorage.HealthCheck(ctx)
+}
 
 func GetStorage(driver string) (storage.Storage, error) {
 	switch driver {

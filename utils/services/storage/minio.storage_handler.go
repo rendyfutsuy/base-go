@@ -23,6 +23,22 @@ type MinIOStorage struct {
 	ctx        context.Context
 }
 
+func (m *MinIOStorage) HealthCheck(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	exists, err := m.client.BucketExists(ctx, m.bucketName)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return fmt.Errorf("bucket %s does not exist", m.bucketName)
+	}
+
+	return nil
+}
+
 // NewMinIOStorage initializes a new MinIOStorage instance.
 func NewMinIOStorage() (*MinIOStorage, error) {
 	endpoint := utils.ConfigVars.String("minio.endpoint")

@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/utils"
+	"github.com/rendyfutsuy/base-go/utils/services"
 )
 
 type HomepageData struct {
@@ -56,4 +57,18 @@ func DefaultHomepage(c echo.Context) error {
 	}
 
 	return nil
+}
+
+func StorageHealth(c echo.Context) error {
+	err := services.StorageHealthCheck(c.Request().Context())
+	if err != nil {
+		return c.JSON(http.StatusServiceUnavailable, map[string]string{
+			"storage": "unhealthy",
+			"error":   err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"storage": "healthy",
+	})
 }
