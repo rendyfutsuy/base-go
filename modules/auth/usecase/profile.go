@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"bytes"
 	"context"
 	"errors"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 	"github.com/rendyfutsuy/base-go/utils"
+	utilsServices "github.com/rendyfutsuy/base-go/utils/services"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -160,4 +162,18 @@ func (u *authUsecase) UpdateMyPassword(ctx context.Context, passwordChunks dto.R
 	}
 
 	return nil
+}
+
+// UploadAvatar uploads avatar file using storage service
+func UploadAvatar(fileData []byte, fileName string, user models.User) (string, error) {
+	var buf bytes.Buffer
+	buf.Write(fileData)
+
+	destinatedPath := "users/avatars/" + user.Username
+	url, err := utilsServices.UploadFile(buf, fileName, destinatedPath)
+	if err != nil {
+		return "", errors.New("Failed to upload avatar file")
+	}
+
+	return url, nil
 }
