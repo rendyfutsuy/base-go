@@ -13,6 +13,7 @@ type UserProfile struct {
 	Email            string   `json:"email"`
 	IsFirstTimeLogin bool     `json:"is_first_time_login"`
 	Permissions      []string `json:"permissions"`
+	Avatar           string   `json:"avatar"`
 }
 
 type ReqUpdateProfile struct {

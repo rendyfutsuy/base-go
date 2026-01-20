@@ -186,6 +186,11 @@ type MockAuthRepository struct {
 	mock.Mock
 }
 
+func (m *MockAuthRepository) UpdateAvatarById(ctx context.Context, avatarURL string, userId uuid.UUID) (bool, error) {
+	args := m.Called(ctx, avatarURL, userId)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *MockAuthRepository) GetIsFirstTimeLogin(ctx context.Context, userId uuid.UUID) (bool, error) {
 	args := m.Called(ctx, userId)
 	return args.Bool(0), args.Error(1)

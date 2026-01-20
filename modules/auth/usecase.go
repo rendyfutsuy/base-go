@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"mime/multipart"
 	"time"
 
 	"github.com/google/uuid"
@@ -36,6 +37,7 @@ type Usecase interface {
 	GetProfile(ctx context.Context, accessToken string) (user models.User, err error)
 	UpdateProfile(ctx context.Context, profileChunks dto.ReqUpdateProfile, userId string) error
 	UpdateMyPassword(ctx context.Context, passwordChunks dto.ReqUpdatePassword, userId string) error
+	UpdateMyAvatar(ctx context.Context, user models.User, file *multipart.FileHeader) error
 	IsUserPasswordExpired(ctx context.Context, login string) error
 
 	// for reset password

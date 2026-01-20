@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/utils"
+	utilsServices "github.com/rendyfutsuy/base-go/utils/services"
 	"gorm.io/gorm"
 )
 
@@ -26,6 +27,7 @@ type User struct {
 	Counter           int            `gorm:"column:counter;default:0" json:"counter"`
 	IsFirstTimeLogin  bool           `gorm:"column:is_first_time_login;default:true" json:"is_first_time_login"`
 	Deletable         bool           `gorm:"column:deletable;default:true;not null" json:"deletable"`
+	Avatar            string         `gorm:"column:avatar;type:text" json:"avatar"`
 
 	// mutator - not stored in DB
 	ActiveStatus     utils.NullString `gorm:"column:active_status;<-:false" json:"active_status"` // Read-only: used for fetch, ignored on insert/update
@@ -39,4 +41,13 @@ type User struct {
 // TableName specifies table name for GORM
 func (User) TableName() string {
 	return "users"
+}
+
+func (user User) GetAvatarURL() string {
+	presignedURL, err := utilsServices.GeneratePresignedURL(user.Avatar)
+	if err != nil {
+		return ""
+	}
+
+	return presignedURL
 }

@@ -388,7 +388,7 @@ func (repo *authRepository) GetUserByAccessToken(ctx context.Context, accessToke
 	// Fetch user
 	err = repo.DB.WithContext(ctx).
 		Table("users").
-		Select("id", "full_name", "email", "username", "is_active", "gender", "role_id", "is_first_time_login").
+		Select("id", "full_name", "email", "username", "is_active", "gender", "role_id", "is_first_time_login", "avatar").
 		Where("username = ? AND deleted_at IS NULL", userData.Username).
 		First(&user).Error
 
@@ -465,7 +465,7 @@ func (repo *authRepository) FindByCurrentSession(ctx context.Context, accessToke
 	// Fetch user
 	err = repo.DB.WithContext(ctx).
 		Table("users").
-		Select("id", "full_name", "email", "username", "is_active", "gender", "role_id", "is_first_time_login").
+		Select("id", "full_name", "email", "username", "is_active", "gender", "role_id", "is_first_time_login", "avatar").
 		Where("username = ? AND deleted_at IS NULL", userData.Username).
 		First(&user).Error
 
@@ -490,20 +490,27 @@ func (repo *authRepository) FindByCurrentSession(ctx context.Context, accessToke
 	return user, nil
 }
 
-// UpdateProfileById updates the full name of a user profile by ID.
-//
-// Parameters:
-// - ctx: The context for managing request lifecycle and cancellation.
-// - profileChunks: The updated profile information.
-// - userId: The unique identifier of the user.
-//
-// Returns:
-// - bool: True if the profile was successfully updated, false otherwise.
-// - error: An error if the update fails.
 func (repo *authRepository) UpdateProfileById(ctx context.Context, profileChunks dto.ReqUpdateProfile, userId uuid.UUID) (bool, error) {
 	updates := map[string]interface{}{
-		"password":            profileChunks.Name,
-		"is_first_time_login": false,
+		"full_name":  profileChunks.Name,
+		"updated_at": time.Now().UTC(),
+	}
+	err := repo.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where("id = ?", userId).
+		Updates(updates).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (repo *authRepository) UpdateAvatarById(ctx context.Context, avatarURL string, userId uuid.UUID) (bool, error) {
+	updates := map[string]interface{}{
+		"avatar":     avatarURL,
+		"updated_at": time.Now().UTC(),
 	}
 	err := repo.DB.WithContext(ctx).
 		Model(&models.User{}).

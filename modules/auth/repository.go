@@ -44,4 +44,7 @@ type Repository interface {
 	MarkRefreshTokenUsed(ctx context.Context, jti string) error
 	// RevokeAllUserSessions destroys all sessions / refresh tokens for a user (used on reuse detection)
 	RevokeAllUserSessions(ctx context.Context, userID uuid.UUID) error
+
+	// Update avatar URL for user
+	UpdateAvatarById(ctx context.Context, avatarURL string, userId uuid.UUID) (bool, error)
 }

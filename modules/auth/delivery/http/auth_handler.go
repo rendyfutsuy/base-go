@@ -10,6 +10,7 @@ import (
 	"github.com/rendyfutsuy/base-go/helpers/middleware"
 	_reqContext "github.com/rendyfutsuy/base-go/helpers/middleware/request"
 	"github.com/rendyfutsuy/base-go/helpers/response"
+	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 )
@@ -75,6 +76,11 @@ func NewAuthHandler(e *echo.Echo, us auth.Usecase, middlewareAuth middleware.IMi
 
 	r.POST("/profile",
 		handler.UpdateProfile,
+		handler.middlewareAuth.AuthorizationCheck,
+	)
+
+	r.POST("/profile/avatar",
+		handler.UploadAvatar,
 		handler.middlewareAuth.AuthorizationCheck,
 	)
 
@@ -189,6 +195,7 @@ func (handler *AuthHandler) GetProfile(c echo.Context) error {
 		IsFirstTimeLogin: user.IsFirstTimeLogin,
 		Role:             user.RoleName,
 		Permissions:      user.Permissions,
+		Avatar:           user.GetAvatarURL(),
 	}
 
 	resp := response.NonPaginationResponse{}
@@ -276,6 +283,24 @@ func (handler *AuthHandler) UpdateMyPassword(c echo.Context) error {
 	resp := response.NonPaginationResponse{}
 	resp, _ = resp.SetResponse(nil)
 	resp.Message = constants.AuthPasswordUpdated
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (handler *AuthHandler) UploadAvatar(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, "file is required"))
+	}
+
+	userCtx := c.Get("user").(models.User)
+	if err := handler.AuthUseCase.UpdateMyAvatar(ctx, userCtx, file); err != nil {
+		return c.JSON(http.StatusInternalServerError, response.SetErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
+
+	resp := response.NonPaginationResponse{}
+	resp, _ = resp.SetResponse(map[string]string{"message": "upload Success"})
 	return c.JSON(http.StatusOK, resp)
 }
 
