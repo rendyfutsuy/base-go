@@ -46,6 +46,7 @@ func ValidateAndSanitizeSortColumn(sortBy string, allowedColumns []string, prefi
 // If natural sort is disabled, the function returns a simple sort expression for the column with the given sort order.
 // The function also handles the case where the sort order is not provided, in which case it defaults to "DESC".
 func BuildNaturalSortExpression(column, sortOrder string, useNaturalSort bool) string {
+	// 2026/01/27: comment this logic to disable sort without aggregated column.
 	if !ColumnNameRegex.MatchString(column) {
 		return "created_at " + ValidateAndSanitizeSortOrder(sortOrder)
 	}
