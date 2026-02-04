@@ -50,6 +50,10 @@ func GetTokenStorageInstance() (TokenStorage, error) {
 	return defaultTokenStorage, nil
 }
 
+func SetTokenStorage(storage TokenStorage) {
+	defaultTokenStorage = storage
+}
+
 // Wrapper functions
 
 func SaveSession(ctx context.Context, user models.User, accessToken, refreshToken, accessJTI, refreshJTI string, refreshTTL time.Duration) error {

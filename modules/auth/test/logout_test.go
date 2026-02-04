@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/rendyfutsuy/base-go/modules/auth/usecase"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,6 +17,9 @@ func TestSignOut(t *testing.T) {
 
 	ctx := context.Background()
 	mockRepo := new(MockAuthRepository)
+	mockTokenStorage := new(MockTokenStorage)
+	token_storage.SetTokenStorage(mockTokenStorage)
+
 	signingKey := []byte("test-secret-key")
 	refreshSigningKey := []byte("test-secret-refresh-key")
 	hashSalt := "test-salt"
@@ -37,7 +41,7 @@ func TestSignOut(t *testing.T) {
 			name:  "Positive case - successful logout",
 			token: validToken,
 			setupMock: func() {
-				mockRepo.On("DestroyToken", ctx, validToken).Return(nil).Once()
+				mockTokenStorage.On("DestroySession", ctx, validToken).Return(nil).Once()
 			},
 			expectedError: false,
 			description:   "Valid token should be destroyed successfully",
@@ -46,7 +50,7 @@ func TestSignOut(t *testing.T) {
 			name:  "Negative case - invalid token",
 			token: "invalid-token",
 			setupMock: func() {
-				mockRepo.On("DestroyToken", ctx, "invalid-token").Return(errors.New("token not found")).Once()
+				mockTokenStorage.On("DestroySession", ctx, "invalid-token").Return(errors.New("token not found")).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: "token not found",
@@ -56,7 +60,7 @@ func TestSignOut(t *testing.T) {
 			name:  "Negative case - empty token",
 			token: "",
 			setupMock: func() {
-				mockRepo.On("DestroyToken", ctx, "").Return(errors.New("token is required")).Once()
+				mockTokenStorage.On("DestroySession", ctx, "").Return(errors.New("token is required")).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: "token is required",
@@ -66,7 +70,7 @@ func TestSignOut(t *testing.T) {
 			name:  "Negative case - database error",
 			token: validToken,
 			setupMock: func() {
-				mockRepo.On("DestroyToken", ctx, validToken).Return(errors.New("database connection error")).Once()
+				mockTokenStorage.On("DestroySession", ctx, validToken).Return(errors.New("database connection error")).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: "database connection error",
@@ -77,7 +81,7 @@ func TestSignOut(t *testing.T) {
 			token: "token'; DROP TABLE jwt_tokens; --",
 			setupMock: func() {
 				// Should try to delete with the literal string, not execute SQL
-				mockRepo.On("DestroyToken", ctx, "token'; DROP TABLE jwt_tokens; --").Return(errors.New("token not found")).Once()
+				mockTokenStorage.On("DestroySession", ctx, "token'; DROP TABLE jwt_tokens; --").Return(errors.New("token not found")).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: "token not found",
@@ -89,6 +93,8 @@ func TestSignOut(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo.ExpectedCalls = nil
 			mockRepo.Calls = nil
+			mockTokenStorage.ExpectedCalls = nil
+			mockTokenStorage.Calls = nil
 			tt.setupMock()
 
 			err := usecaseInstance.SignOut(ctx, tt.token)
@@ -103,6 +109,7 @@ func TestSignOut(t *testing.T) {
 			}
 
 			mockRepo.AssertExpectations(t)
+			mockTokenStorage.AssertExpectations(t)
 		})
 	}
 }
