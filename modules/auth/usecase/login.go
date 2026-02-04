@@ -69,6 +69,7 @@ func (u *authUsecase) Authenticate(ctx context.Context, login string, password s
 	}
 
 	// 8) store access token session
+	// 	save to redis
 	if err := u.authRepo.AddUserAccessToken(ctx, accessToken, user.ID); err != nil {
 		return auth.AuthenticateResult{}, fmt.Errorf("failed to store access token: %w", err)
 	}
@@ -79,6 +80,9 @@ func (u *authUsecase) Authenticate(ctx context.Context, login string, password s
 		return auth.AuthenticateResult{}, fmt.Errorf("failed to create refresh token: %w", err)
 	}
 
+	// 10) store store metadata for token
+
+	// save to redis
 	if err := u.authRepo.StoreRefreshToken(ctx, refreshJTI, user.ID, accessJTI, refreshTTL); err != nil {
 		// best effort: if store fails, revoke created access token & return error
 		_ = u.authRepo.DestroyToken(ctx, accessToken)

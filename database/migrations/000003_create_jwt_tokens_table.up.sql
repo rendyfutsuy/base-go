@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS jwt_tokens (
    deleted_at TIMESTAMP,
    user_id UUID NOT NULL, 
    access_token TEXT NOT NULL,
+   refresh_token TEXT NOT NULL,
    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
 );
 
