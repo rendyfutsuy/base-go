@@ -13,6 +13,7 @@ import (
 	"github.com/rendyfutsuy/base-go/router"
 	"github.com/rendyfutsuy/base-go/utils"
 	utilsServices "github.com/rendyfutsuy/base-go/utils/services"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 	"gorm.io/gorm"
 )
 
@@ -54,6 +55,11 @@ func init() {
 	app.RedisClient = database.ConnectToRedis()
 	if app.RedisClient == nil {
 		utils.Logger.Warn("Could not connect to Redis, continuing without Redis support")
+	}
+
+	// Initialize Token Storage
+	if err := token_storage.InitTokenStorage(utils.ConfigVars.String("database.token_storage"), app.GormDB, app.RedisClient); err != nil {
+		panic("Can't initialize token storage: " + err.Error())
 	}
 
 	app.Validator = validator.New()

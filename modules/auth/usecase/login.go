@@ -12,6 +12,7 @@ import (
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth"
 	"github.com/rendyfutsuy/base-go/utils"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 	"go.uber.org/zap"
 )
 
@@ -68,25 +69,17 @@ func (u *authUsecase) Authenticate(ctx context.Context, login string, password s
 		return auth.AuthenticateResult{}, err
 	}
 
-	// 8) store access token session
-	// 	save to redis
-	if err := u.authRepo.AddUserAccessToken(ctx, accessToken, user.ID); err != nil {
-		return auth.AuthenticateResult{}, fmt.Errorf("failed to store access token: %w", err)
-	}
-
-	// 9) create refresh token + store metadata
+	// 8) create refresh token
 	refreshToken, refreshJTI, refreshTTL, err := u.createRefreshToken(user)
 	if err != nil {
-		return auth.AuthenticateResult{}, fmt.Errorf("failed to create refresh token: %w", err)
+		return auth.AuthenticateResult{}, err
 	}
 
-	// 10) store store metadata for token
-
-	// save to redis
-	if err := u.authRepo.StoreRefreshToken(ctx, refreshJTI, user.ID, accessJTI, refreshTTL); err != nil {
+	// 9) store access token session and refresh token metadata
+	if err := token_storage.SaveSession(ctx, user, accessToken, refreshToken, accessJTI, refreshJTI, refreshTTL); err != nil {
 		// best effort: if store fails, revoke created access token & return error
-		_ = u.authRepo.DestroyToken(ctx, accessToken)
-		return auth.AuthenticateResult{}, fmt.Errorf("failed to persist refresh token: %w", err)
+		_ = token_storage.DestroySession(ctx, accessToken)
+		return auth.AuthenticateResult{}, fmt.Errorf("failed to save session: %w", err)
 	}
 
 	return auth.AuthenticateResult{
@@ -107,29 +100,29 @@ func (u *authUsecase) RefreshToken(ctx context.Context, refreshTokenString strin
 	refreshJTI := claims.ID
 
 	// 2) Load refresh token metadata
-	meta, err := u.authRepo.GetRefreshTokenMetadata(ctx, refreshJTI)
+	meta, err := token_storage.GetRefreshTokenMetadata(ctx, refreshJTI)
 	if err != nil {
 		return auth.RefreshResult{}, constants.ErrTokenRevoked
 	}
 
 	// 3) If already used → token theft detected
 	if meta.Used {
-		_ = u.authRepo.RevokeAllUserSessions(ctx, meta.UserID)
+		_ = token_storage.RevokeAllUserSessions(ctx, meta.UserID)
 		return auth.RefreshResult{}, constants.ErrTokenRevoked
 	}
 
 	// 4) Expired refresh token?
 	if time.Now().UTC().After(meta.ExpiresAt) {
-		_ = u.authRepo.MarkRefreshTokenUsed(ctx, refreshJTI)
+		_ = token_storage.MarkRefreshTokenUsed(ctx, refreshJTI)
 		return auth.RefreshResult{}, constants.ErrTokenRevoked
 	}
 
 	// 5) Mark refresh token as used
-	_ = u.authRepo.MarkRefreshTokenUsed(ctx, refreshJTI)
+	_ = token_storage.MarkRefreshTokenUsed(ctx, refreshJTI)
 
 	// 6) REVOKE OLD ACCESS TOKEN IF EXISTS
 	if meta.AccessJTI != "" {
-		_ = u.authRepo.DestroyToken(ctx, meta.AccessJTI)
+		_ = token_storage.DestroySession(ctx, meta.AccessJTI)
 	}
 
 	// 7) Issue NEW access token
@@ -139,18 +132,14 @@ func (u *authUsecase) RefreshToken(ctx context.Context, refreshTokenString strin
 		return auth.RefreshResult{}, err
 	}
 
-	_ = u.authRepo.AddUserAccessToken(ctx, newAccessToken, meta.UserID)
-
 	// 8) Create NEW refresh token (bind to new accessJTI)
 	newRefreshToken, newRefreshJTI, newTTL, err := u.createRefreshToken(user)
 	if err != nil {
-		_ = u.authRepo.DestroyToken(ctx, newAccessJTI)
 		return auth.RefreshResult{}, err
 	}
 
-	err = u.authRepo.StoreRefreshToken(ctx, newRefreshJTI, meta.UserID, newAccessJTI, newTTL)
-	if err != nil {
-		_ = u.authRepo.DestroyToken(ctx, newAccessJTI)
+	if err := token_storage.SaveSession(ctx, user, newAccessToken, newRefreshToken, newAccessJTI, newRefreshJTI, newTTL); err != nil {
+		_ = token_storage.DestroySession(ctx, newAccessToken)
 		return auth.RefreshResult{}, err
 	}
 

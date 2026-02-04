@@ -8,7 +8,7 @@
     "password": "",
     "db_name": "",
     "sslmode": "disable",
-    "token_storage": "local" // default ke access token akan disimpan di database, kalau di set "redis" access token akan disimpan ke redis
+    "token_storage": "local"
   },
   "user": {
     "default_password_template": "temp"
