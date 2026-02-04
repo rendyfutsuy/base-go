@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 	models "github.com/rendyfutsuy/base-go/models"
@@ -15,13 +14,8 @@ type Repository interface {
 	FindByEmailOrUsername(ctx context.Context, login string) (user models.User, err error)
 	AssertPasswordRight(ctx context.Context, password string, userId uuid.UUID) (bool, error)
 	AssertPasswordExpiredIsPassed(ctx context.Context, userId uuid.UUID) (bool, error)
-	AddUserAccessToken(ctx context.Context, accessToken string, userId uuid.UUID) error
-	GetUserByAccessToken(ctx context.Context, accessToken string) (user models.User, errorMain error)
-	DestroyToken(ctx context.Context, accessToken string) error
-	FindByCurrentSession(ctx context.Context, accessToken string) (user models.User, err error)
 	UpdateProfileById(ctx context.Context, profileChunks dto.ReqUpdateProfile, userId uuid.UUID) (bool, error)
 	UpdatePasswordById(ctx context.Context, hashedPassword string, userId uuid.UUID) (bool, error)
-	DestroyAllToken(ctx context.Context, userId uuid.UUID) error
 	AssertPasswordNeverUsesByUser(ctx context.Context, newPassword string, userId uuid.UUID) (bool, error)
 	AddPasswordHistory(ctx context.Context, hashedPassword string, userId uuid.UUID) error
 	AssertPasswordAttemptPassed(ctx context.Context, userId uuid.UUID) (bool, error)
@@ -36,14 +30,6 @@ type Repository interface {
 
 	// Get user is_first_time_login status
 	GetIsFirstTimeLogin(ctx context.Context, userId uuid.UUID) (bool, error)
-	// StoreRefreshToken persists refresh token jti -> user and sets TTL (expire)
-	StoreRefreshToken(ctx context.Context, jti string, userID uuid.UUID, accessJTI string, ttl time.Duration) error
-	// GetRefreshTokenMetadata returns RefreshTokenMeta; return redis.Nil if not found
-	GetRefreshTokenMetadata(ctx context.Context, jti string) (RefreshTokenMeta, error)
-	// MarkRefreshTokenUsed marks the token record as Used=true (and optionally sets a short TTL)
-	MarkRefreshTokenUsed(ctx context.Context, jti string) error
-	// RevokeAllUserSessions destroys all sessions / refresh tokens for a user (used on reuse detection)
-	RevokeAllUserSessions(ctx context.Context, userID uuid.UUID) error
 
 	// Update avatar URL for user
 	UpdateAvatarById(ctx context.Context, avatarURL string, userId uuid.UUID) (bool, error)

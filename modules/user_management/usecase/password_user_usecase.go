@@ -6,6 +6,7 @@ import (
 
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -84,7 +85,7 @@ func (u *userUsecase) UpdateUserPassword(ctx context.Context, id string, passwor
 	}
 
 	// destroy all token session
-	err = u.auth.DestroyAllToken(ctx, userId)
+	err = token_storage.RevokeAllUserSessions(ctx, userId)
 	if err != nil {
 		utils.Logger.Error(err.Error())
 		return err
@@ -135,7 +136,7 @@ func (u *userUsecase) UpdateUserPasswordNoCheckRequired(ctx context.Context, id 
 	}
 
 	// destroy all token session
-	err = u.auth.DestroyAllToken(ctx, userId)
+	err = token_storage.RevokeAllUserSessions(ctx, userId)
 	if err != nil {
 		utils.Logger.Error(err.Error())
 		return err

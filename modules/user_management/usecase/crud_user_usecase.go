@@ -10,6 +10,7 @@ import (
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -198,7 +199,7 @@ func (u *userUsecase) BlockUser(ctx context.Context, id string, req *dto.ReqBloc
 	}
 
 	// revoke user token
-	u.auth.DestroyAllToken(ctx, uId)
+	token_storage.RevokeAllUserSessions(ctx, uId)
 
 	return u.userRepo.GetUserByID(ctx, uId)
 }
@@ -229,7 +230,7 @@ func (u *userUsecase) ActivateUser(ctx context.Context, id string, req *dto.ReqA
 	}
 
 	// revoke user token
-	u.auth.DestroyAllToken(ctx, uId)
+	token_storage.RevokeAllUserSessions(ctx, uId)
 
 	return u.userRepo.GetUserByID(ctx, uId)
 }

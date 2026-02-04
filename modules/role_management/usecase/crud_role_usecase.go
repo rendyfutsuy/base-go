@@ -10,6 +10,7 @@ import (
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/role_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 
 	"github.com/google/uuid"
 )
@@ -148,7 +149,7 @@ func (u *roleUsecase) RoleNameIsNotDuplicated(ctx context.Context, name string, 
 
 func (u *roleUsecase) MyPermissionsByUserToken(ctx context.Context, token string) (role *models.Role, err error) {
 	// get user id from token
-	user, err := u.authRepo.GetUserByAccessToken(ctx, token)
+	user, err := token_storage.ValidateAccessToken(ctx, token)
 	if err != nil {
 		return nil, errors.New(constants.UserNotFound)
 	}

@@ -30,4 +30,7 @@ type TokenStorage interface {
 
 	// RevokeAllUserSessions revokes all sessions for a user.
 	RevokeAllUserSessions(ctx context.Context, userID uuid.UUID) error
+
+	// ValidateAccessToken validates the access token and returns the associated user.
+	ValidateAccessToken(ctx context.Context, accessToken string) (models.User, error)
 }

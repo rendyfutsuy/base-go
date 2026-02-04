@@ -15,6 +15,7 @@ import (
 	// "github.com/go-playground/validator/v10"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/hibiken/asynq"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/newrelic/go-agent/v3/integrations/nrecho-v4"
@@ -111,8 +112,17 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 		panic(err)
 	}
 
+	// Initialize the Redis client for Asynq
+	redisSetting := asynq.RedisClientOpt{
+		Addr:     utils.ConfigVars.String("redis.address"),
+		Password: utils.ConfigVars.String("redis.password"),
+		DB:       utils.ConfigVars.Int("redis.db"),
+	}
+
+	queueClient := asynq.NewClient(redisSetting)
+
 	// Repositories ------------------------------------------------------------------------------------------------------------------------------------------------------
-	authRepo := _authRepo.NewAuthRepository(gormDB, emailServices, redisClient)   // Using GORM for auth
+	authRepo := _authRepo.NewAuthRepository(gormDB, emailServices, queueClient)   // Using GORM for auth
 	roleManagementRepo := _roleManagementRepo.NewRoleManagementRepository(gormDB) // Using GORM for role_management
 
 	userManagementRepo := _userManagementRepo.NewUserManagementRepository(gormDB) // Using GORM for user_management
@@ -132,9 +142,8 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 	expeditionRepo := _expeditionRepo.NewExpeditionRepository(gormDB) // Using GORM for expedition
 
 	// Middlewares ------------------------------------------------------------------------------------------------------------------------------------------------------
-	middlewareAuth := authmiddleware.NewMiddlewareAuth(authRepo)
+	middlewareAuth := authmiddleware.NewMiddlewareAuth()
 	middlewarePermission := roleMiddleware.NewMiddlewarePermission(
-		authRepo,
 		roleManagementRepo,
 	)
 

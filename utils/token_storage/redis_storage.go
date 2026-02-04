@@ -14,15 +14,18 @@ import (
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/utils"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 type RedisStorage struct {
 	Redis *redis.Client
+	DB    *gorm.DB
 }
 
-func NewRedisStorage(redisClient *redis.Client) *RedisStorage {
+func NewRedisStorage(redisClient *redis.Client, db *gorm.DB) *RedisStorage {
 	return &RedisStorage{
 		Redis: redisClient,
+		DB:    db,
 	}
 }
 
@@ -161,4 +164,41 @@ func (s *RedisStorage) RevokeAllUserSessions(ctx context.Context, userID uuid.UU
 	// Assuming we want to delete all.
 	_, err = pipe.Exec(ctx)
 	return err
+}
+
+func (s *RedisStorage) ValidateAccessToken(ctx context.Context, accessToken string) (models.User, error) {
+	// Extract JTI from token
+	jti, err := s.extractJTIFromToken(accessToken)
+	if err != nil {
+		jti = accessToken
+	}
+
+	val, err := s.Redis.Get(ctx, jti).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return models.User{}, errors.New("invalid session")
+		}
+		return models.User{}, err
+	}
+
+	// We have session data (JSON of models.User)
+	var sessionUser models.User
+	if err := json.Unmarshal([]byte(val), &sessionUser); err != nil {
+		return models.User{}, err
+	}
+
+	// Fetch full user from DB using sessionUser.ID
+	var user models.User
+	err = s.DB.WithContext(ctx).
+		Table("users usr").
+		Select("usr.id, usr.full_name, usr.email, usr.username, usr.is_active, usr.gender, usr.role_id, usr.is_first_time_login, usr.avatar, roles.name as role_name").
+		Joins("LEFT JOIN roles ON roles.id = usr.role_id AND roles.deleted_at IS NULL").
+		Where("usr.id = ? AND usr.deleted_at IS NULL", sessionUser.ID).
+		Scan(&user).Error
+
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return user, nil
 }

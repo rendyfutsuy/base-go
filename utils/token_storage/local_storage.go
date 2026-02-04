@@ -2,6 +2,7 @@ package token_storage
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -72,4 +73,34 @@ func (s *LocalStorage) RevokeAllUserSessions(ctx context.Context, userID uuid.UU
 	return s.DB.WithContext(ctx).
 		Where("user_id = ?", userID).
 		Delete(&models.JWTToken{}).Error
+}
+
+func (s *LocalStorage) ValidateAccessToken(ctx context.Context, accessToken string) (models.User, error) {
+	var token models.JWTToken
+	// Check if session exists for this access token
+	err := s.DB.WithContext(ctx).
+		Where("access_token = ?", accessToken).
+		First(&token).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return models.User{}, errors.New("invalid session")
+		}
+		return models.User{}, err
+	}
+
+	// Retrieve User with Role
+	var user models.User
+	err = s.DB.WithContext(ctx).
+		Table("users usr").
+		Select("usr.id, usr.full_name, usr.email, usr.username, usr.is_active, usr.gender, usr.role_id, usr.is_first_time_login, usr.avatar, roles.name as role_name").
+		Joins("LEFT JOIN roles ON roles.id = usr.role_id AND roles.deleted_at IS NULL").
+		Where("usr.id = ? AND usr.deleted_at IS NULL", token.UserId).
+		Scan(&user).Error
+
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return user, nil
 }

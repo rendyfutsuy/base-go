@@ -28,7 +28,7 @@ func GetTokenStorage(driver string, db *gorm.DB, redisClient *redis.Client) (Tok
 	case TokenStorageLocal:
 		return NewLocalStorage(db), nil
 	case TokenStorageRedis:
-		return NewRedisStorage(redisClient), nil
+		return NewRedisStorage(redisClient, db), nil
 	default:
 		zap.S().Errorf("unsupported token storage driver: %s", driver)
 		return nil, fmt.Errorf("unsupported token storage driver: %s", driver)
@@ -90,4 +90,12 @@ func RevokeAllUserSessions(ctx context.Context, userID uuid.UUID) error {
 		return err
 	}
 	return s.RevokeAllUserSessions(ctx, userID)
+}
+
+func ValidateAccessToken(ctx context.Context, accessToken string) (models.User, error) {
+	s, err := GetTokenStorageInstance()
+	if err != nil {
+		return models.User{}, err
+	}
+	return s.ValidateAccessToken(ctx, accessToken)
 }
