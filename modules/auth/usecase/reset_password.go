@@ -6,6 +6,7 @@ import (
 
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/utils"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -97,7 +98,7 @@ func (u *authUsecase) ResetUserPassword(ctx context.Context, newPassword string,
 	}
 
 	// destroy all token session
-	err = u.authRepo.DestroyAllToken(ctx, user.ID)
+	err = token_storage.RevokeAllUserSessions(ctx, user.ID)
 
 	if err != nil {
 		utils.Logger.Error(err.Error())

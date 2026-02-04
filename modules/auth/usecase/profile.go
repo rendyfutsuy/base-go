@@ -13,11 +13,12 @@ import (
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 	"github.com/rendyfutsuy/base-go/utils"
 	utilsServices "github.com/rendyfutsuy/base-go/utils/services"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func (u *authUsecase) GetProfile(ctx context.Context, accessToken string) (user models.User, err error) {
-	user, err = u.authRepo.FindByCurrentSession(ctx, accessToken)
+	user, err = token_storage.ValidateAccessToken(ctx, accessToken)
 	if err != nil {
 		return user, err
 	}
@@ -157,7 +158,7 @@ func (u *authUsecase) UpdateMyPassword(ctx context.Context, passwordChunks dto.R
 	}
 
 	// destroy all token session
-	err = u.authRepo.DestroyAllToken(ctx, userUUID)
+	err = token_storage.RevokeAllUserSessions(ctx, userUUID)
 	if err != nil {
 		utils.Logger.Error(err.Error())
 		return err

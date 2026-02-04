@@ -14,6 +14,7 @@ import (
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 	"github.com/rendyfutsuy/base-go/modules/auth/usecase"
 	"github.com/rendyfutsuy/base-go/utils"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
@@ -160,6 +161,9 @@ func TestAuthenticate(t *testing.T) {
 
 	ctx := context.Background()
 	mockRepo := new(MockAuthRepository)
+	mockTokenStorage := new(MockTokenStorage)
+	token_storage.SetTokenStorage(mockTokenStorage)
+
 	signingKey := []byte("test-secret-key")
 	refreshSigningKey := []byte("test-secret-refresh-key")
 	hashSalt := "test-salt"
@@ -195,12 +199,13 @@ func TestAuthenticate(t *testing.T) {
 				mockRepo.On("ResetPasswordAttempt", ctx, testUserID).Return(nil).Once()
 				mockRepo.On("AssertPasswordExpiredIsPassed", ctx, testUserID).Return(false, nil).Once()
 				mockRepo.On("GetIsFirstTimeLogin", ctx, testUserID).Return(false, nil).Once()
-				mockRepo.On("AddUserAccessToken", ctx, mock.AnythingOfType("string"), testUserID).Return(nil).Once()
-				mockRepo.On("StoreRefreshToken",
+				mockTokenStorage.On("SaveSession",
 					ctx,
-					mock.AnythingOfType("string"), // refreshJTI
-					testUserID,
-					mock.AnythingOfType("string"), // accessJTI
+					testUser,
+					mock.AnythingOfType("string"),
+					mock.AnythingOfType("string"),
+					mock.AnythingOfType("string"),
+					mock.AnythingOfType("string"),
 					mock.AnythingOfType("time.Duration"),
 				).Return(nil).Once()
 			},
@@ -325,6 +330,8 @@ func TestAuthenticate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo.ExpectedCalls = nil
 			mockRepo.Calls = nil
+			mockTokenStorage.ExpectedCalls = nil
+			mockTokenStorage.Calls = nil
 			tt.setupMock()
 
 			result, err := usecaseInstance.Authenticate(ctx, tt.login, tt.password)
@@ -341,6 +348,7 @@ func TestAuthenticate(t *testing.T) {
 			}
 
 			mockRepo.AssertExpectations(t)
+			mockTokenStorage.AssertExpectations(t)
 		})
 	}
 }

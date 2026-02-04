@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	userDto "github.com/rendyfutsuy/base-go/modules/user_management/dto"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -19,6 +20,10 @@ func TestUpdateUserPassword(t *testing.T) {
 
 	e := echo.New()
 	usecaseInstance, mockUserRepo, mockAuthRepo, _ := createTestUsecase()
+
+	mockTokenStorage := new(MockTokenStorage)
+	token_storage.SetTokenStorage(mockTokenStorage)
+
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -51,7 +56,7 @@ func TestUpdateUserPassword(t *testing.T) {
 				mockAuthRepo.On("AddPasswordHistory", ctx, mock.Anything, validID).Return(nil).Once()
 				mockAuthRepo.On("ResetPasswordAttempt", ctx, validID).Return(nil).Once()
 				mockAuthRepo.On("UpdatePasswordById", ctx, validReq.NewPassword, validID).Return(true, nil).Once()
-				mockAuthRepo.On("DestroyAllToken", ctx, validID).Return(nil).Once()
+				mockTokenStorage.On("RevokeAllUserSessions", ctx, validID).Return(nil).Once()
 			},
 			expectedError: false,
 			description:   "Valid request should update password successfully",
@@ -153,6 +158,8 @@ func TestUpdateUserPassword(t *testing.T) {
 			mockUserRepo.Calls = nil
 			mockAuthRepo.ExpectedCalls = nil
 			mockAuthRepo.Calls = nil
+			mockTokenStorage.ExpectedCalls = nil
+			mockTokenStorage.Calls = nil
 			tt.setupMock()
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
@@ -170,6 +177,7 @@ func TestUpdateUserPassword(t *testing.T) {
 
 			mockUserRepo.AssertExpectations(t)
 			mockAuthRepo.AssertExpectations(t)
+			mockTokenStorage.AssertExpectations(t)
 		})
 	}
 }

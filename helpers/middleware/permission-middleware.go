@@ -7,11 +7,11 @@ import (
 
 	"github.com/rendyfutsuy/base-go/helpers/response"
 	"github.com/rendyfutsuy/base-go/models"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
-	"github.com/rendyfutsuy/base-go/modules/auth"
 	"github.com/rendyfutsuy/base-go/modules/role_management"
 )
 
@@ -20,13 +20,11 @@ type IMiddlewarePermission interface {
 }
 
 type MiddlewarePermission struct {
-	authRepository           auth.Repository
 	roleManagementRepository role_management.Repository
 }
 
-func NewMiddlewarePermission(authRepository auth.Repository, roleManagementRepository role_management.Repository) IMiddlewarePermission {
+func NewMiddlewarePermission(roleManagementRepository role_management.Repository) IMiddlewarePermission {
 	return &MiddlewarePermission{
-		authRepository:           authRepository,
 		roleManagementRepository: roleManagementRepository,
 	}
 }
@@ -78,7 +76,7 @@ func (a *MiddlewarePermission) PermissionValidation(args []string) echo.Middlewa
 
 func (a *MiddlewarePermission) getUserData(ctx context.Context, token string) (models.User, error) {
 	// get user data from current token
-	return a.authRepository.GetUserByAccessToken(ctx, token)
+	return token_storage.ValidateAccessToken(ctx, token)
 }
 
 func (a *MiddlewarePermission) getUserPermissions(ctx context.Context, roleUid uuid.UUID) ([]string, error) {

@@ -19,6 +19,7 @@ import (
 	"github.com/rendyfutsuy/base-go/modules/user_management"
 	userDto "github.com/rendyfutsuy/base-go/modules/user_management/dto"
 	"github.com/rendyfutsuy/base-go/modules/user_management/usecase"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"gorm.io/gorm"
@@ -1155,6 +1156,10 @@ func TestBlockUser(t *testing.T) {
 
 	e := echo.New()
 	usecaseInstance, mockUserRepo, mockAuthRepo, mockRoleRepo := createTestUsecase()
+
+	mockTokenStorage := new(MockTokenStorage)
+	token_storage.SetTokenStorage(mockTokenStorage)
+
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -1189,7 +1194,7 @@ func TestBlockUser(t *testing.T) {
 			req:  validBlockReq,
 			setupMock: func() {
 				mockUserRepo.On("BlockUser", ctx, validID).Return(expectedUser, nil).Once()
-				mockAuthRepo.On("DestroyAllToken", ctx, validID).Return(nil).Once()
+				mockTokenStorage.On("RevokeAllUserSessions", ctx, validID).Return(nil).Once()
 				mockUserRepo.On("GetUserByID", ctx, validID).Return(expectedUser, nil).Once()
 			},
 			expectedError: false,
@@ -1201,7 +1206,7 @@ func TestBlockUser(t *testing.T) {
 			req:  validUnblockReq,
 			setupMock: func() {
 				mockUserRepo.On("UnBlockUser", ctx, validID).Return(expectedUser, nil).Once()
-				mockAuthRepo.On("DestroyAllToken", ctx, validID).Return(nil).Once()
+				mockTokenStorage.On("RevokeAllUserSessions", ctx, validID).Return(nil).Once()
 				mockUserRepo.On("GetUserByID", ctx, validID).Return(expectedUser, nil).Once()
 			},
 			expectedError: false,
@@ -1248,6 +1253,8 @@ func TestBlockUser(t *testing.T) {
 			mockUserRepo.Calls = nil
 			mockAuthRepo.ExpectedCalls = nil
 			mockAuthRepo.Calls = nil
+			mockTokenStorage.ExpectedCalls = nil
+			mockTokenStorage.Calls = nil
 			tt.setupMock()
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
@@ -1268,6 +1275,7 @@ func TestBlockUser(t *testing.T) {
 			mockUserRepo.AssertExpectations(t)
 			mockRoleRepo.AssertExpectations(t)
 			mockAuthRepo.AssertExpectations(t)
+			mockTokenStorage.AssertExpectations(t)
 		})
 	}
 }
@@ -1277,6 +1285,10 @@ func TestActivateUser(t *testing.T) {
 
 	e := echo.New()
 	usecaseInstance, mockUserRepo, mockAuthRepo, mockRoleRepo := createTestUsecase()
+
+	mockTokenStorage := new(MockTokenStorage)
+	token_storage.SetTokenStorage(mockTokenStorage)
+
 	ctx := context.Background()
 
 	validID := uuid.New()
@@ -1311,7 +1323,7 @@ func TestActivateUser(t *testing.T) {
 			req:  validActivateReq,
 			setupMock: func() {
 				mockUserRepo.On("ActivateUser", ctx, validID).Return(expectedUser, nil).Once()
-				mockAuthRepo.On("DestroyAllToken", ctx, validID).Return(nil).Once()
+				mockTokenStorage.On("RevokeAllUserSessions", ctx, validID).Return(nil).Once()
 				mockUserRepo.On("GetUserByID", ctx, validID).Return(expectedUser, nil).Once()
 			},
 			expectedError: false,
@@ -1323,7 +1335,7 @@ func TestActivateUser(t *testing.T) {
 			req:  validDeactivateReq,
 			setupMock: func() {
 				mockUserRepo.On("DisActivateUser", ctx, validID).Return(expectedUser, nil).Once()
-				mockAuthRepo.On("DestroyAllToken", ctx, validID).Return(nil).Once()
+				mockTokenStorage.On("RevokeAllUserSessions", ctx, validID).Return(nil).Once()
 				mockUserRepo.On("GetUserByID", ctx, validID).Return(expectedUser, nil).Once()
 			},
 			expectedError: false,
@@ -1370,6 +1382,8 @@ func TestActivateUser(t *testing.T) {
 			mockUserRepo.Calls = nil
 			mockAuthRepo.ExpectedCalls = nil
 			mockAuthRepo.Calls = nil
+			mockTokenStorage.ExpectedCalls = nil
+			mockTokenStorage.Calls = nil
 			tt.setupMock()
 
 			c := e.NewContext(httptest.NewRequest(http.MethodPut, "/", nil), httptest.NewRecorder())
@@ -1390,6 +1404,7 @@ func TestActivateUser(t *testing.T) {
 			mockUserRepo.AssertExpectations(t)
 			mockRoleRepo.AssertExpectations(t)
 			mockAuthRepo.AssertExpectations(t)
+			mockTokenStorage.AssertExpectations(t)
 		})
 	}
 }

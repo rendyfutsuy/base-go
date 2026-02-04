@@ -13,6 +13,7 @@ import (
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 	"github.com/rendyfutsuy/base-go/modules/auth/usecase"
 	roleManagementDto "github.com/rendyfutsuy/base-go/modules/role_management/dto"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -240,6 +241,9 @@ func TestGetProfile(t *testing.T) {
 	ctx := context.Background()
 	mockRepo := new(MockAuthRepository)
 	mockRoleManagementRepo := new(MockRoleManagementRepository)
+	mockTokenStorage := new(MockTokenStorage)
+	token_storage.SetTokenStorage(mockTokenStorage)
+
 	signingKey := []byte("test-secret-key")
 	refreshSigningKey := []byte("test-secret-refresh-key")
 	hashSalt := "test-salt"
@@ -271,7 +275,7 @@ func TestGetProfile(t *testing.T) {
 			name:        "Positive case - successful get profile",
 			accessToken: accessToken,
 			setupMock: func() {
-				mockRepo.On("FindByCurrentSession", ctx, accessToken).Return(expectedUser, nil).Once()
+				mockTokenStorage.On("ValidateAccessToken", ctx, accessToken).Return(expectedUser, nil).Once()
 				mockRoleManagementRepo.On("GetPermissionFromRoleId", ctx, testRoleId).Return([]models.Permission{}, nil).Once()
 				mockRoleManagementRepo.On("GetPermissionGroupFromRoleId", ctx, testRoleId).Return([]models.PermissionGroup{}, nil).Once()
 			},
@@ -282,7 +286,7 @@ func TestGetProfile(t *testing.T) {
 			name:        "Negative case - invalid token",
 			accessToken: "invalid-token",
 			setupMock: func() {
-				mockRepo.On("FindByCurrentSession", ctx, "invalid-token").Return(models.User{}, errors.New(constants.UserInvalid)).Once()
+				mockTokenStorage.On("ValidateAccessToken", ctx, "invalid-token").Return(models.User{}, errors.New(constants.UserInvalid)).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: constants.UserInvalid,
@@ -292,7 +296,7 @@ func TestGetProfile(t *testing.T) {
 			name:        "Negative case - empty token",
 			accessToken: "",
 			setupMock: func() {
-				mockRepo.On("FindByCurrentSession", ctx, "").Return(models.User{}, errors.New(constants.UserInvalid)).Once()
+				mockTokenStorage.On("ValidateAccessToken", ctx, "").Return(models.User{}, errors.New(constants.UserInvalid)).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: constants.UserInvalid,
@@ -303,7 +307,7 @@ func TestGetProfile(t *testing.T) {
 			accessToken: "token'; DROP TABLE jwt_tokens; --",
 			setupMock: func() {
 				// Should not find user even with SQL injection attempt due to parameterized query
-				mockRepo.On("FindByCurrentSession", ctx, "token'; DROP TABLE jwt_tokens; --").Return(models.User{}, errors.New(constants.UserInvalid)).Once()
+				mockTokenStorage.On("ValidateAccessToken", ctx, "token'; DROP TABLE jwt_tokens; --").Return(models.User{}, errors.New(constants.UserInvalid)).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: constants.UserInvalid,
@@ -313,7 +317,7 @@ func TestGetProfile(t *testing.T) {
 			name:        "Negative case - database error",
 			accessToken: accessToken,
 			setupMock: func() {
-				mockRepo.On("FindByCurrentSession", ctx, accessToken).Return(models.User{}, errors.New("database error")).Once()
+				mockTokenStorage.On("ValidateAccessToken", ctx, accessToken).Return(models.User{}, errors.New("database error")).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: "database error",
@@ -327,6 +331,8 @@ func TestGetProfile(t *testing.T) {
 			mockRepo.Calls = nil
 			mockRoleManagementRepo.ExpectedCalls = nil
 			mockRoleManagementRepo.Calls = nil
+			mockTokenStorage.ExpectedCalls = nil
+			mockTokenStorage.Calls = nil
 			tt.setupMock()
 
 			user, err := usecaseInstance.GetProfile(ctx, tt.accessToken)
@@ -347,6 +353,7 @@ func TestGetProfile(t *testing.T) {
 
 			mockRepo.AssertExpectations(t)
 			mockRoleManagementRepo.AssertExpectations(t)
+			mockTokenStorage.AssertExpectations(t)
 		})
 	}
 }
@@ -484,6 +491,8 @@ func TestUpdateMyPassword(t *testing.T) {
 
 	ctx := context.Background()
 	mockRepo := new(MockAuthRepository)
+	mockTokenStorage := new(MockTokenStorage)
+	token_storage.SetTokenStorage(mockTokenStorage)
 	signingKey := []byte("test-secret-key")
 	refreshSigningKey := []byte("test-secret-refresh-key")
 	hashSalt := "test-salt"
@@ -521,7 +530,7 @@ func TestUpdateMyPassword(t *testing.T) {
 				mockRepo.On("AddPasswordHistory", ctx, mock.AnythingOfType("string"), parsedUUID).Return(nil).Once()
 				mockRepo.On("ResetPasswordAttempt", ctx, parsedUUID).Return(nil).Once()
 				mockRepo.On("UpdatePasswordById", ctx, newPassword, parsedUUID).Return(true, nil).Once()
-				mockRepo.On("DestroyAllToken", ctx, parsedUUID).Return(nil).Once()
+				mockTokenStorage.On("RevokeAllUserSessions", ctx, parsedUUID).Return(nil).Once()
 			},
 			expectedError: false,
 			description:   "Valid password update should succeed",
@@ -643,7 +652,7 @@ func TestUpdateMyPassword(t *testing.T) {
 				mockRepo.On("AddPasswordHistory", ctx, mock.AnythingOfType("string"), parsedUUID).Return(nil).Once()
 				mockRepo.On("ResetPasswordAttempt", ctx, parsedUUID).Return(nil).Once()
 				mockRepo.On("UpdatePasswordById", ctx, "", parsedUUID).Return(true, nil).Once()
-				mockRepo.On("DestroyAllToken", ctx, parsedUUID).Return(nil).Once()
+				mockTokenStorage.On("RevokeAllUserSessions", ctx, parsedUUID).Return(nil).Once()
 			},
 			expectedError: false,
 			description:   "Empty new password is technically valid but should be validated at handler level",
@@ -685,7 +694,7 @@ func TestUpdateMyPassword(t *testing.T) {
 				mockRepo.On("AddPasswordHistory", ctx, mock.AnythingOfType("string"), parsedUUID).Return(nil).Once()
 				mockRepo.On("ResetPasswordAttempt", ctx, parsedUUID).Return(nil).Once()
 				mockRepo.On("UpdatePasswordById", ctx, "'; DROP TABLE users; --", parsedUUID).Return(true, nil).Once()
-				mockRepo.On("DestroyAllToken", ctx, parsedUUID).Return(nil).Once()
+				mockTokenStorage.On("RevokeAllUserSessions", ctx, parsedUUID).Return(nil).Once()
 			},
 			expectedError: false,
 			description:   "SQL injection in new password should be treated as literal string",
@@ -712,6 +721,8 @@ func TestUpdateMyPassword(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo.ExpectedCalls = nil
 			mockRepo.Calls = nil
+			mockTokenStorage.ExpectedCalls = nil
+			mockTokenStorage.Calls = nil
 			tt.setupMock()
 
 			err := usecaseInstance.UpdateMyPassword(ctx, tt.passwordChunks, tt.userId)
@@ -726,6 +737,7 @@ func TestUpdateMyPassword(t *testing.T) {
 			}
 
 			mockRepo.AssertExpectations(t)
+			mockTokenStorage.AssertExpectations(t)
 		})
 	}
 }

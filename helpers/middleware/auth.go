@@ -13,8 +13,7 @@ import (
 	"github.com/rendyfutsuy/base-go/helpers/response"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/utils"
-
-	"github.com/rendyfutsuy/base-go/modules/auth"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 )
 
 type GeneralResponse struct {
@@ -26,13 +25,10 @@ type IMiddlewareAuth interface {
 }
 
 type MiddlewareAuth struct {
-	authRepository auth.Repository
 }
 
-func NewMiddlewareAuth(authRepository auth.Repository) IMiddlewareAuth {
-	return &MiddlewareAuth{
-		authRepository: authRepository,
-	}
+func NewMiddlewareAuth() IMiddlewareAuth {
+	return &MiddlewareAuth{}
 }
 
 func (a *MiddlewareAuth) AuthorizationCheck(next echo.HandlerFunc) echo.HandlerFunc {
@@ -119,7 +115,7 @@ func (a *MiddlewareAuth) getUserData(ctx context.Context, token string) (user mo
 
 	tokenString := token
 
-	user, err = a.authRepository.GetUserByAccessToken(ctx, tokenString)
+	user, err = token_storage.ValidateAccessToken(ctx, tokenString)
 	if err != nil {
 		return user, err
 	}

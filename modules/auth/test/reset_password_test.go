@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	models "github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth/usecase"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
@@ -122,6 +123,9 @@ func TestResetUserPassword(t *testing.T) {
 
 	ctx := context.Background()
 	mockRepo := new(MockAuthRepository)
+	mockTokenStorage := new(MockTokenStorage)
+	token_storage.SetTokenStorage(mockTokenStorage)
+
 	signingKey := []byte("test-secret-key")
 	refreshSigningKey := []byte("test-secret-refresh-key")
 	hashSalt := "test-salt"
@@ -161,7 +165,7 @@ func TestResetUserPassword(t *testing.T) {
 				mockRepo.On("AddPasswordHistory", ctx, mock.AnythingOfType("string"), testUserID).Return(nil).Once()
 				mockRepo.On("ResetPasswordAttempt", ctx, testUserID).Return(nil).Once()
 				mockRepo.On("DestroyAllResetPasswordToken", ctx, testUserID).Return(nil).Once()
-				mockRepo.On("DestroyAllToken", ctx, testUserID).Return(nil).Once()
+				mockTokenStorage.On("RevokeAllUserSessions", ctx, testUserID).Return(nil).Once()
 			},
 			expectedError: false,
 			description:   "Valid token and password should reset password successfully",
@@ -226,7 +230,7 @@ func TestResetUserPassword(t *testing.T) {
 				mockRepo.On("AddPasswordHistory", ctx, mock.AnythingOfType("string"), testUserID).Return(nil).Once()
 				mockRepo.On("ResetPasswordAttempt", ctx, testUserID).Return(nil).Once()
 				mockRepo.On("DestroyAllResetPasswordToken", ctx, testUserID).Return(nil).Once()
-				mockRepo.On("DestroyAllToken", ctx, testUserID).Return(nil).Once()
+				mockTokenStorage.On("RevokeAllUserSessions", ctx, testUserID).Return(nil).Once()
 			},
 			expectedError: false,
 			description:   "Empty password is technically valid but should be validated at handler level",
@@ -258,7 +262,7 @@ func TestResetUserPassword(t *testing.T) {
 				mockRepo.On("AddPasswordHistory", ctx, mock.AnythingOfType("string"), testUserID).Return(nil).Once()
 				mockRepo.On("ResetPasswordAttempt", ctx, testUserID).Return(nil).Once()
 				mockRepo.On("DestroyAllResetPasswordToken", ctx, testUserID).Return(nil).Once()
-				mockRepo.On("DestroyAllToken", ctx, testUserID).Return(nil).Once()
+				mockTokenStorage.On("RevokeAllUserSessions", ctx, testUserID).Return(nil).Once()
 			},
 			expectedError: false,
 			description:   "SQL injection in new password should be treated as literal string",
@@ -269,6 +273,8 @@ func TestResetUserPassword(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo.ExpectedCalls = nil
 			mockRepo.Calls = nil
+			mockTokenStorage.ExpectedCalls = nil
+			mockTokenStorage.Calls = nil
 			tt.setupMock()
 
 			err := usecaseInstance.ResetUserPassword(ctx, tt.newPassword, tt.token)
@@ -283,6 +289,7 @@ func TestResetUserPassword(t *testing.T) {
 			}
 
 			mockRepo.AssertExpectations(t)
+			mockTokenStorage.AssertExpectations(t)
 		})
 	}
 }
