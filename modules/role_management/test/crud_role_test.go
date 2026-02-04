@@ -18,6 +18,7 @@ import (
 	"github.com/rendyfutsuy/base-go/modules/role_management"
 	roleDto "github.com/rendyfutsuy/base-go/modules/role_management/dto"
 	"github.com/rendyfutsuy/base-go/modules/role_management/usecase"
+	"github.com/rendyfutsuy/base-go/utils/token_storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -1087,6 +1088,10 @@ func TestMyPermissionsByUserToken(t *testing.T) {
 
 	e := echo.New()
 	usecaseInstance, mockRoleRepo, mockAuthRepo := createTestUsecase()
+
+	mockTokenStorage := new(MockTokenStorage)
+	token_storage.SetTokenStorage(mockTokenStorage)
+
 	ctx := context.Background()
 
 	validToken := "valid-access-token"
@@ -1113,7 +1118,7 @@ func TestMyPermissionsByUserToken(t *testing.T) {
 			name:  "Positive case - successful get permissions",
 			token: validToken,
 			setupMock: func() {
-				mockAuthRepo.On("GetUserByAccessToken", ctx, validToken).Return(testUser, nil).Once()
+				mockTokenStorage.On("ValidateAccessToken", ctx, validToken).Return(testUser, nil).Once()
 				mockRoleRepo.On("GetRoleByID", ctx, roleID).Return(expectedRole, nil).Once()
 			},
 			expectedError: false,
@@ -1123,7 +1128,7 @@ func TestMyPermissionsByUserToken(t *testing.T) {
 			name:  "Negative case - invalid token",
 			token: "invalid-token",
 			setupMock: func() {
-				mockAuthRepo.On("GetUserByAccessToken", ctx, "invalid-token").Return(models.User{}, errors.New("token not found")).Once()
+				mockTokenStorage.On("ValidateAccessToken", ctx, "invalid-token").Return(models.User{}, errors.New("token not found")).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: constants.UserNotFound,
@@ -1133,7 +1138,7 @@ func TestMyPermissionsByUserToken(t *testing.T) {
 			name:  "Negative case - empty token",
 			token: "",
 			setupMock: func() {
-				mockAuthRepo.On("GetUserByAccessToken", ctx, "").Return(models.User{}, errors.New("token required")).Once()
+				mockTokenStorage.On("ValidateAccessToken", ctx, "").Return(models.User{}, errors.New("token required")).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: constants.UserNotFound,
@@ -1144,7 +1149,7 @@ func TestMyPermissionsByUserToken(t *testing.T) {
 			token: "'; DROP TABLE jwt_tokens; --",
 			setupMock: func() {
 				// Should be treated as normal string due to parameterized query
-				mockAuthRepo.On("GetUserByAccessToken", ctx, "'; DROP TABLE jwt_tokens; --").Return(models.User{}, errors.New("token not found")).Once()
+				mockTokenStorage.On("ValidateAccessToken", ctx, "'; DROP TABLE jwt_tokens; --").Return(models.User{}, errors.New("token not found")).Once()
 			},
 			expectedError:  true,
 			expectedErrMsg: constants.UserNotFound,
@@ -1158,6 +1163,8 @@ func TestMyPermissionsByUserToken(t *testing.T) {
 			mockRoleRepo.Calls = nil
 			mockAuthRepo.ExpectedCalls = nil
 			mockAuthRepo.Calls = nil
+			mockTokenStorage.ExpectedCalls = nil
+			mockTokenStorage.Calls = nil
 			tt.setupMock()
 
 			c := e.NewContext(httptest.NewRequest(http.MethodGet, "/", nil), httptest.NewRecorder())
@@ -1177,6 +1184,7 @@ func TestMyPermissionsByUserToken(t *testing.T) {
 
 			mockRoleRepo.AssertExpectations(t)
 			mockAuthRepo.AssertExpectations(t)
+			mockTokenStorage.AssertExpectations(t)
 		})
 	}
 }
