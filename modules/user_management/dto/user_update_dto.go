@@ -18,8 +18,8 @@ type ReqActivateUser struct {
 }
 
 type ReqUpdateUser struct {
-	FullName             string    `form:"name" json:"name" validate:"required,max=80,uppercase_letters"`
-	Username             string    `form:"username" json:"username" validate:"uppercase_letters"`
+	FullName             string    `form:"name" json:"name" validate:"required,max=80"`
+	Username             string    `form:"username" json:"username" validate:"required"`
 	RoleId               uuid.UUID `form:"role_id" json:"role_id" validate:"required"`
 	Email                string    `form:"email" json:"email"`
 	IsActive             bool      `form:"is_active" json:"is_active"`

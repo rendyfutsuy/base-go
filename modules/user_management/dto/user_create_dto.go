@@ -10,10 +10,10 @@ type ReqCheckDuplicatedUser struct {
 }
 
 type ReqCreateUser struct {
-	FullName             string    `form:"name" json:"name" validate:"required,max=80,uppercase_letters"`
-	Username             string    `form:"username" json:"username" validate:"required,uppercase_letters"`
+	FullName             string    `form:"name" json:"name" validate:"required,max=80"`
+	Username             string    `form:"username" json:"username" validate:"required"`
 	RoleId               uuid.UUID `form:"role_id" json:"role_id" validate:"required"`
-	Password             string    `form:"password" json:"password" validate:"required,min=8,password_uppercase"`
+	Password             string    `form:"password" json:"password" validate:"required,min=8"`
 	PasswordConfirmation string    `form:"password_confirmation" json:"password_confirmation" validate:"required,eqfield=Password"`
 }
 
