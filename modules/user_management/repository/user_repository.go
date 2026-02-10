@@ -44,9 +44,9 @@ func (repo *userRepository) CreateUser(ctx context.Context, userReq dto.ToDBCrea
 	userRes = &models.User{
 		FullName: userReq.FullName,
 		Username: userReq.Username,
-		// Email:    userReq.Email,
-		RoleId: userReq.RoleId,
-		// Nik:               userReq.Nik,
+		Email:    userReq.Email,
+		RoleId:   userReq.RoleId,
+		Nik:      userReq.Nik,
 		// IsActive:          userReq.IsActive,
 		// Gender:            userReq.Gender,
 		Password:          myPassword,
@@ -209,7 +209,7 @@ func (repo *userRepository) GetAllUser(ctx context.Context) ([]models.User, erro
 func (repo *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, userReq dto.ToDBUpdateUser) (userRes *models.User, err error) {
 	updates := map[string]interface{}{
 		"full_name": userReq.FullName,
-		// "email":     userReq.Email,
+		"email":     userReq.Email,
 		// "gender":    userReq.Gender,
 		// "is_active":  userReq.IsActive,
 		"role_id":    userReq.RoleId,

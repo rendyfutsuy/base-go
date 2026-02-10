@@ -21,7 +21,7 @@ type ReqUpdateUser struct {
 	FullName             string    `form:"name" json:"name" validate:"required,max=80"`
 	Username             string    `form:"username" json:"username" validate:"required"`
 	RoleId               uuid.UUID `form:"role_id" json:"role_id" validate:"required"`
-	Email                string    `form:"email" json:"email"`
+	Email                string    `form:"email" json:"email" validate:"required,email"`
 	IsActive             bool      `form:"is_active" json:"is_active"`
 	Gender               string    `form:"gender" json:"gender"`
 	Password             string    `form:"password" json:"password"`

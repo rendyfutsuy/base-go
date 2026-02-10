@@ -206,7 +206,7 @@ func TestNewUserManagementHandler_RegisterRoutes(t *testing.T) {
 func TestUserHandler_CreateUserSuccess(t *testing.T) {
 	e := newEcho()
 	roleID := uuid.New()
-	body := `{"name":"JOHN DOE","username":"JDOE","role_id":"` + roleID.String() + `","password":"PASSWORD!1","password_confirmation":"PASSWORD!1"}`
+	body := `{"name":"JOHN DOE","username":"JDOE","role_id":"` + roleID.String() + `","email":"test@example.com","nik":"1234567890","password":"PASSWORD!1","password_confirmation":"PASSWORD!1"}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/user-management/user", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -229,7 +229,7 @@ func TestUserHandler_CreateUserSuccess(t *testing.T) {
 
 func TestUserHandler_CreateUserValidationError(t *testing.T) {
 	e := newEcho()
-	body := `{"name":"","username":"","role_id":"","password":"","password_confirmation":""}`
+	body := `{"name":"","username":"","role_id":"","email":"","nik":"","password":"","password_confirmation":""}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/user-management/user", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
