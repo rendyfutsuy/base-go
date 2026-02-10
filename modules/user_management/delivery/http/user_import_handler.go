@@ -79,6 +79,13 @@ func (handler *UserManagementHandler) ImportUsersFromExcel(c echo.Context) error
 	if res.FailedCount > 0 {
 		resp := response.NonPaginationResponse{}
 		resp, _ = resp.SetResponse(res)
+		if res.FailedCount > 0 {
+			resp.Message = constants.UserImportFailedPartial
+			if res.SuccessCount == 0 {
+				resp.Message = constants.UserImportFileSaveFailed
+				resp.Status = http.StatusBadRequest
+			}
+		}
 		return c.JSON(http.StatusBadRequest, resp)
 	}
 
