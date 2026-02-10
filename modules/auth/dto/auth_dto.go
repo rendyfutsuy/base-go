@@ -21,7 +21,6 @@ type ReqUpdateProfile struct {
 }
 
 type ReqUpdatePassword struct {
-	OldPassword          string `form:"old_password" json:"old_password" validate:"required"`
 	NewPassword          string `form:"new_password" json:"new_password" validate:"required"`
 	PasswordConfirmation string `form:"password_confirmation" json:"password_confirmation" validate:"required,eqfield=NewPassword"`
 }

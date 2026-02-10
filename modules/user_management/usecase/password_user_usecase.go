@@ -27,14 +27,6 @@ func (u *userUsecase) UpdateUserPassword(ctx context.Context, id string, passwor
 		return err
 	}
 
-	// assert old password given is same with saved password
-	isPasswordRight, err := u.auth.AssertPasswordRight(ctx, passwordChunks.OldPassword, userId)
-
-	// if old password fail to match return error
-	if !isPasswordRight {
-		return errors.New("Old Password not Match")
-	}
-
 	// assert current password not the same with new password
 	isNewPasswordRight, err := u.auth.AssertPasswordRight(ctx, passwordChunks.NewPassword, userId)
 
