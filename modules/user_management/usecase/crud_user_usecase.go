@@ -173,6 +173,10 @@ func (u *userUsecase) UserNameIsNotDuplicated(ctx context.Context, fullName stri
 	return u.userRepo.GetDuplicatedUser(ctx, fullName, id)
 }
 
+func (u *userUsecase) EmailIsNotDuplicated(ctx context.Context, email string, id uuid.UUID) (userRes *models.User, err error) {
+	return u.userRepo.GetDuplicatedUserByEmail(ctx, email, id)
+}
+
 func (u *userUsecase) BlockUser(ctx context.Context, id string, req *dto.ReqBlockUser) (userRes *models.User, err error) {
 	// parsing UUID
 	uId, err := utils.StringToUUID(id)

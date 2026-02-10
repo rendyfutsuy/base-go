@@ -23,6 +23,7 @@ type Repository interface {
 	SoftDeleteUser(ctx context.Context, id uuid.UUID, userReq dto.ToDBDeleteUser) (userRes *models.User, err error)
 	UserNameIsNotDuplicated(ctx context.Context, name string, excludedId uuid.UUID) (bool, error)
 	GetDuplicatedUser(ctx context.Context, name string, excludedId uuid.UUID) (user *models.User, err error)
+	GetDuplicatedUserByEmail(ctx context.Context, email string, excludedId uuid.UUID) (user *models.User, err error)
 	UserNameIsNotDuplicatedOnSoftDeleted(ctx context.Context, name string, excludedId uuid.UUID) (bool, error)
 	GetDuplicatedUserOnSoftDeleted(ctx context.Context, name string, excludedId uuid.UUID) (user *models.User, err error)
 	BlockUser(ctx context.Context, id uuid.UUID) (userRes *models.User, err error)

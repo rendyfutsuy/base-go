@@ -68,6 +68,7 @@ func NewUserManagementHandler(e *echo.Echo, us user_management.Usecase, mwP _req
 	// user check name	eligible permission
 	checkUserName := append(showUser, "user.check-name")
 	r.POST("/user/check-name", handler.GetDuplicatedUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(checkUserName))
+	r.POST("/user/check-email", handler.GetDuplicatedEmail, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(checkUserName))
 
 	// 2025/11/04: unused - commented first
 	// user block

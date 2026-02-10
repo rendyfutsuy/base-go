@@ -318,6 +318,61 @@ func (handler *UserManagementHandler) GetDuplicatedUser(c echo.Context) error {
 	return c.JSON(http.StatusConflict, resp)
 }
 
+// GetDuplicatedEmail godoc
+// @Summary		Check if email is duplicated
+// @Description	Check if a user email already exists in the database
+// @Tags			User Management
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			request	body	dto.ReqCheckDuplicatedEmail	true	"Check duplicated email request"
+// @Success		200		{object}	response.NonPaginationResponse{data=dto.RespUser}	"User with such email exists"
+// @Failure		400		{object}	response.NonPaginationResponse	"Bad request"
+// @Failure		401		{object}	response.NonPaginationResponse	"Unauthorized"
+// @Failure		200		{object}	response.NonPaginationResponse	"User with such email is not found"
+// @Router			/v1/user-management/user/check-email [post]
+func (handler *UserManagementHandler) GetDuplicatedEmail(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
+	req := new(dto.ReqCheckDuplicatedEmail)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	// validate request
+	if err := c.Validate(req); err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	// initialize uid
+	uid := uuid.Nil
+
+	// UserId can be null
+	if req.ExcludedUserId != uuid.Nil {
+		uid = req.ExcludedUserId
+	}
+
+	res, err := handler.UserUseCase.EmailIsNotDuplicated(ctx, req.Email, uid)
+
+	// if email havent been used by existing account info, return not found message
+	if res == nil {
+		return c.JSON(http.StatusOK, response.SetErrorResponse(http.StatusOK, "User Info with such email is not found"))
+	}
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	// if email already used by existing account info, return User object
+	resResp := dto.ToRespUser(*res)
+	resp := response.NonPaginationResponse{}
+	resp, _ = resp.SetResponse(resResp)
+	resp.Status = http.StatusConflict
+
+	return c.JSON(http.StatusConflict, resp)
+}
+
 // 2025/11/04: unused - commented first
 // // BlockUser godoc
 // // @Summary		Block a user

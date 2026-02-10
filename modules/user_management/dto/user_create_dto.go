@@ -9,6 +9,11 @@ type ReqCheckDuplicatedUser struct {
 	ExcludedUserId uuid.UUID `json:"excluded_user_id"`
 }
 
+type ReqCheckDuplicatedEmail struct {
+	Email          string    `json:"email" validate:"required,email"`
+	ExcludedUserId uuid.UUID `json:"excluded_user_id"`
+}
+
 type ReqCreateUser struct {
 	FullName             string    `form:"name" json:"name" validate:"required,max=80"`
 	Username             string    `form:"username" json:"username" validate:"required"`

@@ -18,6 +18,7 @@ type Usecase interface {
 	UpdateUser(ctx context.Context, id string, req *dto.ReqUpdateUser, authId string) (userRes *models.User, err error)
 	SoftDeleteUser(ctx context.Context, id string, authId string) (userRes *models.User, err error)
 	UserNameIsNotDuplicated(ctx context.Context, name string, id uuid.UUID) (userRes *models.User, err error)
+	EmailIsNotDuplicated(ctx context.Context, email string, id uuid.UUID) (userRes *models.User, err error)
 	BlockUser(ctx context.Context, id string, req *dto.ReqBlockUser) (userRes *models.User, err error)
 	ActivateUser(ctx context.Context, id string, req *dto.ReqActivateUser) (userRes *models.User, err error)
 

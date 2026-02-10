@@ -451,6 +451,37 @@ func (repo *userRepository) GetDuplicatedUser(ctx context.Context, name string, 
 	return user, nil
 }
 
+// GetDuplicatedUserByEmail retrieves the user information with the given email and excluded ID from the database.
+//
+// Parameters:
+// - email: the email of the user information to retrieve.
+// - excludedId: the ID of the user information to exclude from the result.
+//
+// Returns:
+// - user: a pointer to the retrieved user information.
+// - err: an error if there was a problem retrieving the user information.
+func (repo *userRepository) GetDuplicatedUserByEmail(ctx context.Context, email string, excludedId uuid.UUID) (user *models.User, err error) {
+	user = &models.User{}
+
+	query := repo.DB.WithContext(ctx).
+		Select("id", "full_name", "username", "email", "created_at", "updated_at").
+		Where("email = ? AND deleted_at IS NULL", email)
+
+	if excludedId != uuid.Nil {
+		query = query.Where("id <> ?", excludedId)
+	}
+
+	err = query.First(user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return user, nil
+}
+
 // UserNameIsNotDuplicatedOnSoftDeleted checks if the provided user name is not duplicated in the database.
 //
 // It takes a name string and an excludedId UUID as parameters.
