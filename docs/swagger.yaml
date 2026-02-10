@@ -9,6 +9,15 @@ definitions:
     - login
     - password
     type: object
+  dto.ReqCheckDuplicatedEmail:
+    properties:
+      email:
+        type: string
+      excluded_user_id:
+        type: string
+    required:
+    - email
+    type: object
   dto.ReqCheckDuplicatedRole:
     properties:
       excluded_role_info_id:
@@ -176,8 +185,12 @@ definitions:
     type: object
   dto.ReqCreateUser:
     properties:
+      email:
+        type: string
       name:
         maxLength: 80
+        type: string
+      nik:
         type: string
       password:
         minLength: 8
@@ -189,7 +202,9 @@ definitions:
       username:
         type: string
     required:
+    - email
     - name
+    - nik
     - password
     - password_confirmation
     - role_id
@@ -391,8 +406,10 @@ definitions:
       username:
         type: string
     required:
+    - email
     - name
     - role_id
+    - username
     type: object
   dto.ReqUpdateUserPassword:
     properties:
@@ -4851,6 +4868,38 @@ paths:
       security:
       - BearerAuth: []
       summary: Get all users
+      tags:
+      - User Management
+  /v1/user-management/user/check-email:
+    post:
+      consumes:
+      - application/json
+      description: Check if a user email already exists in the database
+      parameters:
+      - description: Check duplicated email request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCheckDuplicatedEmail'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User with such email is not found
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Check if email is duplicated
       tags:
       - User Management
   /v1/user-management/user/check-name:
