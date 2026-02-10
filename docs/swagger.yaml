@@ -301,13 +301,10 @@ definitions:
     properties:
       new_password:
         type: string
-      old_password:
-        type: string
       password_confirmation:
         type: string
     required:
     - new_password
-    - old_password
     - password_confirmation
     type: object
   dto.ReqUpdateProfile:
@@ -401,13 +398,10 @@ definitions:
     properties:
       new_password:
         type: string
-      old_password:
-        type: string
       password_confirmation:
         type: string
     required:
     - new_password
-    - old_password
     - password_confirmation
     type: object
   dto.ResImportUserExcel:
@@ -934,6 +928,8 @@ definitions:
     type: object
   dto.UserProfile:
     properties:
+      avatar:
+        type: string
       email:
         type: string
       id:

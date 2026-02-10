@@ -6758,14 +6758,10 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "new_password",
-                "old_password",
                 "password_confirmation"
             ],
             "properties": {
                 "new_password": {
-                    "type": "string"
-                },
-                "old_password": {
                     "type": "string"
                 },
                 "password_confirmation": {
@@ -6905,14 +6901,10 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "new_password",
-                "old_password",
                 "password_confirmation"
             ],
             "properties": {
                 "new_password": {
-                    "type": "string"
-                },
-                "old_password": {
                     "type": "string"
                 },
                 "password_confirmation": {
@@ -7718,6 +7710,9 @@ const docTemplate = `{
         "dto.UserProfile": {
             "type": "object",
             "properties": {
+                "avatar": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },

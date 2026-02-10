@@ -49,7 +49,6 @@ func TestUpdateUserPassword(t *testing.T) {
 			req:  validReq,
 			setupMock: func() {
 				mockUserRepo.On("IsUserPasswordCanUpdated", ctx, validID).Return(true, nil).Once()
-				mockAuthRepo.On("AssertPasswordRight", ctx, validReq.NewPassword, validID).Return(false, nil).Once()
 				mockAuthRepo.On("AssertPasswordNeverUsesByUser", ctx, validReq.NewPassword, validID).Return(true, nil).Once()
 				mockAuthRepo.On("AddPasswordHistory", ctx, mock.Anything, validID).Return(nil).Once()
 				mockAuthRepo.On("ResetPasswordAttempt", ctx, validID).Return(nil).Once()
@@ -82,29 +81,16 @@ func TestUpdateUserPassword(t *testing.T) {
 			description:    "Password update restriction should return error",
 		},
 		{
-			name: "Negative case - new password same as current",
-			id:   validIDString,
-			req:  validReq,
-			setupMock: func() {
-				mockUserRepo.On("IsUserPasswordCanUpdated", ctx, validID).Return(true, nil).Once()
-				mockAuthRepo.On("AssertPasswordRight", ctx, validReq.NewPassword, validID).Return(true, nil).Once()
-			},
-			expectedError:  true,
-			expectedErrMsg: "New Password should not be same with Current Password",
-			description:    "New password same as current should return error",
-		},
-		{
 			name: "Negative case - new password used before",
 			id:   validIDString,
 			req:  validReq,
 			setupMock: func() {
 				mockUserRepo.On("IsUserPasswordCanUpdated", ctx, validID).Return(true, nil).Once()
-				mockAuthRepo.On("AssertPasswordRight", ctx, validReq.NewPassword, validID).Return(false, nil).Once()
 				mockAuthRepo.On("AssertPasswordNeverUsesByUser", ctx, validReq.NewPassword, validID).Return(false, errors.New("password used before")).Once()
 			},
 			expectedError:  true,
-			expectedErrMsg: "password used before",
-			description:    "New password used before should return error",
+			expectedErrMsg: "New Password should not be same with Current Password",
+			description:    "New password same as current should return error",
 		},
 		{
 			name: "Negative-Positive case - SQL injection attempt in ID",
@@ -123,7 +109,6 @@ func TestUpdateUserPassword(t *testing.T) {
 			req:  validReq,
 			setupMock: func() {
 				mockUserRepo.On("IsUserPasswordCanUpdated", ctx, validID).Return(true, nil).Once()
-				mockAuthRepo.On("AssertPasswordRight", ctx, validReq.NewPassword, validID).Return(false, nil).Once()
 				mockAuthRepo.On("AssertPasswordNeverUsesByUser", ctx, validReq.NewPassword, validID).Return(true, nil).Once()
 				mockAuthRepo.On("AddPasswordHistory", ctx, mock.Anything, validID).Return(nil).Once()
 				mockAuthRepo.On("ResetPasswordAttempt", ctx, validID).Return(nil).Once()
