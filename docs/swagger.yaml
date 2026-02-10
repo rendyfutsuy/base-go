@@ -904,6 +904,8 @@ definitions:
         type: string
       deletable:
         type: boolean
+      email:
+        type: string
       id:
         type: string
       name:
@@ -923,6 +925,8 @@ definitions:
         type: string
       deletable:
         type: boolean
+      email:
+        type: string
       id:
         type: string
       name:

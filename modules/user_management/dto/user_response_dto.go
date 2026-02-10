@@ -20,6 +20,7 @@ type RespUserIndex struct {
 	ID        uuid.UUID `json:"id"`
 	FullName  string    `json:"name"`
 	Username  string    `json:"username"`
+	Email     string    `json:"email"`
 	RoleName  string    `json:"role_name"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -44,6 +45,7 @@ type RespUserDetail struct {
 	ID        uuid.UUID `json:"id"`
 	FullName  string    `json:"name"`
 	Username  string    `json:"username"`
+	Email     string    `json:"email"`
 	RoleId    uuid.UUID `json:"role_id"`
 	RoleName  string    `json:"role_name"`
 	CreatedAt time.Time `json:"created_at"`
@@ -68,6 +70,7 @@ func ToRespUserIndex(userDb models.User) RespUserIndex {
 		ID:        userDb.ID,
 		FullName:  userDb.FullName,
 		Username:  userDb.Username,
+		Email:     userDb.Email,
 		RoleName:  userDb.RoleName,
 		Deletable: userDb.Deletable,
 		CreatedAt: userDb.CreatedAt,
@@ -83,6 +86,7 @@ func ToRespUserDetail(userDb models.User) RespUserDetail {
 		ID:        userDb.ID,
 		FullName:  userDb.FullName,
 		Username:  userDb.Username,
+		Email:     userDb.Email,
 		RoleId:    userDb.RoleId,
 		RoleName:  userDb.RoleName,
 		Deletable: userDb.Deletable,

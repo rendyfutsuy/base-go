@@ -7722,6 +7722,9 @@ const docTemplate = `{
                 "deletable": {
                     "type": "boolean"
                 },
+                "email": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -7750,6 +7753,9 @@ const docTemplate = `{
                 },
                 "deletable": {
                     "type": "boolean"
+                },
+                "email": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"
