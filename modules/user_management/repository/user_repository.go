@@ -642,6 +642,14 @@ func (repo *userRepository) BulkCreateUsers(ctx context.Context, usersReq []dto.
 		passwordTemplate = utils.ConfigVars.String("user.default_password_template")
 	}
 
+	// hash password template
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(passwordTemplate), bcrypt.DefaultCost)
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		return err
+	}
+	passwordTemplate = string(hashedPassword)
+
 	// Convert to User models
 	users := make([]models.User, len(usersReq))
 	for i, userReq := range usersReq {
