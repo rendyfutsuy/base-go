@@ -25,6 +25,7 @@ const (
 	UserImportFileOpenFailed        = "Failed to open file"
 	UserImportTempFileCreateFailed  = "Failed to create temporary file"
 	UserImportFileSaveFailed        = "Failed to save file"
+	UserImportFailedPartial         = "Failed to import some rows"
 	UserImportTemplateCreateFailed  = "Failed to create template"
 
 	// Excel import validation errors

@@ -5,7 +5,6 @@ import (
 )
 
 type ReqUpdateUserPassword struct {
-	OldPassword          string `form:"old_password" json:"old_password" validate:"required"`
 	NewPassword          string `form:"new_password" json:"new_password" validate:"required"`
 	PasswordConfirmation string `form:"password_confirmation" json:"password_confirmation" validate:"required,eqfield=NewPassword"`
 }
@@ -19,10 +18,10 @@ type ReqActivateUser struct {
 }
 
 type ReqUpdateUser struct {
-	FullName             string    `form:"name" json:"name" validate:"required,max=80,uppercase_letters"`
-	Username             string    `form:"username" json:"username" validate:"uppercase_letters"`
+	FullName             string    `form:"name" json:"name" validate:"required,max=80"`
+	Username             string    `form:"username" json:"username" validate:"required"`
 	RoleId               uuid.UUID `form:"role_id" json:"role_id" validate:"required"`
-	Email                string    `form:"email" json:"email"`
+	Email                string    `form:"email" json:"email" validate:"required,email"`
 	IsActive             bool      `form:"is_active" json:"is_active"`
 	Gender               string    `form:"gender" json:"gender"`
 	Password             string    `form:"password" json:"password"`

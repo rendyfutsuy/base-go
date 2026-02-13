@@ -18,6 +18,7 @@ type Parameter struct {
 	CreatedAt   time.Time      `gorm:"column:created_at;not null" json:"created_at"`
 	UpdatedAt   time.Time      `gorm:"column:updated_at;not null" json:"updated_at"`
 	DeletedAt   gorm.DeletedAt `gorm:"column:deleted_at;index" json:"deleted_at"`
+	ParentID    uuid.UUID      `gorm:"column:parent_id;type:uuid" json:"parent_id"`
 }
 
 func (Parameter) TableName() string {

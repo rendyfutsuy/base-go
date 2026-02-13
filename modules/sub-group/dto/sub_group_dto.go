@@ -9,12 +9,12 @@ import (
 
 type ReqCreateSubGroup struct {
 	GroupID uuid.UUID `form:"groups_id" json:"groups_id" validate:"required"`
-	Name    string    `form:"name" json:"name" validate:"required,max=255,uppercase_letters"`
+	Name    string    `form:"name" json:"name" validate:"required,max=255"`
 }
 
 type ReqUpdateSubGroup struct {
 	GroupID uuid.UUID `form:"groups_id" json:"groups_id" validate:"required"`
-	Name    string    `form:"name" json:"name" validate:"required,max=255,uppercase_letters"`
+	Name    string    `form:"name" json:"name" validate:"required,max=255"`
 }
 
 type RespSubGroup struct {

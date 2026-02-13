@@ -28,6 +28,14 @@ type mockUserManagementUsecase struct {
 	mock.Mock
 }
 
+func (m *mockUserManagementUsecase) EmailIsNotDuplicated(ctx context.Context, email string, id uuid.UUID) (*models.User, error) {
+	args := m.Called(ctx, email, id)
+	if user := args.Get(0); user != nil {
+		return user.(*models.User), args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
 func (m *mockUserManagementUsecase) CreateUser(ctx context.Context, req *dto.ReqCreateUser, userID string) (*models.User, error) {
 	args := m.Called(ctx, req, userID)
 	if user := args.Get(0); user != nil {
@@ -201,12 +209,13 @@ func TestNewUserManagementHandler_RegisterRoutes(t *testing.T) {
 	require.True(t, routeExists(e.Routes(), http.MethodGet, "/v1/user-management/user"))
 	require.True(t, routeExists(e.Routes(), http.MethodPatch, "/v1/user-management/user/:id/password"))
 	require.True(t, routeExists(e.Routes(), http.MethodPost, "/v1/user-management/user/import"))
+	require.True(t, routeExists(e.Routes(), http.MethodPost, "/v1/user-management/user/check-email"))
 }
 
 func TestUserHandler_CreateUserSuccess(t *testing.T) {
 	e := newEcho()
 	roleID := uuid.New()
-	body := `{"name":"JOHN DOE","username":"JDOE","role_id":"` + roleID.String() + `","password":"PASSWORD!1","password_confirmation":"PASSWORD!1"}`
+	body := `{"name":"JOHN DOE","username":"JDOE","role_id":"` + roleID.String() + `","email":"test@example.com","nik":"1234567890","password":"PASSWORD!1","password_confirmation":"PASSWORD!1"}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/user-management/user", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -229,7 +238,7 @@ func TestUserHandler_CreateUserSuccess(t *testing.T) {
 
 func TestUserHandler_CreateUserValidationError(t *testing.T) {
 	e := newEcho()
-	body := `{"name":"","username":"","role_id":"","password":"","password_confirmation":""}`
+	body := `{"name":"","username":"","role_id":"","email":"","nik":"","password":"","password_confirmation":""}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/user-management/user", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -347,6 +356,51 @@ func TestUserHandler_GetDuplicatedUserDuplicate(t *testing.T) {
 		Return(&models.User{ID: uuid.New(), FullName: "JOHN DOE"}, nil).Once()
 
 	err := handler.GetDuplicatedUser(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusConflict, rec.Code)
+	mockUC.AssertExpectations(t)
+}
+
+func TestUserHandler_GetDuplicatedEmailNotFound(t *testing.T) {
+	e := newEcho()
+	body := `{"email":"test@example.com"}`
+	req := httptest.NewRequest(http.MethodPost, "/v1/user-management/user/check-email", strings.NewReader(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	mockUC := new(mockUserManagementUsecase)
+	handler := &httpHandler.UserManagementHandler{UserUseCase: mockUC}
+
+	mockUC.On("EmailIsNotDuplicated", mock.Anything, "test@example.com", uuid.Nil).Return(nil, nil).Once()
+
+	err := handler.GetDuplicatedEmail(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var resp struct {
+		Message string `json:"message"`
+	}
+	require.NoError(t, json.NewDecoder(rec.Body).Decode(&resp))
+	assert.Equal(t, "User Info with such email is not found", resp.Message)
+	mockUC.AssertExpectations(t)
+}
+
+func TestUserHandler_GetDuplicatedEmailDuplicate(t *testing.T) {
+	e := newEcho()
+	body := `{"email":"test@example.com"}`
+	req := httptest.NewRequest(http.MethodPost, "/v1/user-management/user/check-email", strings.NewReader(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	mockUC := new(mockUserManagementUsecase)
+	handler := &httpHandler.UserManagementHandler{UserUseCase: mockUC}
+
+	mockUC.On("EmailIsNotDuplicated", mock.Anything, "test@example.com", uuid.Nil).
+		Return(&models.User{ID: uuid.New(), FullName: "JOHN DOE"}, nil).Once()
+
+	err := handler.GetDuplicatedEmail(c)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusConflict, rec.Code)
 	mockUC.AssertExpectations(t)

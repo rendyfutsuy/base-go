@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/rendyfutsuy/base-go/utils/token_storage"
@@ -27,28 +28,12 @@ func (u *userUsecase) UpdateUserPassword(ctx context.Context, id string, passwor
 		return err
 	}
 
-	// assert old password given is same with saved password
-	isPasswordRight, err := u.auth.AssertPasswordRight(ctx, passwordChunks.OldPassword, userId)
-
-	// if old password fail to match return error
-	if !isPasswordRight {
-		return errors.New("Old Password not Match")
-	}
-
-	// assert current password not the same with new password
-	isNewPasswordRight, err := u.auth.AssertPasswordRight(ctx, passwordChunks.NewPassword, userId)
-
-	// if current password same with current password, return error
-	if isNewPasswordRight {
-		return errors.New("New Password should not be same with Current Password")
-	}
-
 	// assert new password not the same wit any previous password
 	isCurrentPasswordPassed, err := u.auth.AssertPasswordNeverUsesByUser(ctx, passwordChunks.NewPassword, userId)
 
 	// if new password fail to match return error
 	if !isCurrentPasswordPassed {
-		return err
+		return errors.New(constants.AuthNewPasswordSameAsOld)
 	}
 
 	// add new password to password history

@@ -44,9 +44,9 @@ func (repo *userRepository) CreateUser(ctx context.Context, userReq dto.ToDBCrea
 	userRes = &models.User{
 		FullName: userReq.FullName,
 		Username: userReq.Username,
-		// Email:    userReq.Email,
-		RoleId: userReq.RoleId,
-		// Nik:               userReq.Nik,
+		Email:    userReq.Email,
+		RoleId:   userReq.RoleId,
+		Nik:      userReq.Nik,
 		// IsActive:          userReq.IsActive,
 		// Gender:            userReq.Gender,
 		Password:          myPassword,
@@ -209,7 +209,7 @@ func (repo *userRepository) GetAllUser(ctx context.Context) ([]models.User, erro
 func (repo *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, userReq dto.ToDBUpdateUser) (userRes *models.User, err error) {
 	updates := map[string]interface{}{
 		"full_name": userReq.FullName,
-		// "email":     userReq.Email,
+		"email":     userReq.Email,
 		// "gender":    userReq.Gender,
 		// "is_active":  userReq.IsActive,
 		"role_id":    userReq.RoleId,
@@ -451,6 +451,37 @@ func (repo *userRepository) GetDuplicatedUser(ctx context.Context, name string, 
 	return user, nil
 }
 
+// GetDuplicatedUserByEmail retrieves the user information with the given email and excluded ID from the database.
+//
+// Parameters:
+// - email: the email of the user information to retrieve.
+// - excludedId: the ID of the user information to exclude from the result.
+//
+// Returns:
+// - user: a pointer to the retrieved user information.
+// - err: an error if there was a problem retrieving the user information.
+func (repo *userRepository) GetDuplicatedUserByEmail(ctx context.Context, email string, excludedId uuid.UUID) (user *models.User, err error) {
+	user = &models.User{}
+
+	query := repo.DB.WithContext(ctx).
+		Select("id", "full_name", "username", "email", "created_at", "updated_at").
+		Where("email = ? AND deleted_at IS NULL", email)
+
+	if excludedId != uuid.Nil {
+		query = query.Where("id <> ?", excludedId)
+	}
+
+	err = query.First(user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return user, nil
+}
+
 // UserNameIsNotDuplicatedOnSoftDeleted checks if the provided user name is not duplicated in the database.
 //
 // It takes a name string and an excludedId UUID as parameters.
@@ -641,6 +672,14 @@ func (repo *userRepository) BulkCreateUsers(ctx context.Context, usersReq []dto.
 	if utils.ConfigVars.Exists("user.default_password_template") {
 		passwordTemplate = utils.ConfigVars.String("user.default_password_template")
 	}
+
+	// hash password template
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(passwordTemplate), bcrypt.DefaultCost)
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		return err
+	}
+	passwordTemplate = string(hashedPassword)
 
 	// Convert to User models
 	users := make([]models.User, len(usersReq))

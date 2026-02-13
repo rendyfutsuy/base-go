@@ -8,11 +8,11 @@ import (
 )
 
 type ReqCreateGroup struct {
-	Name string `form:"name" json:"name" validate:"required,max=255,uppercase_letters"`
+	Name string `form:"name" json:"name" validate:"required,max=255"`
 }
 
 type ReqUpdateGroup struct {
-	Name string `form:"name" json:"name" validate:"required,max=255,uppercase_letters"`
+	Name string `form:"name" json:"name" validate:"required,max=255"`
 }
 
 type RespGroup struct {

@@ -5789,6 +5789,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/user-management/user/check-email": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Check if a user email already exists in the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Check if email is duplicated",
+                "parameters": [
+                    {
+                        "description": "Check duplicated email request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ReqCheckDuplicatedEmail"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User with such email is not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/user-management/user/check-name": {
             "post": {
                 "security": [
@@ -6333,6 +6384,20 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ReqCheckDuplicatedEmail": {
+            "type": "object",
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "excluded_user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.ReqCheckDuplicatedRole": {
             "type": "object",
             "required": [
@@ -6579,16 +6644,24 @@ const docTemplate = `{
         "dto.ReqCreateUser": {
             "type": "object",
             "required": [
+                "email",
                 "name",
+                "nik",
                 "password",
                 "password_confirmation",
                 "role_id",
                 "username"
             ],
             "properties": {
+                "email": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string",
                     "maxLength": 80
+                },
+                "nik": {
+                    "type": "string"
                 },
                 "password": {
                     "type": "string",
@@ -6758,14 +6831,10 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "new_password",
-                "old_password",
                 "password_confirmation"
             ],
             "properties": {
                 "new_password": {
-                    "type": "string"
-                },
-                "old_password": {
                     "type": "string"
                 },
                 "password_confirmation": {
@@ -6870,8 +6939,10 @@ const docTemplate = `{
         "dto.ReqUpdateUser": {
             "type": "object",
             "required": [
+                "email",
                 "name",
-                "role_id"
+                "role_id",
+                "username"
             ],
             "properties": {
                 "email": {
@@ -6905,14 +6976,10 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "new_password",
-                "old_password",
                 "password_confirmation"
             ],
             "properties": {
                 "new_password": {
-                    "type": "string"
-                },
-                "old_password": {
                     "type": "string"
                 },
                 "password_confirmation": {
@@ -7655,6 +7722,9 @@ const docTemplate = `{
                 "deletable": {
                     "type": "boolean"
                 },
+                "email": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -7683,6 +7753,9 @@ const docTemplate = `{
                 },
                 "deletable": {
                     "type": "boolean"
+                },
+                "email": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"
@@ -7718,6 +7791,9 @@ const docTemplate = `{
         "dto.UserProfile": {
             "type": "object",
             "properties": {
+                "avatar": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },

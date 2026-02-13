@@ -100,14 +100,6 @@ func (u *authUsecase) UpdateMyPassword(ctx context.Context, passwordChunks dto.R
 		return errors.New(constants.AuthPasswordAlreadyChanged)
 	}
 
-	// assert old password given is same with saved password
-	isPasswordRight, err := u.authRepo.AssertPasswordRight(ctx, passwordChunks.OldPassword, userUUID)
-
-	// if old password fail to match return error
-	if !isPasswordRight {
-		return errors.New(constants.AuthOldPasswordNotMatch)
-	}
-
 	// assert current password not the same with new password
 	isNewPasswordRight, err := u.authRepo.AssertPasswordRight(ctx, passwordChunks.NewPassword, userUUID)
 

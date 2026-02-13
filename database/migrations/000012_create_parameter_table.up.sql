@@ -2,6 +2,7 @@
 CREATE TABLE IF NOT EXISTS parameters (
   id UUID DEFAULT uuid_generate_v7() PRIMARY KEY NOT NULL,
   code VARCHAR(255) NOT NULL UNIQUE,
+  parent_id UUID REFERENCES parameters(id),
   name VARCHAR(255) NOT NULL,
   value VARCHAR(255),
   type VARCHAR(255),
