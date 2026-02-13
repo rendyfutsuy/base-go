@@ -46,6 +46,7 @@ type RespUserDetail struct {
 	FullName  string    `json:"name"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
+	Nik       string    `json:"nik"`
 	RoleId    uuid.UUID `json:"role_id"`
 	RoleName  string    `json:"role_name"`
 	CreatedAt time.Time `json:"created_at"`
@@ -87,6 +88,7 @@ func ToRespUserDetail(userDb models.User) RespUserDetail {
 		FullName:  userDb.FullName,
 		Username:  userDb.Username,
 		Email:     userDb.Email,
+		Nik:       userDb.Nik,
 		RoleId:    userDb.RoleId,
 		RoleName:  userDb.RoleName,
 		Deletable: userDb.Deletable,

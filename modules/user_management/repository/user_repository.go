@@ -105,7 +105,8 @@ func (repo *userRepository) GetUserByID(ctx context.Context, id uuid.UUID) (user
 			CASE 
 				WHEN usr.counter >= 3 THEN true
 				ELSE false
-			END AS is_blocked
+			END AS is_blocked,
+			usr.nik
 		`).
 		Joins("JOIN roles rl ON rl.id = usr.role_id").
 		Where("usr.id = ? AND usr.deleted_at IS NULL", id).
@@ -149,7 +150,8 @@ func (repo *userRepository) GetIndexUser(ctx context.Context, req request.PageRe
 				WHEN usr.counter >= 3 THEN true
 				ELSE false
 			END AS is_blocked,
-			rl.name AS role_name
+			rl.name AS role_name,
+			usr.nik
 		`).
 		Joins("JOIN roles rl ON rl.id = usr.role_id").
 		Where("usr.deleted_at IS NULL")
