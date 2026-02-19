@@ -67,5 +67,8 @@
     "app_name": "base-v2",
     "license": "",
     "identifier": ""
+  },
+  "throttle": {
+    "limit": 1000
   }
 }

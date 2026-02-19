@@ -96,8 +96,9 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 	router.Use(middleware.Recover())
 	router.Use(nrecho.Middleware(nrApp))
 
-	// Config Rate Limiter allows 100 requests/sec
-	router.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(100)))
+	// Config Rate Limiter with configurable limit (default 1000 requests/sec)
+	throttleMiddleware := authmiddleware.NewThrottleMiddleware()
+	router.Use(throttleMiddleware.Throttle())
 
 	router.GET("/", _homepageController.DefaultHomepage)
 	router.GET("/health/storage", _homepageController.StorageHealth)
@@ -148,6 +149,18 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 	)
 
 	middlewarePageRequest := _reqContext.NewMiddlewarePageRequest()
+
+	// Initialize race condition middleware
+	raceConditionMiddleware := authmiddleware.NewRaceConditionMiddleware(redisClient)
+
+	// Example: Add protected routes with race condition prevention
+	// This demonstrates how to apply race condition middleware to specific routes
+	raceProtectedGroup := router.Group("/v1/protected")
+	raceProtectedGroup.Use(middlewareAuth.AuthorizationCheck)
+	raceProtectedGroup.Use(raceConditionMiddleware.PreventRaceCondition("protected_operations"))
+	raceProtectedGroup.GET("/safe-operation", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"message": "This operation is protected from race conditions"})
+	})
 
 	// Auth
 	authService := _authService.NewAuthUsecase(
