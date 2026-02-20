@@ -298,7 +298,7 @@ base-go/
 ├── main.go             # Application entry point
 ├── config.json         # Application configuration
 └── go.mod              # Go module dependencies
-└── .env         # Env file
+└── .env                # Env file
 ```
 
 ### Arsitektur Clean Architecture
