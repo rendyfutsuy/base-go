@@ -21,6 +21,44 @@ import (
 // get user
 // get index user
 // get all user
+// register user (public)
+
+// RegisterUser godoc
+// @Summary		Register a new user (Public)
+// @Description	Register a new user without authentication
+// @Tags			User Management
+// @Accept			json
+// @Produce		json
+// @Param			request	body		dto.ReqCreateUser	true	"User registration data"
+// @Success		200		{object}	response.NonPaginationResponse{data=dto.RespUser}	"Successfully registered user"
+// @Failure		400		{object}	response.NonPaginationResponse	"Bad request - validation error"
+// @Router			/v1/user-management/register [post]
+func (handler *UserManagementHandler) RegisterUser(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
+	req := new(dto.ReqCreateUser)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	// validate request
+	if err := c.Validate(req); err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	// call usecase with empty authId for public registration
+	res, err := handler.UserUseCase.CreateUser(ctx, req, "")
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	resResp := dto.ToRespUser(*res)
+	resp := response.NonPaginationResponse{}
+	resp, _ = resp.SetResponse(resResp)
+
+	return c.JSON(http.StatusOK, resp)
+}
 
 // CreateUser godoc
 // @Summary		Create a new user

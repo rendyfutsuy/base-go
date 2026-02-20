@@ -29,6 +29,9 @@ func NewUserManagementHandler(e *echo.Echo, us user_management.Usecase, mwP _req
 		middlewarePermission: middlewarePermission,
 	}
 
+	// Public registration endpoint (no Authorization middleware)
+	e.POST("v1/user-management/register", handler.RegisterUser)
+
 	r := e.Group("v1/user-management")
 
 	r.Use(handler.middlewareAuth.AuthorizationCheck)
