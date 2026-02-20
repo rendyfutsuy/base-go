@@ -100,6 +100,36 @@ func (u *userUsecase) CreateUser(ctx context.Context, req *dto.ReqCreateUser, us
 	return userRes, err
 }
 
+func (u *userUsecase) RegisterUser(ctx context.Context, req *dto.ReqRegisterUser, userID string) (userRes *models.User, err error) {
+	if err := u.validateUsernameNotDuplicated(ctx, req.Username, uuid.Nil); err != nil {
+		return nil, err
+	}
+
+	count, err := u.userRepo.CountUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if role exists
+	role, err := u.roleManagement.GetRoleByName(ctx, constants.DefaultRoleForUserRegister)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New(constants.UserRoleNotFound)
+		}
+		return nil, err
+	}
+
+	formatCount := fmt.Sprintf("%07d", *count+1)
+	userDb := req.ToDBRegisterUser(formatCount, userID, role.ID)
+
+	userRes, err = u.userRepo.CreateUser(ctx, userDb)
+	if err != nil {
+		return nil, err
+	}
+
+	return userRes, err
+}
+
 func (u *userUsecase) GetUserByID(ctx context.Context, id string) (user *models.User, err error) {
 	uId, err := utils.StringToUUID(id)
 	if err != nil {

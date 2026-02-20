@@ -5560,6 +5560,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/user-management/register": {
+            "post": {
+                "description": "Register a new user without authentication",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Register a new user (Public)",
+                "parameters": [
+                    {
+                        "description": "User registration data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ReqRegisterUser"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully registered user",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.NonPaginationResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.RespUser"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - validation error",
+                        "schema": {
+                            "$ref": "#/definitions/response.NonPaginationResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/user-management/user": {
             "get": {
                 "security": [
@@ -6678,6 +6730,39 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ReqRegisterUser": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "nik",
+                "password",
+                "password_confirmation",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 80
+                },
+                "nik": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8
+                },
+                "password_confirmation": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.ReqResetPassword": {
             "type": "object",
             "required": [
@@ -7731,6 +7816,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "nik": {
+                    "type": "string"
+                },
                 "role_id": {
                     "type": "string"
                 },
@@ -7816,6 +7904,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                },
+                "verified_at": {
                     "type": "string"
                 }
             }

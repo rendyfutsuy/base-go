@@ -196,6 +196,7 @@ func (handler *AuthHandler) GetProfile(c echo.Context) error {
 		Role:             user.RoleName,
 		Permissions:      user.Permissions,
 		Avatar:           user.GetAvatarURL(),
+		VerifiedAt:       user.VerifiedAt,
 	}
 
 	resp := response.NonPaginationResponse{}

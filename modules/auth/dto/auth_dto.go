@@ -1,19 +1,22 @@
 package dto
 
+import "time"
+
 type ReqAuthUser struct {
 	Login    string `json:"login" validate:"required"`
 	Password string `json:"password" validate:"required"`
 }
 
 type UserProfile struct {
-	UserId           string   `json:"id"`
-	Name             string   `json:"name"`
-	Username         string   `json:"username"`
-	Role             string   `json:"role"`
-	Email            string   `json:"email"`
-	IsFirstTimeLogin bool     `json:"is_first_time_login"`
-	Permissions      []string `json:"permissions"`
-	Avatar           string   `json:"avatar"`
+	UserId           string     `json:"id"`
+	Name             string     `json:"name"`
+	Username         string     `json:"username"`
+	Role             string     `json:"role"`
+	Email            string     `json:"email"`
+	IsFirstTimeLogin bool       `json:"is_first_time_login"`
+	VerifiedAt       *time.Time `json:"verified_at"`
+	Permissions      []string   `json:"permissions"`
+	Avatar           string     `json:"avatar"`
 }
 
 type ReqUpdateProfile struct {

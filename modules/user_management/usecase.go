@@ -22,6 +22,9 @@ type Usecase interface {
 	BlockUser(ctx context.Context, id string, req *dto.ReqBlockUser) (userRes *models.User, err error)
 	ActivateUser(ctx context.Context, id string, req *dto.ReqActivateUser) (userRes *models.User, err error)
 
+	// registration
+	RegisterUser(ctx context.Context, req *dto.ReqRegisterUser, userID string) (userRes *models.User, err error)
+
 	// password management
 	UpdateUserPassword(ctx context.Context, userId string, passwordChunks *dto.ReqUpdateUserPassword) error
 	UpdateUserPasswordNoCheckRequired(ctx context.Context, userId string, passwordChunks *dto.ReqUpdateUserPassword) error

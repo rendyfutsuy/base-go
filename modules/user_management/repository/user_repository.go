@@ -42,19 +42,22 @@ func (repo *userRepository) CreateUser(ctx context.Context, userReq dto.ToDBCrea
 	myPassword = string(hashedPassword)
 
 	userRes = &models.User{
-		FullName: userReq.FullName,
-		Username: userReq.Username,
-		Email:    userReq.Email,
-		RoleId:   userReq.RoleId,
-		Nik:      userReq.Nik,
-		// IsActive:          userReq.IsActive,
-		// Gender:            userReq.Gender,
+		FullName:          userReq.FullName,
+		Username:          userReq.Username,
+		Email:             userReq.Email,
+		RoleId:            userReq.RoleId,
+		Nik:               userReq.Nik,
 		Password:          myPassword,
 		CreatedAt:         now,
 		UpdatedAt:         now,
 		PasswordExpiredAt: expiredAt,
-		IsFirstTimeLogin:  true, // Explicitly set to true for new users
+		IsFirstTimeLogin:  userReq.IsFirstTimeLogin,
 		Deletable:         true, // Explicitly set to true for new users
+	}
+
+	// Set VerifiedAt if IsVerifiedNow is true
+	if userReq.IsVerifiedNow {
+		userRes.VerifiedAt = &now
 	}
 
 	// Create user - GORM will insert all fields from struct
@@ -106,7 +109,8 @@ func (repo *userRepository) GetUserByID(ctx context.Context, id uuid.UUID) (user
 				WHEN usr.counter >= 3 THEN true
 				ELSE false
 			END AS is_blocked,
-			usr.nik
+			usr.nik,
+			usr.verified_at
 		`).
 		Joins("JOIN roles rl ON rl.id = usr.role_id").
 		Where("usr.id = ? AND usr.deleted_at IS NULL", id).

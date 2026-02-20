@@ -60,9 +60,10 @@ func (repo *authRepository) FindByEmailOrUsername(ctx context.Context, login str
 
 	// Map DB struct → models.User for usecase
 	return models.User{
-		ID:       dbUser.ID,
-		Email:    dbUser.Email,
-		Username: dbUser.Username,
+		ID:         dbUser.ID,
+		Email:      dbUser.Email,
+		Username:   dbUser.Username,
+		VerifiedAt: dbUser.VerifiedAt,
 	}, nil
 }
 

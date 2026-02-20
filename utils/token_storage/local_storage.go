@@ -93,7 +93,7 @@ func (s *LocalStorage) ValidateAccessToken(ctx context.Context, accessToken stri
 	var user models.User
 	err = s.DB.WithContext(ctx).
 		Table("users usr").
-		Select("usr.id, usr.full_name, usr.email, usr.username, usr.is_active, usr.gender, usr.role_id, usr.is_first_time_login, usr.avatar, roles.name as role_name").
+		Select("usr.id, usr.full_name, usr.email, usr.username, usr.is_active, usr.gender, usr.role_id, usr.is_first_time_login, usr.avatar, roles.name as role_name, usr.verified_at").
 		Joins("LEFT JOIN roles ON roles.id = usr.role_id AND roles.deleted_at IS NULL").
 		Where("usr.id = ? AND usr.deleted_at IS NULL", token.UserId).
 		Scan(&user).Error

@@ -29,7 +29,7 @@ import (
 // @Tags			User Management
 // @Accept			json
 // @Produce		json
-// @Param			request	body		dto.ReqCreateUser	true	"User registration data"
+// @Param			request	body		dto.ReqRegisterUser	true	"User registration data"
 // @Success		200		{object}	response.NonPaginationResponse{data=dto.RespUser}	"Successfully registered user"
 // @Failure		400		{object}	response.NonPaginationResponse	"Bad request - validation error"
 // @Router			/v1/user-management/register [post]
@@ -37,7 +37,7 @@ func (handler *UserManagementHandler) RegisterUser(c echo.Context) error {
 	// initialize context from echo
 	ctx := c.Request().Context()
 
-	req := new(dto.ReqCreateUser)
+	req := new(dto.ReqRegisterUser)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -48,7 +48,7 @@ func (handler *UserManagementHandler) RegisterUser(c echo.Context) error {
 	}
 
 	// call usecase with empty authId for public registration
-	res, err := handler.UserUseCase.CreateUser(ctx, req, "")
+	res, err := handler.UserUseCase.RegisterUser(ctx, req, "")
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
