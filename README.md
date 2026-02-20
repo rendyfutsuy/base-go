@@ -112,47 +112,34 @@ psql -U postgres -c "CREATE DATABASE base_local;"
 Copy file konfigurasi contoh dan sesuaikan dengan kebutuhan:
 
 ```bash
-cp config.json.example config.json
+cp .env.example .env
 ```
 
-Edit `config.json` sesuai dengan environment Anda:
+Edit `.env` sesuai dengan environment Anda:
 
-```json
-{
-  "app_name": "base v2.0",
-  "app_env": "development",
-  "database": {
-    "host": "localhost",
-    "port": 5432,
-    "user": "postgres",
-    "password": "postgres",
-    "db_name": "base_local",
-    "sslmode": "disable"
-  },
-  "user": {
-    "default_password_template": "temp"
-  },
-  "app_port": 9090,
-  "jwt_key": "your-secret-key",
-  "email": {
-    "smtp_host": "",
-    "smtp_port": "587",
-    "smtp_sender_mail": "",
-    "smtp_auth_email": "",
-    "smtp_password": "",
-    "reset_password_url": "http://localhost:3000/reset-password",
-    "validation-scope": "gmail.com|mailinator.com|company.com"
-  },
-  "redis": {
-    "addr": "127.0.0.1:6379",
-    "password": "",
-    "db": "db0",
-    "concurrency": 10
-  },
-  "auth": {
-    "access_token_ttl_seconds": 86400
-  }
-}
+```
+APP_NAME=base v2.0
+APP_ENV=development
+APP_PORT=9090
+QUEUE_PORT=9091
+CONTEXT__TIMEOUT=30
+
+JWT_KEY=123456
+JWT_REFRESH_KEY=123456
+
+NEWRELIC__ENABLE_NEW_RELIC_LOGGING=false
+NEWRELIC__APP_NAME=Go Base Project
+NEWRELIC__LICENSE=
+NEWRELIC__IDENTIFIER=local
+
+DATABASE__HOST=localhost
+DATABASE__PORT=5432
+DATABASE__USER=postgres
+DATABASE__PASSWORD=postgres
+DATABASE__DB_NAME=go_base_project
+DATABASE__SSLMODE=disable
+DATABASE__TOKEN_STORAGE=local
+....
 ```
 
 ## 🔄 Database Migration & Seeding
@@ -223,7 +210,7 @@ swag init -g router/router.go
 go run main.go
 ```
 
-Aplikasi akan berjalan di `http://localhost:9090` (sesuai konfigurasi `app_port` di `config.json`).
+Aplikasi akan berjalan di `http://localhost:9090` (sesuai konfigurasi `app_port` di `.env`).
 
 ### Build & Run
 
@@ -259,7 +246,7 @@ Akses Swagger documentation di development environment:
 http://localhost:9090/swagger/index.html
 ```
 
-**Catatan:** Swagger hanya tersedia jika `app_env` di `config.json` diset ke `development`.
+**Catatan:** Swagger hanya tersedia jika `app_env` di `.env` diset ke `development`.
 
 ### Regenerate Swagger Documentation
 
@@ -486,7 +473,7 @@ go test -cover ./...
 
 ### Environment Variables
 
-Aplikasi menggunakan file `config.json` untuk konfigurasi. Untuk production, disarankan menggunakan environment variables atau service seperti Vault.
+Aplikasi menggunakan file `.env` untuk konfigurasi. Untuk production, disarankan menggunakan environment variables atau service seperti Vault.
 
 ### Konfigurasi yang Tersedia
 
@@ -515,17 +502,17 @@ Aplikasi menggunakan file `config.json` untuk konfigurasi. Untuk production, dis
 
 Pastikan:
 - PostgreSQL sudah berjalan
-- Credentials di `config.json` benar
+- Credentials di `.env` benar
 - Database sudah dibuat
 - Migration sudah dijalankan
 
 ### Port Already in Use
 
-Ubah `app_port` di `config.json` atau kill process yang menggunakan port tersebut.
+Ubah `app_port` di `.env` atau kill process yang menggunakan port tersebut.
 
 ### Swagger Not Available
 
-Pastikan `app_env` di `config.json` diset ke `development`.
+Pastikan `app_env` di `.env` diset ke `development`.
 
 ## 📄 License
 
