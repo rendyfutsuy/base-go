@@ -54,8 +54,8 @@ func (r *ReqRegisterUser) ToDBRegisterUser(code, authId string, roleId uuid.UUID
 		Email:            r.Email,
 		Password:         r.Password,
 		Nik:              r.NIK,
-		IsVerifiedNow:    true,
-		IsFirstTimeLogin: true, // Explicitly set to true for new users
+		IsVerifiedNow:    false,
+		IsFirstTimeLogin: false, // Explicitly set to false for registered users
 	}
 }
 
