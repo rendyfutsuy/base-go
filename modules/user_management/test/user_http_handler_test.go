@@ -139,6 +139,19 @@ func (m *mockUserManagementUsecase) ImportUsersFromExcel(ctx context.Context, fi
 	return nil, args.Error(1)
 }
 
+func (m *mockUserManagementUsecase) SendVerificationCode(ctx context.Context, email string) error {
+	args := m.Called(ctx, email)
+	return args.Error(0)
+}
+
+func (m *mockUserManagementUsecase) VerifyOTP(ctx context.Context, email string, token string) (*models.User, error) {
+	args := m.Called(ctx, email, token)
+	if user := args.Get(0); user != nil {
+		return user.(*models.User), args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
 type noopMiddlewareAuth struct{}
 
 func (n *noopMiddlewareAuth) AuthorizationCheck(next echo.HandlerFunc) echo.HandlerFunc {

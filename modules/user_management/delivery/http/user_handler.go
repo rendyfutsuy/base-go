@@ -60,6 +60,41 @@ func (handler *UserManagementHandler) RegisterUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+func (handler *UserManagementHandler) SendVerificationCode(c echo.Context) error {
+	ctx := c.Request().Context()
+	req := new(dto.ReqSendVerification)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+	if err := c.Validate(req); err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+	if err := handler.UserUseCase.SendVerificationCode(ctx, req.Email); err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+	resp := response.NonPaginationResponse{}
+	resp, _ = resp.SetResponse(map[string]string{"message": "Verification code sent"})
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (handler *UserManagementHandler) VerifyOTP(c echo.Context) error {
+	ctx := c.Request().Context()
+	req := new(dto.ReqVerifyOTP)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+	if err := c.Validate(req); err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+	user, err := handler.UserUseCase.VerifyOTP(ctx, req.Email, req.Token)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+	resResp := dto.ToRespUser(*user)
+	resp := response.NonPaginationResponse{}
+	resp, _ = resp.SetResponse(resResp)
+	return c.JSON(http.StatusOK, resp)
+}
 // CreateUser godoc
 // @Summary		Create a new user
 // @Description	Create a new user with provided information

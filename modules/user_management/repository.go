@@ -42,4 +42,14 @@ type Repository interface {
 	// ------------------------------------------------- password scope - BEGIN -----------------------------------------------------
 	IsUserPasswordCanUpdated(ctx context.Context, id uuid.UUID) (bool, error)
 	// ------------------------------------------------- password scope - END -------------------------------------------------------
+
+	// ------------------------------------------------- otp scope - BEGIN ----------------------------------------------------------
+	CreateOTP(ctx context.Context, otp models.OTP) (*models.OTP, error)
+	FindOTPByUserAndToken(ctx context.Context, userID uuid.UUID, token string) (*models.OTP, error)
+	SoftDeleteOTP(ctx context.Context, id uuid.UUID) error
+	// ------------------------------------------------- otp scope - END ------------------------------------------------------------
+
+	// ------------------------------------------------- verification scope - BEGIN -------------------------------------------------
+	MarkUserVerified(ctx context.Context, id uuid.UUID) (*models.User, error)
+	// ------------------------------------------------- verification scope - END ---------------------------------------------------
 }

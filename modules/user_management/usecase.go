@@ -24,6 +24,8 @@ type Usecase interface {
 
 	// registration
 	RegisterUser(ctx context.Context, req *dto.ReqRegisterUser, userID string) (userRes *models.User, err error)
+	SendVerificationCode(ctx context.Context, email string) error
+	VerifyOTP(ctx context.Context, email string, token string) (*models.User, error)
 
 	// password management
 	UpdateUserPassword(ctx context.Context, userId string, passwordChunks *dto.ReqUpdateUserPassword) error

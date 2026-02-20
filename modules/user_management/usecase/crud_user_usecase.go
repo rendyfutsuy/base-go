@@ -2,14 +2,17 @@ package usecase
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
+	"math/big"
 
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
+	"github.com/rendyfutsuy/base-go/utils/services"
 	"github.com/rendyfutsuy/base-go/utils/token_storage"
 
 	"github.com/google/uuid"
@@ -146,6 +149,51 @@ func (u *userUsecase) GetIndexUser(ctx context.Context, req request.PageRequest,
 
 func (u *userUsecase) GetAllUser(ctx context.Context) (user_infos []models.User, err error) {
 	return u.userRepo.GetAllUser(ctx)
+}
+
+func (u *userUsecase) SendVerificationCode(ctx context.Context, email string) error {
+	user, err := u.auth.FindByEmailOrUsername(ctx, email)
+	if err != nil {
+		return err
+	}
+	n, err := rand.Int(rand.Reader, big.NewInt(1000000))
+	if err != nil {
+		return err
+	}
+	code := fmt.Sprintf("%06d", n.Int64())
+	otp := models.OTP{
+		ID:     uuid.New(),
+		Token:  code,
+		UserID: user.ID,
+	}
+	_, err = u.userRepo.CreateOTP(ctx, otp)
+	if err != nil {
+		return err
+	}
+	es, err := services.NewEmailService()
+	if err != nil {
+		return err
+	}
+	return es.SendVerificationEmail(email, code)
+}
+
+func (u *userUsecase) VerifyOTP(ctx context.Context, email string, token string) (*models.User, error) {
+	user, err := u.auth.FindByEmailOrUsername(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	otp, err := u.userRepo.FindOTPByUserAndToken(ctx, user.ID, token)
+	if err != nil {
+		return nil, err
+	}
+	if otp == nil {
+		return nil, errors.New("Invalid OTP code")
+	}
+	err = u.userRepo.SoftDeleteOTP(ctx, otp.ID)
+	if err != nil {
+		return nil, err
+	}
+	return u.userRepo.MarkUserVerified(ctx, user.ID)
 }
 
 func (u *userUsecase) UpdateUser(ctx context.Context, id string, req *dto.ReqUpdateUser, userID string) (userRes *models.User, err error) {

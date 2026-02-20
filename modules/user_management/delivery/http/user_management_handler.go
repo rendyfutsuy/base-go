@@ -31,6 +31,8 @@ func NewUserManagementHandler(e *echo.Echo, us user_management.Usecase, mwP _req
 
 	// Public registration endpoint (no Authorization middleware)
 	e.POST("v1/user-management/register", handler.RegisterUser)
+	e.POST("v1/user-management/register/send-verification", handler.SendVerificationCode)
+	e.POST("v1/user-management/register/verify", handler.VerifyOTP)
 
 	r := e.Group("v1/user-management")
 

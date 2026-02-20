@@ -190,6 +190,35 @@ func (m *MockUserRepository) CreateTable(sqlFilePath string) (err error) {
 	return args.Error(0)
 }
 
+func (m *MockUserRepository) CreateOTP(ctx context.Context, otp models.OTP) (*models.OTP, error) {
+	args := m.Called(ctx, otp)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.OTP), args.Error(1)
+}
+
+func (m *MockUserRepository) FindOTPByUserAndToken(ctx context.Context, userID uuid.UUID, token string) (*models.OTP, error) {
+	args := m.Called(ctx, userID, token)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.OTP), args.Error(1)
+}
+
+func (m *MockUserRepository) SoftDeleteOTP(ctx context.Context, id uuid.UUID) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockUserRepository) MarkUserVerified(ctx context.Context, id uuid.UUID) (*models.User, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.User), args.Error(1)
+}
+
 // MockAuthRepository is a mock implementation of auth.Repository
 type MockAuthRepository struct {
 	mock.Mock
