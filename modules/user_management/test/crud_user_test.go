@@ -643,6 +643,139 @@ func TestCreateUser(t *testing.T) {
 	}
 }
 
+func TestRegisterUser(t *testing.T) {
+	setupTestLogger()
+
+	e := echo.New()
+	usecaseInstance, mockUserRepo, _, mockRoleRepo := createTestUsecase()
+	ctx := context.Background()
+
+	validRoleID := uuid.New()
+	validUserID := ""
+	validCount := 10
+
+	validReq := &userDto.ReqRegisterUser{
+		FullName:             "Test User",
+		Username:             "TESTUSER",
+		Email:                "test@example.com",
+		NIK:                  "1234567890",
+		Password:             "password123",
+		PasswordConfirmation: "password123",
+	}
+
+	expectedUser := &models.User{
+		ID:       uuid.New(),
+		FullName: "Test User",
+		Email:    "test@example.com",
+	}
+
+	tests := []struct {
+		name           string
+		req            *userDto.ReqRegisterUser
+		userId         string
+		setupMock      func()
+		expectedError  bool
+		expectedErrMsg string
+		description    string
+	}{
+		{
+			name:   "Positive case - successful registration",
+			req:    validReq,
+			userId: validUserID,
+			setupMock: func() {
+				mockUserRepo.On("UsernameIsNotDuplicated", ctx, validReq.Username, uuid.Nil).Return(true, nil).Once()
+				mockUserRepo.On("CountUser", ctx).Return(&validCount, nil).Once()
+				mockRoleRepo.On("GetRoleByName", ctx, constants.DefaultRoleForUserRegister).Return(&models.Role{
+					ID:   validRoleID,
+					Name: constants.DefaultRoleForUserRegister,
+				}, nil).Once()
+				mockUserRepo.On("CreateUser", ctx, mock.Anything).Return(expectedUser, nil).Once()
+			},
+			expectedError: false,
+			description:   "Valid request should register user successfully",
+		},
+		{
+			name:   "Negative case - duplicated username",
+			req:    validReq,
+			userId: validUserID,
+			setupMock: func() {
+				mockUserRepo.On("UsernameIsNotDuplicated", ctx, validReq.Username, uuid.Nil).Return(false, nil).Once()
+			},
+			expectedError:  true,
+			expectedErrMsg: constants.UserUsernameAlreadyExistsID,
+			description:    "Duplicated username should return error",
+		},
+		{
+			name:   "Negative case - role not found",
+			req:    validReq,
+			userId: validUserID,
+			setupMock: func() {
+				mockUserRepo.On("UsernameIsNotDuplicated", ctx, validReq.Username, uuid.Nil).Return(true, nil).Once()
+				mockUserRepo.On("CountUser", ctx).Return(&validCount, nil).Once()
+				mockRoleRepo.On("GetRoleByName", ctx, constants.DefaultRoleForUserRegister).Return(nil, gorm.ErrRecordNotFound).Once()
+			},
+			expectedError:  true,
+			expectedErrMsg: constants.UserRoleNotFound,
+			description:    "Missing default role should return error",
+		},
+		{
+			name:   "Negative case - CountUser error",
+			req:    validReq,
+			userId: validUserID,
+			setupMock: func() {
+				mockUserRepo.On("UsernameIsNotDuplicated", ctx, validReq.Username, uuid.Nil).Return(true, nil).Once()
+				mockUserRepo.On("CountUser", ctx).Return((*int)(nil), errors.New("database error")).Once()
+			},
+			expectedError:  true,
+			expectedErrMsg: "database error",
+			description:    "CountUser error should be returned",
+		},
+		{
+			name:   "Negative case - CreateUser error",
+			req:    validReq,
+			userId: validUserID,
+			setupMock: func() {
+				mockUserRepo.On("UsernameIsNotDuplicated", ctx, validReq.Username, uuid.Nil).Return(true, nil).Once()
+				mockUserRepo.On("CountUser", ctx).Return(&validCount, nil).Once()
+				mockRoleRepo.On("GetRoleByName", ctx, constants.DefaultRoleForUserRegister).Return(&models.Role{
+					ID:   validRoleID,
+					Name: constants.DefaultRoleForUserRegister,
+				}, nil).Once()
+				mockUserRepo.On("CreateUser", ctx, mock.Anything).Return(nil, errors.New("database error")).Once()
+			},
+			expectedError:  true,
+			expectedErrMsg: "database error",
+			description:    "CreateUser error should be returned",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockUserRepo.ExpectedCalls = nil
+			mockUserRepo.Calls = nil
+			tt.setupMock()
+
+			c := e.NewContext(httptest.NewRequest(http.MethodPost, "/", nil), httptest.NewRecorder())
+
+			result, err := usecaseInstance.RegisterUser(c.Request().Context(), tt.req, tt.userId)
+
+			if tt.expectedError {
+				assert.Error(t, err)
+				if tt.expectedErrMsg != "" {
+					assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				}
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+			}
+
+			mockUserRepo.AssertExpectations(t)
+			mockRoleRepo.AssertExpectations(t)
+		})
+	}
+}
+
 func TestGetUserByID(t *testing.T) {
 	setupTestLogger()
 
