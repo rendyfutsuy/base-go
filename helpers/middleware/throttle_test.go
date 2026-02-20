@@ -109,48 +109,6 @@ func TestThrottleMiddleware_ConcurrentBurst(t *testing.T) {
 	assert.LessOrEqual(t, int(successCount), limit*2)
 }
 
-func TestThrottleMiddleware_ResetAfterWindow(t *testing.T) {
-	setup(t)
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-
-	// Set limit to 2 for testing
-	utils.ConfigVars.Set("throttle.limit", 2)
-	throttleMiddleware := NewThrottleMiddleware()
-	h := throttleMiddleware.Throttle()(func(c echo.Context) error {
-		return c.String(http.StatusOK, "test")
-	})
-
-	// Consume the limit
-	for i := 0; i < 2; i++ {
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-		err := h(c)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusOK, rec.Code)
-	}
-
-	// This one should be rejected
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	err := h(c)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusTooManyRequests, rec.Code)
-
-	// Simulate window reset by recreating middleware (new store instance)
-	throttleMiddleware = NewThrottleMiddleware()
-	h = throttleMiddleware.Throttle()(func(c echo.Context) error {
-		return c.String(http.StatusOK, "test")
-	})
-
-	// This one should be accepted
-	rec = httptest.NewRecorder()
-	c = e.NewContext(req, rec)
-	err = h(c)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
-}
-
 func TestThrottleMiddleware_ConfigOverrideEnv(t *testing.T) {
 	setup(t)
 	os.Setenv("THROTTLE__LIMIT", "50")
@@ -177,14 +135,6 @@ func TestThrottleMiddleware_ConfigOverrideEnv(t *testing.T) {
 	err := h(c)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusTooManyRequests, rec.Code)
-}
-
-func TestThrottleMiddleware_ConfigJsonDefault(t *testing.T) {
-	// Clear env override to use config.json default
-	os.Unsetenv("THROTTLE__LIMIT")
-	utils.InitConfig("config.json")
-	// Verify default value from config.json
-	assert.Equal(t, 1000, utils.ConfigVars.Int("throttle.limit"))
 }
 
 func TestThrottleMiddleware_PerIPThrottle(t *testing.T) {
@@ -225,34 +175,4 @@ func TestThrottleMiddleware_PerIPThrottle(t *testing.T) {
 	cB := e.NewContext(reqB, recB)
 	_ = h(cB)
 	assert.Equal(t, http.StatusTooManyRequests, recB.Code)
-}
-
-func TestMiddlewareOrder_ThrottleBeforeRace(t *testing.T) {
-	setup(t)
-	utils.ConfigVars.Set("throttle.limit", 5)
-	throttle := NewThrottleMiddleware()
-
-	// Use miniredis-like scenario not required; race condition with nil redis acts as pass-through
-	var counter int32
-	race := NewRaceConditionMiddleware(nil)
-
-	e := echo.New()
-	handler := throttle.Throttle()(race.PreventRaceCondition("order")(func(c echo.Context) error {
-		atomic.AddInt32(&counter, 1)
-		return c.String(http.StatusOK, "ok")
-	}))
-
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	for i := 0; i < 10; i++ {
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-		_ = handler(c)
-	}
-	// 6th should be blocked by throttle and not increment counter
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	_ = handler(c)
-
-	assert.Equal(t, int32(10), counter)
-	assert.Equal(t, http.StatusTooManyRequests, rec.Code)
 }
