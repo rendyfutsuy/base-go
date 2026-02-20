@@ -529,11 +529,18 @@ Pastikan `app_env` di `config.json` diset ke `development`.
 
 ## 📄 License
 
-[Specify your license here]
+Rendy Anggara © since 2025
 
 ## 👥 Contributors
 
-[List contributors here]
+<table>
+
+<tr>
+
+<td  align="center"><a  href="https://github.com/rendyfutsuy"><img  src="https://avatars.githubusercontent.com/u/22336340?s=96&v=4"  style="border-radius:50%;" width="100px;"  alt=""/><br  /><sub><b>Rendy Anggara</b></sub></a><br  /><a  href="#"  title="Owner">⚜</a><a  href="#"  title="Code">💻</a></td>
+</tr>
+
+</table>
 
 ## 📞 Support
 
