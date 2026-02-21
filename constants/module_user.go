@@ -42,4 +42,6 @@ const (
 	UserRoleNotFound                 = "Role not found"
 	UserCannotDelete                 = "User cannot be deleted because deletable is false"
 	DefaultRoleForUserRegister       = "User"
+	UserEmailAlreadyVerified         = "Email sudah diverifikasi"
+	UserEmailEmptyAskAdmin           = "Email Kosong, tolong minta admin isi"
 )

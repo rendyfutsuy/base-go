@@ -62,14 +62,19 @@ func (handler *UserManagementHandler) RegisterUser(c echo.Context) error {
 
 func (handler *UserManagementHandler) SendVerificationCode(c echo.Context) error {
 	ctx := c.Request().Context()
-	req := new(dto.ReqSendVerification)
-	if err := c.Bind(req); err != nil {
-		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	userCtx := c.Get("user")
+	if userCtx == nil {
+		return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, constants.AuthTokenInvalid))
 	}
-	if err := c.Validate(req); err != nil {
-		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	currentUser := userCtx.(models.User)
+	if currentUser.VerifiedAt != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.UserEmailAlreadyVerified))
 	}
-	if err := handler.UserUseCase.SendVerificationCode(ctx, req.Email); err != nil {
+	email := strings.TrimSpace(currentUser.Email)
+	if email == "" {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.UserEmailEmptyAskAdmin))
+	}
+	if err := handler.UserUseCase.SendVerificationCode(ctx, email); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 	resp := response.NonPaginationResponse{}
@@ -95,6 +100,7 @@ func (handler *UserManagementHandler) VerifyOTP(c echo.Context) error {
 	resp, _ = resp.SetResponse(resResp)
 	return c.JSON(http.StatusOK, resp)
 }
+
 // CreateUser godoc
 // @Summary		Create a new user
 // @Description	Create a new user with provided information
