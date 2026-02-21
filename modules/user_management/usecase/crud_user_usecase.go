@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/hibiken/asynq"
+
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
+	"github.com/rendyfutsuy/base-go/modules/auth/tasks"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
-	"github.com/rendyfutsuy/base-go/utils/services"
 	"github.com/rendyfutsuy/base-go/utils/token_storage"
 
 	"github.com/google/uuid"
@@ -170,11 +172,19 @@ func (u *userUsecase) SendVerificationCode(ctx context.Context, email string) er
 	if err != nil {
 		return err
 	}
-	es, err := services.NewEmailService()
+	redisOpt := asynq.RedisClientOpt{
+		Addr:     utils.ConfigVars.String("redis.address"),
+		Password: utils.ConfigVars.String("redis.password"),
+		DB:       utils.ConfigVars.Int("redis.db"),
+	}
+	client := asynq.NewClient(redisOpt)
+	defer client.Close()
+	task, err := tasks.NewEmailVerificationTask(user.ID, email, code)
 	if err != nil {
 		return err
 	}
-	return es.SendVerificationEmail(email, code)
+	_, err = client.Enqueue(task)
+	return err
 }
 
 func (u *userUsecase) VerifyOTP(ctx context.Context, email string, token string) (*models.User, error) {
