@@ -183,7 +183,7 @@ func (u *userUsecase) SendVerificationCode(ctx context.Context, email string) er
 	if err != nil {
 		return err
 	}
-	_, err = client.Enqueue(task)
+	_, err = client.Enqueue(task, asynq.MaxRetry(5))
 	return err
 }
 
