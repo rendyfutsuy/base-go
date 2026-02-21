@@ -773,6 +773,14 @@ func (repo *userRepository) SoftDeleteOTP(ctx context.Context, id uuid.UUID) err
 		Update("deleted_at", now).Error
 }
 
+func (repo *userRepository) SoftDeleteAllOTPByUser(ctx context.Context, userID uuid.UUID) error {
+	now := time.Now().UTC()
+	return repo.DB.WithContext(ctx).
+		Model(&models.OTP{}).
+		Where("user_id = ? AND deleted_at IS NULL", userID).
+		Update("deleted_at", now).Error
+}
+
 func (repo *userRepository) MarkUserVerified(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	now := time.Now().UTC()
 	err := repo.DB.WithContext(ctx).

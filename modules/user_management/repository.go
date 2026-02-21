@@ -47,6 +47,7 @@ type Repository interface {
 	CreateOTP(ctx context.Context, otp models.OTP) (*models.OTP, error)
 	FindOTPByUserAndToken(ctx context.Context, userID uuid.UUID, token string) (*models.OTP, error)
 	SoftDeleteOTP(ctx context.Context, id uuid.UUID) error
+	SoftDeleteAllOTPByUser(ctx context.Context, userID uuid.UUID) error
 	// ------------------------------------------------- otp scope - END ------------------------------------------------------------
 
 	// ------------------------------------------------- verification scope - BEGIN -------------------------------------------------

@@ -158,6 +158,10 @@ func (u *userUsecase) SendVerificationCode(ctx context.Context, email string) er
 	if err != nil {
 		return err
 	}
+	// soft delete existing OTPs for this user
+	if err := u.userRepo.SoftDeleteAllOTPByUser(ctx, user.ID); err != nil {
+		return err
+	}
 	n, err := rand.Int(rand.Reader, big.NewInt(1000000))
 	if err != nil {
 		return err

@@ -211,6 +211,11 @@ func (m *MockUserRepository) SoftDeleteOTP(ctx context.Context, id uuid.UUID) er
 	return args.Error(0)
 }
 
+func (m *MockUserRepository) SoftDeleteAllOTPByUser(ctx context.Context, userID uuid.UUID) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
 func (m *MockUserRepository) MarkUserVerified(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
