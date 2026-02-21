@@ -9,6 +9,7 @@ Template aplikasi backend REST API yang dibuat menggunakan Go (Golang), Echo Fra
 - [Instalasi](#instalasi)
 - [Konfigurasi](#konfigurasi)
 - [Menjalankan Aplikasi](#menjalankan-aplikasi)
+- [Menjalankan Queue](#menjalankan-queue)
 - [Database Migration & Seeding](#database-migration--seeding)
 - [Struktur Proyek](#struktur-proyek)
 - [API Documentation](#api-documentation)
@@ -235,6 +236,56 @@ Jalankan dengan:
 ```bash
 air
 ```
+
+## Menjalankan Queue
+
+Worker queue menggunakan Asynq dan Redis untuk memproses background jobs (reset password, email verification).
+
+### Jalankan Redis
+- macOS (Homebrew):
+```bash
+brew services start redis
+```
+- Alternatif Docker:
+```bash
+docker run -d --name redis -p 6379:6379 redis:7
+```
+
+### Jalankan Worker
+- Development:
+```bash
+go run ./cmd/email-worker
+```
+- Build & Run:
+```bash
+go build -o bin/email-worker ./cmd/email-worker
+./bin/email-worker
+```
+
+### Konfigurasi Terkait
+- Pastikan `.env` berisi pengaturan Redis:
+```
+REDIS__ADDRESS=localhost:6379
+REDIS__PASSWORD=
+REDIS__DB=0
+```
+- SMTP dan reset URL untuk email:
+```
+EMAIL__SMTP_HOST=smtp.example.com
+EMAIL__SMTP_PORT=587
+EMAIL__AUTH_EMAIL=no-reply@example.com
+EMAIL__AUTH_PASSWORD=yourpassword
+EMAIL__SENDER_EMAIL=no-reply@example.com
+EMAIL__RESET_URL=http://localhost:9090/v1/auth/reset-password/request
+```
+- New Relic opsional:
+```
+NEWRELIC__ENABLE_NEW_RELIC_LOGGING=false
+NEWRELIC__APP_NAME=Go Base Project
+NEWRELIC__LICENSE=
+```
+
+Worker akan otomatis mengeksekusi semua job yang tersimpan di Redis pada queues `critical`, `default`, dan `low`.
 
 ## 📚 API Documentation
 
@@ -537,4 +588,3 @@ Untuk pertanyaan atau masalah, silakan buat issue di repository ini.
 ---
 
 **Happy Coding! 🚀**
-

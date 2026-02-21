@@ -91,7 +91,16 @@ func (handler *UserManagementHandler) VerifyOTP(c echo.Context) error {
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	user, err := handler.UserUseCase.VerifyOTP(ctx, req.Email, req.Token)
+	userCtx := c.Get("user")
+	if userCtx == nil {
+		return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, constants.AuthTokenInvalid))
+	}
+	currentUser := userCtx.(models.User)
+	email := strings.TrimSpace(currentUser.Email)
+	if email == "" {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.UserEmailEmptyAskAdmin))
+	}
+	user, err := handler.UserUseCase.VerifyOTP(ctx, email, req.Token)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
