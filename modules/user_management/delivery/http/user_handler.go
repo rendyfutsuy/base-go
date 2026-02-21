@@ -21,6 +21,94 @@ import (
 // get user
 // get index user
 // get all user
+// register user (public)
+
+// RegisterUser godoc
+// @Summary		Register a new user (Public)
+// @Description	Register a new user without authentication
+// @Tags			User Management
+// @Accept			json
+// @Produce		json
+// @Param			request	body		dto.ReqRegisterUser	true	"User registration data"
+// @Success		200		{object}	response.NonPaginationResponse{data=dto.RespUser}	"Successfully registered user"
+// @Failure		400		{object}	response.NonPaginationResponse	"Bad request - validation error"
+// @Router			/v1/user-management/register [post]
+func (handler *UserManagementHandler) RegisterUser(c echo.Context) error {
+	// initialize context from echo
+	ctx := c.Request().Context()
+
+	req := new(dto.ReqRegisterUser)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	// validate request
+	if err := c.Validate(req); err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	// call usecase with empty authId for public registration
+	res, err := handler.UserUseCase.RegisterUser(ctx, req, "")
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	resResp := dto.ToRespUser(*res)
+	resp := response.NonPaginationResponse{}
+	resp, _ = resp.SetResponse(resResp)
+
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (handler *UserManagementHandler) SendVerificationCode(c echo.Context) error {
+	ctx := c.Request().Context()
+	userCtx := c.Get("user")
+	if userCtx == nil {
+		return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, constants.AuthTokenInvalid))
+	}
+	currentUser := userCtx.(models.User)
+	if currentUser.VerifiedAt != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.UserEmailAlreadyVerified))
+	}
+	email := strings.TrimSpace(currentUser.Email)
+	if email == "" {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.UserEmailEmptyAskAdmin))
+	}
+	if err := handler.UserUseCase.SendVerificationCode(ctx, email); err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+	resp := response.NonPaginationResponse{}
+	resp, _ = resp.SetResponse(map[string]string{"message": "Verification code sent"})
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (handler *UserManagementHandler) VerifyOTP(c echo.Context) error {
+	ctx := c.Request().Context()
+	req := new(dto.ReqVerifyOTP)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+	if err := c.Validate(req); err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+	userCtx := c.Get("user")
+	if userCtx == nil {
+		return c.JSON(http.StatusUnauthorized, response.SetErrorResponse(http.StatusUnauthorized, constants.AuthTokenInvalid))
+	}
+	currentUser := userCtx.(models.User)
+	email := strings.TrimSpace(currentUser.Email)
+	if email == "" {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, constants.UserEmailEmptyAskAdmin))
+	}
+	user, err := handler.UserUseCase.VerifyOTP(ctx, email, req.Token)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+	resResp := dto.ToRespUser(*user)
+	resp := response.NonPaginationResponse{}
+	resp, _ = resp.SetResponse(resResp)
+	return c.JSON(http.StatusOK, resp)
+}
 
 // CreateUser godoc
 // @Summary		Create a new user

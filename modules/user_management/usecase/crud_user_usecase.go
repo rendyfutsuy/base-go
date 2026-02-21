@@ -2,12 +2,17 @@ package usecase
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
+	"math/big"
+
+	"github.com/hibiken/asynq"
 
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
+	"github.com/rendyfutsuy/base-go/modules/auth/tasks"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/rendyfutsuy/base-go/utils/token_storage"
@@ -100,6 +105,36 @@ func (u *userUsecase) CreateUser(ctx context.Context, req *dto.ReqCreateUser, us
 	return userRes, err
 }
 
+func (u *userUsecase) RegisterUser(ctx context.Context, req *dto.ReqRegisterUser, userID string) (userRes *models.User, err error) {
+	if err := u.validateUsernameNotDuplicated(ctx, req.Username, uuid.Nil); err != nil {
+		return nil, err
+	}
+
+	count, err := u.userRepo.CountUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if role exists
+	role, err := u.roleManagement.GetRoleByName(ctx, constants.DefaultRoleForUserRegister)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New(constants.UserRoleNotFound)
+		}
+		return nil, err
+	}
+
+	formatCount := fmt.Sprintf("%07d", *count+1)
+	userDb := req.ToDBRegisterUser(formatCount, userID, role.ID)
+
+	userRes, err = u.userRepo.CreateUser(ctx, userDb)
+	if err != nil {
+		return nil, err
+	}
+
+	return userRes, err
+}
+
 func (u *userUsecase) GetUserByID(ctx context.Context, id string) (user *models.User, err error) {
 	uId, err := utils.StringToUUID(id)
 	if err != nil {
@@ -116,6 +151,63 @@ func (u *userUsecase) GetIndexUser(ctx context.Context, req request.PageRequest,
 
 func (u *userUsecase) GetAllUser(ctx context.Context) (user_infos []models.User, err error) {
 	return u.userRepo.GetAllUser(ctx)
+}
+
+func (u *userUsecase) SendVerificationCode(ctx context.Context, email string) error {
+	user, err := u.auth.FindByEmailOrUsername(ctx, email)
+	if err != nil {
+		return err
+	}
+	// soft delete existing OTPs for this user
+	if err := u.userRepo.SoftDeleteAllOTPByUser(ctx, user.ID); err != nil {
+		return err
+	}
+	n, err := rand.Int(rand.Reader, big.NewInt(1000000))
+	if err != nil {
+		return err
+	}
+	code := fmt.Sprintf("%06d", n.Int64())
+	otp := models.OTP{
+		ID:     uuid.New(),
+		Token:  code,
+		UserID: user.ID,
+	}
+	_, err = u.userRepo.CreateOTP(ctx, otp)
+	if err != nil {
+		return err
+	}
+	redisOpt := asynq.RedisClientOpt{
+		Addr:     utils.ConfigVars.String("redis.address"),
+		Password: utils.ConfigVars.String("redis.password"),
+		DB:       utils.ConfigVars.Int("redis.db"),
+	}
+	client := asynq.NewClient(redisOpt)
+	defer client.Close()
+	task, err := tasks.NewEmailVerificationTask(user.ID, email, code)
+	if err != nil {
+		return err
+	}
+	_, err = client.Enqueue(task, asynq.MaxRetry(5))
+	return err
+}
+
+func (u *userUsecase) VerifyOTP(ctx context.Context, email string, token string) (*models.User, error) {
+	user, err := u.auth.FindByEmailOrUsername(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	otp, err := u.userRepo.FindOTPByUserAndToken(ctx, user.ID, token)
+	if err != nil {
+		return nil, err
+	}
+	if otp == nil {
+		return nil, errors.New("Invalid OTP code")
+	}
+	err = u.userRepo.SoftDeleteOTP(ctx, otp.ID)
+	if err != nil {
+		return nil, err
+	}
+	return u.userRepo.MarkUserVerified(ctx, user.ID)
 }
 
 func (u *userUsecase) UpdateUser(ctx context.Context, id string, req *dto.ReqUpdateUser, userID string) (userRes *models.User, err error) {

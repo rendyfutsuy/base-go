@@ -2,6 +2,7 @@ package services
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"strconv"
 
@@ -59,6 +60,20 @@ func (s *EmailService) SendPasswordResetEmail(email, session string) error {
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", tpl.String())
 
-	d := gomail.NewPlainDialer(s.smtpHost, s.smtpPort, s.authEmail, s.authPassword)
+	d := gomail.NewDialer(s.smtpHost, s.smtpPort, s.authEmail, s.authPassword)
+	return d.DialAndSend(m)
+}
+
+func (s *EmailService) SendVerificationEmail(email, code string) error {
+	subject := "Verification Code"
+	body := fmt.Sprintf("<p>Your verification code is: <strong>%s</strong></p>", code)
+
+	m := gomail.NewMessage()
+	m.SetHeader("From", s.senderEmail)
+	m.SetHeader("To", email)
+	m.SetHeader("Subject", subject)
+	m.SetBody("text/html", body)
+
+	d := gomail.NewDialer(s.smtpHost, s.smtpPort, s.authEmail, s.authPassword)
 	return d.DialAndSend(m)
 }

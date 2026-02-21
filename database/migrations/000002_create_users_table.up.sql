@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users(
    created_at TIMESTAMP,
    updated_at TIMESTAMP,
    deleted_at TIMESTAMP,
+   verified_at TIMESTAMP,
    role_id UUID NOT NULL, 
    nik VARCHAR(80),
    username VARCHAR(80),

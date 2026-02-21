@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 	"github.com/rendyfutsuy/base-go/constants"
 	models "github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth/tasks"
@@ -51,7 +52,7 @@ func (repo *authRepository) RequestResetPassword(ctx context.Context, email stri
 		return err
 	}
 
-	_, err = repo.QueueClient.Enqueue(task)
+	_, err = repo.QueueClient.Enqueue(task, asynq.MaxRetry(5))
 	if err != nil {
 		utils.Logger.Error(err.Error())
 		return err

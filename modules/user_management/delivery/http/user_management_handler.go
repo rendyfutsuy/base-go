@@ -29,6 +29,10 @@ func NewUserManagementHandler(e *echo.Echo, us user_management.Usecase, mwP _req
 		middlewarePermission: middlewarePermission,
 	}
 
+	// Public registration endpoint (no Authorization middleware)
+	e.POST("v1/user-management/register", handler.RegisterUser)
+	// Verification endpoints require Authorization
+
 	r := e.Group("v1/user-management")
 
 	r.Use(handler.middlewareAuth.AuthorizationCheck)
@@ -39,6 +43,8 @@ func NewUserManagementHandler(e *echo.Echo, us user_management.Usecase, mwP _req
 	permissionToDelete := []string{"user.delete"}
 
 	// user scope
+	r.POST("/register/send-verification", handler.SendVerificationCode)
+	r.POST("/register/verify", handler.VerifyOTP)
 	r.POST("/user", handler.CreateUser, middleware.RequireActivatedUser, handler.middlewarePermission.PermissionValidation(permissionToCreate))
 
 	// user index eligible permission

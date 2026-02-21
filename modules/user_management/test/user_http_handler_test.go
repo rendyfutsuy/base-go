@@ -52,6 +52,14 @@ func (m *mockUserManagementUsecase) GetUserByID(ctx context.Context, id string) 
 	return nil, args.Error(1)
 }
 
+func (m *mockUserManagementUsecase) RegisterUser(ctx context.Context, req *dto.ReqRegisterUser, userID string) (*models.User, error) {
+	args := m.Called(ctx, req, userID)
+	if user := args.Get(0); user != nil {
+		return user.(*models.User), args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
 func (m *mockUserManagementUsecase) GetAllUser(ctx context.Context) ([]models.User, error) {
 	args := m.Called(ctx)
 	if users := args.Get(0); users != nil {
@@ -127,6 +135,19 @@ func (m *mockUserManagementUsecase) ImportUsersFromExcel(ctx context.Context, fi
 	args := m.Called(ctx, filePath)
 	if res := args.Get(0); res != nil {
 		return res.(*dto.ResImportUsers), args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
+func (m *mockUserManagementUsecase) SendVerificationCode(ctx context.Context, email string) error {
+	args := m.Called(ctx, email)
+	return args.Error(0)
+}
+
+func (m *mockUserManagementUsecase) VerifyOTP(ctx context.Context, email string, token string) (*models.User, error) {
+	args := m.Called(ctx, email, token)
+	if user := args.Get(0); user != nil {
+		return user.(*models.User), args.Error(1)
 	}
 	return nil, args.Error(1)
 }

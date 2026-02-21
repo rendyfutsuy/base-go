@@ -42,19 +42,22 @@ func (repo *userRepository) CreateUser(ctx context.Context, userReq dto.ToDBCrea
 	myPassword = string(hashedPassword)
 
 	userRes = &models.User{
-		FullName: userReq.FullName,
-		Username: userReq.Username,
-		Email:    userReq.Email,
-		RoleId:   userReq.RoleId,
-		Nik:      userReq.Nik,
-		// IsActive:          userReq.IsActive,
-		// Gender:            userReq.Gender,
+		FullName:          userReq.FullName,
+		Username:          userReq.Username,
+		Email:             userReq.Email,
+		RoleId:            userReq.RoleId,
+		Nik:               userReq.Nik,
 		Password:          myPassword,
 		CreatedAt:         now,
 		UpdatedAt:         now,
 		PasswordExpiredAt: expiredAt,
-		IsFirstTimeLogin:  true, // Explicitly set to true for new users
+		IsFirstTimeLogin:  userReq.IsFirstTimeLogin,
 		Deletable:         true, // Explicitly set to true for new users
+	}
+
+	// Set VerifiedAt if IsVerifiedNow is true
+	if userReq.IsVerifiedNow {
+		userRes.VerifiedAt = &now
 	}
 
 	// Create user - GORM will insert all fields from struct
@@ -106,7 +109,8 @@ func (repo *userRepository) GetUserByID(ctx context.Context, id uuid.UUID) (user
 				WHEN usr.counter >= 3 THEN true
 				ELSE false
 			END AS is_blocked,
-			usr.nik
+			usr.nik,
+			usr.verified_at
 		`).
 		Joins("JOIN roles rl ON rl.id = usr.role_id").
 		Where("usr.id = ? AND usr.deleted_at IS NULL", id).
@@ -737,4 +741,65 @@ func (repo *userRepository) SortColumnMapping(selectedSortLabel string) string {
 	}
 
 	return mapping[normalized]
+}
+
+func (repo *userRepository) CreateOTP(ctx context.Context, otp models.OTP) (*models.OTP, error) {
+	now := time.Now().UTC()
+	otp.CreatedAt = now
+	otp.UpdatedAt = &now
+	err := repo.DB.WithContext(ctx).Create(&otp).Error
+	if err != nil {
+		return nil, err
+	}
+	return &otp, nil
+}
+
+func (repo *userRepository) FindOTPByUserAndToken(ctx context.Context, userID uuid.UUID, token string) (*models.OTP, error) {
+	var otp models.OTP
+	err := repo.DB.WithContext(ctx).
+		Where("user_id = ? AND token = ? AND deleted_at IS NULL", userID, token).
+		First(&otp).Error
+	if err != nil {
+		return nil, err
+	}
+	return &otp, nil
+}
+
+func (repo *userRepository) SoftDeleteOTP(ctx context.Context, id uuid.UUID) error {
+	now := time.Now().UTC()
+	return repo.DB.WithContext(ctx).
+		Model(&models.OTP{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Update("deleted_at", now).Error
+}
+
+func (repo *userRepository) SoftDeleteAllOTPByUser(ctx context.Context, userID uuid.UUID) error {
+	now := time.Now().UTC()
+	return repo.DB.WithContext(ctx).
+		Model(&models.OTP{}).
+		Where("user_id = ? AND deleted_at IS NULL", userID).
+		Update("deleted_at", now).Error
+}
+
+func (repo *userRepository) MarkUserVerified(ctx context.Context, id uuid.UUID) (*models.User, error) {
+	now := time.Now().UTC()
+	err := repo.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Update("verified_at", now).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf(constants.UserIDNotFound, id)
+		}
+		return nil, err
+	}
+	user := &models.User{}
+	err = repo.DB.WithContext(ctx).
+		Select("id", "full_name", "created_at", "updated_at", "deleted_at").
+		Where("id = ?", id).
+		First(user).Error
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }

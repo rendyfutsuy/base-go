@@ -22,6 +22,7 @@ type User struct {
 	CreatedAt         time.Time      `gorm:"column:created_at;not null" json:"created_at"`
 	UpdatedAt         time.Time      `gorm:"column:updated_at;not null" json:"updated_at"`
 	DeletedAt         gorm.DeletedAt `gorm:"column:deleted_at;index" json:"deleted_at"`
+	VerifiedAt        *time.Time     `gorm:"column:verified_at" json:"verified_at"`
 	PasswordExpiredAt time.Time      `gorm:"column:password_expired_at" json:"password_expired_at"`
 	Gender            string         `gorm:"column:gender;type:varchar(20)" json:"gender"`
 	Counter           int            `gorm:"column:counter;default:0" json:"counter"`
