@@ -78,6 +78,16 @@ func (r *parameterRepository) Update(ctx context.Context, id uuid.UUID, code, na
 	return p, nil
 }
 
+func (r *parameterRepository) SetParent(ctx context.Context, id uuid.UUID, parentID uuid.UUID) error {
+	updates := map[string]interface{}{
+		"parent_id": parentID,
+		"updated_at": time.Now().UTC(),
+	}
+	return r.DB.WithContext(ctx).Model(&models.Parameter{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Updates(updates).Error
+}
+
 func (r *parameterRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.DB.WithContext(ctx).Where("id = ? AND deleted_at IS NULL", id).Delete(&models.Parameter{}).Error
 }

@@ -12,6 +12,7 @@ type ReqCreateParameter struct {
 	Value *string `form:"value" json:"value,omitempty"`
 	Type  *string `form:"type" json:"type,omitempty"`
 	Desc  *string `form:"desc" json:"desc,omitempty"`
+	ParentId *uuid.UUID `form:"parent_id" json:"parent_id,omitempty"`
 }
 
 type ReqUpdateParameter struct {
@@ -20,6 +21,7 @@ type ReqUpdateParameter struct {
 	Value *string `form:"value" json:"value,omitempty"`
 	Type  *string `form:"type" json:"type,omitempty"`
 	Desc  *string `form:"desc" json:"desc,omitempty"`
+	ParentId *uuid.UUID `form:"parent_id" json:"parent_id,omitempty"`
 }
 
 type RespParameter struct {

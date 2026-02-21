@@ -44,7 +44,22 @@ func (u *parameterUsecase) Create(ctx context.Context, reqBody *dto.ReqCreatePar
 		return nil, errors.New(constants.ParameterNameAlreadyExists)
 	}
 
-	return u.repo.Create(ctx, reqBody.Code, reqBody.Name, reqBody.Value, reqBody.Type, reqBody.Desc)
+	res, err := u.repo.Create(ctx, reqBody.Code, reqBody.Name, reqBody.Value, reqBody.Type, reqBody.Desc)
+	if err != nil {
+		return nil, err
+	}
+	if reqBody.ParentId != nil && *reqBody.ParentId != uuid.Nil {
+		parent, err := u.repo.GetByID(ctx, *reqBody.ParentId)
+		if err != nil || parent == nil {
+			return nil, errors.New("invalid parent parameter")
+		}
+		if err := u.repo.SetParent(ctx, res.ID, *reqBody.ParentId); err != nil {
+			return nil, err
+		}
+		// refresh result
+		res, _ = u.repo.GetByID(ctx, res.ID)
+	}
+	return res, nil
 }
 
 func (u *parameterUsecase) Update(ctx context.Context, id string, reqBody *dto.ReqUpdateParameter, userID string) (*models.Parameter, error) {
@@ -77,6 +92,26 @@ func (u *parameterUsecase) Update(ctx context.Context, id string, reqBody *dto.R
 			return nil, fmt.Errorf(constants.ParameterNotFound, id)
 		}
 		return nil, err
+	}
+	if reqBody.ParentId != nil {
+		if *reqBody.ParentId == pid {
+			return nil, errors.New("parent must not be the same as the parameter")
+		}
+		if *reqBody.ParentId != uuid.Nil {
+			parent, err := u.repo.GetByID(ctx, *reqBody.ParentId)
+			if err != nil || parent == nil {
+				return nil, errors.New("invalid parent parameter")
+			}
+			if err := u.repo.SetParent(ctx, pid, *reqBody.ParentId); err != nil {
+				return nil, err
+			}
+			res, _ = u.repo.GetByID(ctx, pid)
+		} else {
+			if err := u.repo.SetParent(ctx, pid, uuid.Nil); err != nil {
+				return nil, err
+			}
+			res, _ = u.repo.GetByID(ctx, pid)
+		}
 	}
 	return res, nil
 }

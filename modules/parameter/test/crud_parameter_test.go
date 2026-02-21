@@ -40,6 +40,11 @@ func (m *MockParameterRepository) Update(ctx context.Context, id uuid.UUID, code
 	return args.Get(0).(*models.Parameter), args.Error(1)
 }
 
+func (m *MockParameterRepository) SetParent(ctx context.Context, id uuid.UUID, parentID uuid.UUID) error {
+	args := m.Called(ctx, id, parentID)
+	return args.Error(0)
+}
+
 func (m *MockParameterRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)

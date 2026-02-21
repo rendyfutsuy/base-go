@@ -12,6 +12,7 @@ import (
 type Repository interface {
 	Create(ctx context.Context, code, name string, value, typeVal, desc *string) (*models.Parameter, error)
 	Update(ctx context.Context, id uuid.UUID, code, name string, value, typeVal, desc *string) (*models.Parameter, error)
+	SetParent(ctx context.Context, id uuid.UUID, parentID uuid.UUID) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.Parameter, error)
 	GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqParameterIndexFilter) ([]models.Parameter, int, error)
