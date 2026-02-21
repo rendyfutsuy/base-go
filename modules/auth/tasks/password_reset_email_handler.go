@@ -62,6 +62,7 @@ func HandleEmailResetPasswordRequestTask(ctx context.Context, t *asynq.Task, ema
 		utils.Logger.Error(err.Error())
 		return fmt.Errorf("failed to send email: %v", err)
 	}
+	utils.Logger.Info(fmt.Sprintf("Password reset email sent successfully: user_id=%s, email=%s", p.UserID.String(), p.Email))
 
 	return nil
 }

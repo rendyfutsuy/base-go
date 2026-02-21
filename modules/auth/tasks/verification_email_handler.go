@@ -45,6 +45,7 @@ func HandleVerificationEmailTask(ctx context.Context, t *asynq.Task, emailServic
 		utils.Logger.Error(err.Error())
 		return fmt.Errorf("failed to send verification email: %v", err)
 	}
+	utils.Logger.Info(fmt.Sprintf("Verification email sent successfully: user_id=%s, email=%s", p.UserID.String(), p.Email))
 	return nil
 }
 
