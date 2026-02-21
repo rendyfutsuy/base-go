@@ -78,13 +78,28 @@ func (r *parameterRepository) Update(ctx context.Context, id uuid.UUID, code, na
 	return p, nil
 }
 
+func (r *parameterRepository) SetParent(ctx context.Context, id uuid.UUID, parentID uuid.UUID) error {
+	updates := map[string]interface{}{
+		"parent_id": parentID,
+		"updated_at": time.Now().UTC(),
+	}
+	return r.DB.WithContext(ctx).Model(&models.Parameter{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Updates(updates).Error
+}
+
 func (r *parameterRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.DB.WithContext(ctx).Where("id = ? AND deleted_at IS NULL", id).Delete(&models.Parameter{}).Error
 }
 
 func (r *parameterRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Parameter, error) {
 	p := &models.Parameter{}
-	if err := r.DB.WithContext(ctx).Where("id = ? AND deleted_at IS NULL", id).First(p).Error; err != nil {
+	if err := r.DB.WithContext(ctx).
+		Table("parameters p").
+		Select("p.id, p.code, p.name, p.value, p.type, p.description, p.created_at, p.updated_at, p.parent_id, parent.name AS parent_name").
+		Joins("LEFT JOIN parameters parent ON parent.id = p.parent_id AND parent.deleted_at IS NULL").
+		Where("p.id = ? AND p.deleted_at IS NULL", id).
+		Scan(p).Error; err != nil {
 		return nil, err
 	}
 	return p, nil

@@ -2,6 +2,7 @@ INSERT INTO users (
     id,
     created_at,
     updated_at,
+    verified_at,
     password_expired_at,
     email,
     username,
@@ -23,6 +24,7 @@ INSERT INTO users (
     uuid_generate_v7(),
     NOW(),
     NOW(),
+    NOW(),
     NOW() + INTERVAL '90 days',
     'superuser@mailinator.com',
     'admin',
@@ -42,6 +44,7 @@ INSERT INTO users (
     -- password expired at: now + 90 days
     -- status active
     uuid_generate_v7(),
+    NOW(),
     NOW(),
     NOW(),
     NOW() + INTERVAL '90 days',

@@ -60,8 +60,10 @@ func (repo *userRepository) CreateUser(ctx context.Context, userReq dto.ToDBCrea
 		userRes.VerifiedAt = &now
 	}
 
-	// Create user - GORM will insert all fields from struct
-	err = repo.DB.WithContext(ctx).Create(userRes).Error
+	// Create user - force include is_first_time_login to override DB default
+	err = repo.DB.WithContext(ctx).
+		Select("full_name", "username", "email", "role_id", "nik", "password", "created_at", "updated_at", "password_expired_at", "is_first_time_login", "deletable", "verified_at").
+		Create(userRes).Error
 
 	if err != nil {
 		return nil, err
