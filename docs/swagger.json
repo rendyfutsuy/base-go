@@ -7440,6 +7440,9 @@
                 "name": {
                     "type": "string"
                 },
+                "parent": {
+                    "$ref": "#/definitions/dto.RespParameterParent"
+                },
                 "type": {
                     "type": "string"
                 },
@@ -7473,6 +7476,17 @@
                     "type": "string"
                 },
                 "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.RespParameterParent": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 }
             }

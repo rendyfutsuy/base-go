@@ -7448,6 +7448,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "parent": {
+                    "$ref": "#/definitions/dto.RespParameterParent"
+                },
                 "type": {
                     "type": "string"
                 },
@@ -7481,6 +7484,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.RespParameterParent": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 }
             }
