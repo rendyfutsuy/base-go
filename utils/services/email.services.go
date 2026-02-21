@@ -60,7 +60,7 @@ func (s *EmailService) SendPasswordResetEmail(email, session string) error {
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", tpl.String())
 
-	d := gomail.NewPlainDialer(s.smtpHost, s.smtpPort, s.authEmail, s.authPassword)
+	d := gomail.NewDialer(s.smtpHost, s.smtpPort, s.authEmail, s.authPassword)
 	return d.DialAndSend(m)
 }
 
@@ -74,6 +74,6 @@ func (s *EmailService) SendVerificationEmail(email, code string) error {
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)
 
-	d := gomail.NewPlainDialer(s.smtpHost, s.smtpPort, s.authEmail, s.authPassword)
+	d := gomail.NewDialer(s.smtpHost, s.smtpPort, s.authEmail, s.authPassword)
 	return d.DialAndSend(m)
 }
