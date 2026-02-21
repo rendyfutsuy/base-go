@@ -6602,6 +6602,9 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 255
                 },
+                "parent_id": {
+                    "type": "string"
+                },
                 "type": {
                     "type": "string"
                 },
@@ -6903,6 +6906,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "maxLength": 255
+                },
+                "parent_id": {
+                    "type": "string"
                 },
                 "type": {
                     "type": "string"

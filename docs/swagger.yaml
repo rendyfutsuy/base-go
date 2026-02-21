@@ -118,6 +118,8 @@ definitions:
       name:
         maxLength: 255
         type: string
+      parent_id:
+        type: string
       type:
         type: string
       value:
@@ -327,6 +329,8 @@ definitions:
         type: string
       name:
         maxLength: 255
+        type: string
+      parent_id:
         type: string
       type:
         type: string
