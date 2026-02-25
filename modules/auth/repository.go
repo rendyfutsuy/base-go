@@ -30,7 +30,4 @@ type Repository interface {
 
 	// Get user is_first_time_login status
 	GetIsFirstTimeLogin(ctx context.Context, userId uuid.UUID) (bool, error)
-
-	// Update avatar URL for user
-	UpdateAvatarById(ctx context.Context, avatarURL string, userId uuid.UUID) (bool, error)
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/rendyfutsuy/base-go/modules/auth"
+	fileusecase "github.com/rendyfutsuy/base-go/modules/file/usecase"
 	roleManagement "github.com/rendyfutsuy/base-go/modules/role_management"
 )
 
@@ -16,6 +17,7 @@ type AuthClaims struct {
 type authUsecase struct {
 	authRepo           auth.Repository
 	roleManagementRepo roleManagement.Repository
+	fileUC             fileusecase.Usecase
 	contextTimeout     time.Duration
 	hashSalt           string
 	signingKey         []byte
@@ -23,7 +25,7 @@ type authUsecase struct {
 	expireDuration     time.Duration
 }
 
-func NewAuthUsecase(r auth.Repository, rm roleManagement.Repository, timeout time.Duration, hashSalt string, signingKey []byte, refreshSigningKey []byte) auth.Usecase {
+func NewAuthUsecase(r auth.Repository, rm roleManagement.Repository, timeout time.Duration, hashSalt string, signingKey []byte, refreshSigningKey []byte, fileUC fileusecase.Usecase) auth.Usecase {
 	// Expire Time Calculation BEGIN
 	// Determine the current time in UTC+7 (Asia/Bangkok timezone)
 	loc := time.FixedZone("UTC+7", 7*60*60) // UTC+7 is 7 hours ahead of UTC
@@ -42,6 +44,7 @@ func NewAuthUsecase(r auth.Repository, rm roleManagement.Repository, timeout tim
 	return &authUsecase{
 		authRepo:           r,
 		roleManagementRepo: rm,
+		fileUC:             fileUC,
 		contextTimeout:     timeout,
 		hashSalt:           hashSalt,
 		signingKey:         signingKey,

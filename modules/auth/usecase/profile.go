@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"io"
@@ -11,8 +10,8 @@ import (
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
+	filedto "github.com/rendyfutsuy/base-go/modules/file/dto"
 	"github.com/rendyfutsuy/base-go/utils"
-	utilsServices "github.com/rendyfutsuy/base-go/utils/services"
 	"github.com/rendyfutsuy/base-go/utils/token_storage"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -172,32 +171,38 @@ func (u *authUsecase) UpdateMyAvatar(ctx context.Context, user models.User, file
 		return err
 	}
 
-	// upload file
-	url, err := u.UploadAvatar(fileData, file.Filename, user)
+	// upload via File usecase
+	extra := user.Username
+	uploaded, err := u.fileUC.Upload(ctx, filedto.UploadInput{
+		Data:             fileData,
+		OriginalFileName: file.Filename,
+		DestRoot:         "users/avatars",
+		ExtraPath:        &extra,
+	})
 	if err != nil {
 		return err
 	}
 
-	// update avatar
-	userUUID := user.ID
-	_, err = u.authRepo.UpdateAvatarById(ctx, url, userUUID)
-	if err != nil {
+	// ensure only one avatar: unassign old avatar records for this user
+	_ = u.fileUC.UnassignFiles(ctx, filedto.UnassignFilesFromModule{
+		ModuleID:   user.ID,
+		ModuleType: constants.ModuleTypeUser,
+	})
+
+	// assign uploaded file as current avatar
+	ftype := constants.FileTypeAvatar
+	if err := u.fileUC.AssignFiles(ctx, filedto.AssignFilesToModule{
+		ModuleID:   user.ID,
+		ModuleType: constants.ModuleTypeUser,
+		Items: []filedto.AssignFileItem{
+			{FileID: uploaded.ID, Type: &ftype},
+		},
+	}); err != nil {
 		return err
 	}
 
+	// no DB update needed; avatar served via pivot
 	return nil
 }
 
-// UploadAvatar uploads avatar file using storage service
-func (u *authUsecase) UploadAvatar(fileData []byte, fileName string, user models.User) (string, error) {
-	var buf bytes.Buffer
-	buf.Write(fileData)
-
-	destinatedPath := "users/avatars/" + user.Username
-	url, err := utilsServices.UploadFile(buf, fileName, destinatedPath)
-	if err != nil {
-		return "", errors.New("Failed to upload avatar file")
-	}
-
-	return url, nil
-}
+// UploadAvatar is deprecated in favor of file module integration

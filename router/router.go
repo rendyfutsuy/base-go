@@ -175,6 +175,9 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 		return c.JSON(http.StatusOK, map[string]string{"message": "This operation is protected from race conditions"})
 	})
 
+	// File usecase (shared by modules)
+	fileService := _fileService.NewFileUsecase(fileRepo)
+
 	// Auth
 	authService := _authService.NewAuthUsecase(
 		authRepo,
@@ -183,6 +186,7 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 		utils.ConfigVars.String("jwt_key"),
 		[]byte(utils.ConfigVars.String("jwt_key")),
 		[]byte(utils.ConfigVars.String("jwt_refresh_key")),
+		fileService,
 	)
 	_authController.NewAuthHandler(
 		router,
@@ -291,7 +295,6 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 	)
 
 	// post management (public index & detail, protected create/update/delete)
-	fileService := _fileService.NewFileUsecase(fileRepo)
 	postService := _postService.NewPostUsecase(postRepo, parameterRepo, fileService)
 	_postController.NewPostHandler(
 		router,
