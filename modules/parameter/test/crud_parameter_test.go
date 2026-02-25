@@ -83,6 +83,17 @@ func (m *MockParameterRepository) ExistsByName(ctx context.Context, name string,
 	args := m.Called(ctx, name, excludeID)
 	return args.Bool(0), args.Error(1)
 }
+func (m *MockParameterRepository) AssignParametersToModule(ctx context.Context, moduleType string, moduleID uuid.UUID, parameterIDs []uuid.UUID) error {
+	args := m.Called(ctx, moduleType, moduleID, parameterIDs)
+	return args.Error(0)
+}
+func (m *MockParameterRepository) GetByModule(ctx context.Context, moduleType string, moduleID uuid.UUID) ([]models.Parameter, error) {
+	args := m.Called(ctx, moduleType, moduleID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]models.Parameter), args.Error(1)
+}
 
 func TestCreateParameter(t *testing.T) {
 	e := echo.New()

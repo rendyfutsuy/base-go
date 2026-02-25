@@ -19,4 +19,6 @@ type Repository interface {
 	GetAll(ctx context.Context, filter dto.ReqParameterIndexFilter) ([]models.Parameter, error)
 	ExistsByCode(ctx context.Context, code string, excludeID uuid.UUID) (bool, error)
 	ExistsByName(ctx context.Context, name string, excludeID uuid.UUID) (bool, error)
+	AssignParametersToModule(ctx context.Context, moduleType string, moduleID uuid.UUID, parameterIDs []uuid.UUID) error
+	GetByModule(ctx context.Context, moduleType string, moduleID uuid.UUID) ([]models.Parameter, error)
 }

@@ -34,6 +34,7 @@ type RespParameter struct {
 	CreatedAt string               `json:"created_at"`
 	UpdatedAt string               `json:"updated_at"`
 	Parent    *RespParameterParent `json:"parent"`
+	Deletable bool                 `json:"deletable"`
 }
 
 type RespParameterParent struct {
@@ -59,6 +60,7 @@ func ToRespParameter(m models.Parameter) RespParameter {
 		CreatedAt: m.CreatedAt.Format(constants.FormatDateTimeISO8601),
 		UpdatedAt: m.UpdatedAt.Format(constants.FormatDateTimeISO8601),
 		Parent:    parent,
+		Deletable: m.Deletable,
 	}
 }
 
@@ -70,6 +72,7 @@ type RespParameterIndex struct {
 	Type      *string   `json:"type,omitempty"`
 	CreatedAt string    `json:"created_at"`
 	UpdatedAt string    `json:"updated_at"`
+	Deletable bool      `json:"deletable"`
 }
 
 func ToRespParameterIndex(m models.Parameter) RespParameterIndex {
@@ -83,6 +86,7 @@ func ToRespParameterIndex(m models.Parameter) RespParameterIndex {
 		Type:      typeVal,
 		CreatedAt: m.CreatedAt.Format(constants.FormatDateTimeISO8601),
 		UpdatedAt: m.UpdatedAt.Format(constants.FormatDateTimeISO8601),
+		Deletable: m.Deletable,
 	}
 }
 

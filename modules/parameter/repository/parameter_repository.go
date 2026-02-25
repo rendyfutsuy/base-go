@@ -23,6 +23,24 @@ func NewParameterRepository(db *gorm.DB) *parameterRepository {
 	}
 }
 
+func (r *parameterRepository) AssignParametersToModule(ctx context.Context, moduleType string, moduleID uuid.UUID, parameterIDs []uuid.UUID) error {
+	if len(parameterIDs) == 0 {
+		return nil
+	}
+	now := time.Now().UTC()
+	items := make([]models.ParametersToModule, 0, len(parameterIDs))
+	for _, pid := range parameterIDs {
+		items = append(items, models.ParametersToModule{
+			ParameterID: pid,
+			ModuleType:  moduleType,
+			ModuleID:    moduleID,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		})
+	}
+	return r.DB.WithContext(ctx).Create(&items).Error
+}
+
 func (r *parameterRepository) Create(ctx context.Context, code, name string, value, typeVal, desc *string) (*models.Parameter, error) {
 	now := time.Now().UTC()
 	p := &models.Parameter{
@@ -80,7 +98,7 @@ func (r *parameterRepository) Update(ctx context.Context, id uuid.UUID, code, na
 
 func (r *parameterRepository) SetParent(ctx context.Context, id uuid.UUID, parentID uuid.UUID) error {
 	updates := map[string]interface{}{
-		"parent_id": parentID,
+		"parent_id":  parentID,
 		"updated_at": time.Now().UTC(),
 	}
 	return r.DB.WithContext(ctx).Model(&models.Parameter{}).
@@ -96,7 +114,11 @@ func (r *parameterRepository) GetByID(ctx context.Context, id uuid.UUID) (*model
 	p := &models.Parameter{}
 	if err := r.DB.WithContext(ctx).
 		Table("parameters p").
-		Select("p.id, p.code, p.name, p.value, p.type, p.description, p.created_at, p.updated_at, p.parent_id, parent.name AS parent_name").
+		Select(`p.id, p.code, p.name, p.value, p.type, p.description, p.created_at, p.updated_at, p.parent_id, parent.name AS parent_name,
+			(
+				NOT EXISTS (SELECT 1 FROM parameters_to_module ptm WHERE ptm.parameter_id = p.id)
+				AND NOT EXISTS (SELECT 1 FROM parameters child WHERE child.parent_id = p.id AND child.deleted_at IS NULL)
+			) AS deletable`).
 		Joins("LEFT JOIN parameters parent ON parent.id = p.parent_id AND parent.deleted_at IS NULL").
 		Where("p.id = ? AND p.deleted_at IS NULL", id).
 		Scan(p).Error; err != nil {
@@ -131,7 +153,11 @@ func (r *parameterRepository) ExistsByName(ctx context.Context, name string, exc
 
 func (r *parameterRepository) GetIndex(ctx context.Context, req request.PageRequest, filter dto.ReqParameterIndexFilter) ([]models.Parameter, int, error) {
 	var parameters []models.Parameter
-	query := r.DB.WithContext(ctx).Table("parameters p").Select("p.id, p.code, p.name, p.value, p.type, p.description, p.created_at, p.updated_at").
+	query := r.DB.WithContext(ctx).Table("parameters p").Select(`p.id, p.code, p.name, p.value, p.type, p.description, p.created_at, p.updated_at,
+		(
+			NOT EXISTS (SELECT 1 FROM parameters_to_module ptm WHERE ptm.parameter_id = p.id)
+			AND NOT EXISTS (SELECT 1 FROM parameters child WHERE child.parent_id = p.id AND child.deleted_at IS NULL)
+		) AS deletable`).
 		Where("p.deleted_at IS NULL")
 
 		// Apply search from PageRequest
@@ -157,7 +183,11 @@ func (r *parameterRepository) GetIndex(ctx context.Context, req request.PageRequ
 
 func (r *parameterRepository) GetAll(ctx context.Context, filter dto.ReqParameterIndexFilter) ([]models.Parameter, error) {
 	var parameters []models.Parameter
-	query := r.DB.WithContext(ctx).Table("parameters p").Select("p.id, p.code, p.name, p.value, p.type, p.description, p.created_at, p.updated_at").
+	query := r.DB.WithContext(ctx).Table("parameters p").Select(`p.id, p.code, p.name, p.value, p.type, p.description, p.created_at, p.updated_at,
+		(
+			NOT EXISTS (SELECT 1 FROM parameters_to_module ptm WHERE ptm.parameter_id = p.id)
+			AND NOT EXISTS (SELECT 1 FROM parameters child WHERE child.parent_id = p.id AND child.deleted_at IS NULL)
+		) AS deletable`).
 		Where("p.deleted_at IS NULL")
 
 	// Apply search from filter
@@ -182,4 +212,17 @@ func (r *parameterRepository) GetAll(ctx context.Context, filter dto.ReqParamete
 		return nil, err
 	}
 	return parameters, nil
+}
+
+func (r *parameterRepository) GetByModule(ctx context.Context, moduleType string, moduleID uuid.UUID) ([]models.Parameter, error) {
+	var params []models.Parameter
+	if err := r.DB.WithContext(ctx).
+		Table("parameters p").
+		Select("p.id, p.name, p.type").
+		Joins("JOIN parameters_to_module ptm ON ptm.parameter_id = p.id").
+		Where("ptm.module_type = ? AND ptm.module_id = ? AND p.deleted_at IS NULL", moduleType, moduleID).
+		Find(&params).Error; err != nil {
+		return nil, err
+	}
+	return params, nil
 }
