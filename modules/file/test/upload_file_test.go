@@ -148,3 +148,33 @@ func TestUpload_WithDescriptionAndNoExtraPath(t *testing.T) {
 	matches, _ := filepath.Glob(glob)
 	assert.True(t, len(matches) >= 1)
 }
+
+func TestUnassignFilesFromModule(t *testing.T) {
+	ctx := context.Background()
+	mockRepo := new(MockFileRepository)
+	uc := usecase.NewFileUsecase(mockRepo)
+
+	moduleID := uuid.New()
+	in := dto.UnassignFilesFromModule{
+		ModuleID:   moduleID,
+		ModuleType: "post",
+	}
+	mockRepo.On("RemoveFilesFromModule", ctx, "post", moduleID).Return(nil).Once()
+
+	err := uc.UnassignFiles(ctx, in)
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestDeleteFile(t *testing.T) {
+	ctx := context.Background()
+	mockRepo := new(MockFileRepository)
+	uc := usecase.NewFileUsecase(mockRepo)
+
+	id := uuid.New()
+	mockRepo.On("Delete", ctx, id).Return(nil).Once()
+
+	err := uc.Delete(ctx, id.String())
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}

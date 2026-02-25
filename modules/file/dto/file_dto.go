@@ -26,3 +26,8 @@ type AssignFilesToModule struct {
 	ModuleType string
 	Items      []AssignFileItem
 }
+
+type UnassignFilesFromModule struct {
+	ModuleID   uuid.UUID
+	ModuleType string
+}
