@@ -11,6 +11,6 @@ import (
 type Repository interface {
 	Create(ctx context.Context, data dto.ToDBFile) (*models.File, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	AssignFilesToModule(ctx context.Context, moduleType string, moduleID uuid.UUID, fileIDs []uuid.UUID) error
+	AssignFilesToModule(ctx context.Context, input dto.AssignFilesToModule) error
 	RemoveFilesFromModule(ctx context.Context, moduleType string, moduleID uuid.UUID) error
 }

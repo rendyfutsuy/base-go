@@ -1,0 +1,2 @@
+ALTER TABLE files_to_module
+ADD COLUMN IF NOT EXISTS type VARCHAR(255);
