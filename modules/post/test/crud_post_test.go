@@ -112,22 +112,21 @@ func TestPostUsecase_Create_TypeValidation(t *testing.T) {
 	mockParamRepo := new(MockParameterRepository)
 	useCase := postUsecase.NewPostUsecase(mockPostRepo, mockParamRepo)
 
-	levelID := uuid.New()
 	langID := uuid.New()
 	topicID := uuid.New()
 
 	// invalid level (not post_level)
-	mockParamRepo.On("GetByID", ctx, levelID).Return(&models.Parameter{ID: levelID, Type: ptrStr("lang")}, nil).Once()
 	req := &postDto.ReqCreatePost{
 		Title:            "A",
 		Description:      "B",
 		ShortDescription: "C",
 		Price:            100,
 		DiscountRate:     10,
-		LevelID:          levelID,
 		LangID:           langID,
 		TopicIDs:         []uuid.UUID{topicID},
 	}
+	// return wrong type for lang to trigger validation error
+	mockParamRepo.On("GetByID", ctx, langID).Return(&models.Parameter{ID: langID, Type: ptrStr("wrong")}, nil).Once()
 	_, err := useCase.Create(ctx, req, "", nil, "")
 	assert.Error(t, err)
 
@@ -135,14 +134,12 @@ func TestPostUsecase_Create_TypeValidation(t *testing.T) {
 	mockParamRepo.ExpectedCalls = nil
 	mockPostRepo.ExpectedCalls = nil
 
-	mockParamRepo.On("GetByID", ctx, levelID).Return(&models.Parameter{ID: levelID, Type: ptrStr("post_level")}, nil).Once()
 	mockParamRepo.On("GetByID", ctx, langID).Return(&models.Parameter{ID: langID, Type: ptrStr("lang")}, nil).Once()
 	mockParamRepo.On("GetByID", ctx, topicID).Return(&models.Parameter{ID: topicID, Type: ptrStr("topic")}, nil).Once()
 
 	cID := uuid.New()
 	mockPostRepo.On("Create", ctx, uuid.Nil, mock.Anything).
 		Return(&models.Post{ID: cID, Title: "A", Description: "B", ShortDescription: "C", Price: 100, DiscountRate: 10, CreatedAt: time.Now(), UpdatedAt: time.Now()}, nil).Once()
-	mockParamRepo.On("AssignParametersToModule", ctx, "post", cID, []uuid.UUID{levelID}).Return(nil).Once()
 	mockParamRepo.On("AssignParametersToModule", ctx, "post", cID, []uuid.UUID{langID}).Return(nil).Once()
 	mockParamRepo.On("AssignParametersToModule", ctx, "post", cID, []uuid.UUID{topicID}).Return(nil).Once()
 
@@ -152,7 +149,6 @@ func TestPostUsecase_Create_TypeValidation(t *testing.T) {
 		ShortDescription: "C",
 		Price:            100,
 		DiscountRate:     10,
-		LevelID:          levelID,
 		LangID:           langID,
 		TopicIDs:         []uuid.UUID{topicID},
 	}, "", nil, "")
