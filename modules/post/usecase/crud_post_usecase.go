@@ -136,6 +136,11 @@ func (u *postUsecase) Update(ctx context.Context, id string, req *dto.ReqUpdateP
 		return nil, err
 	}
 
+	// Clear existing relations
+	if err := u.paramRepo.ClearParametersForModule(ctx, "post", c.ID); err != nil {
+		return nil, err
+	}
+
 	// Re-assign relations: for simplicity, append new assignments (idempotency relies on unique checks if needed)
 	if err := u.paramRepo.AssignParametersToModule(ctx, "post", c.ID, []uuid.UUID{req.LangID}); err != nil {
 		return nil, err
