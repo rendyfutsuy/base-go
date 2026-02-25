@@ -107,6 +107,10 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 	if utils.ConfigVars.String("app_env") == "development" {
 		router.GET("/swagger/*", echoSwagger.WrapHandler)
 	}
+
+	// uses to render files stored on local device.
+	router.Static("/storage", "public/storage")
+
 	// Services  ------------------------------------------------------------------------------------------------------------------------------------------------------
 	emailServices, err := services.NewEmailService()
 	if err != nil {

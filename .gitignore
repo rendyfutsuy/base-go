@@ -3,6 +3,7 @@
 
 # environnement
 .env
+public/storage
 
 # logger
 log.json
