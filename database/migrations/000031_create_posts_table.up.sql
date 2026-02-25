@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS courses (
+CREATE TABLE IF NOT EXISTS posts (
   id UUID DEFAULT uuid_generate_v7() PRIMARY KEY NOT NULL,
   created_by UUID NOT NULL REFERENCES users(id),
   title VARCHAR(255) NOT NULL,
@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS courses (
   updated_at TIMESTAMP NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS courses_id_index ON courses (id);
-CREATE INDEX IF NOT EXISTS courses_created_by_index ON courses (created_by);
-CREATE INDEX IF NOT EXISTS courses_title_index ON courses (title);
-CREATE INDEX IF NOT EXISTS courses_created_at_index ON courses (created_at);
-CREATE INDEX IF NOT EXISTS courses_updated_at_index ON courses (updated_at);
+CREATE INDEX IF NOT EXISTS posts_id_index ON posts (id);
+CREATE INDEX IF NOT EXISTS posts_created_by_index ON posts (created_by);
+CREATE INDEX IF NOT EXISTS posts_title_index ON posts (title);
+CREATE INDEX IF NOT EXISTS posts_created_at_index ON posts (created_at);
+CREATE INDEX IF NOT EXISTS posts_updated_at_index ON posts (updated_at);

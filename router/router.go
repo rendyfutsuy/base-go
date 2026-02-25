@@ -76,6 +76,10 @@ import (
 	_backingController "github.com/rendyfutsuy/base-go/modules/backing/delivery/http"
 	_backingRepo "github.com/rendyfutsuy/base-go/modules/backing/repository"
 	_backingService "github.com/rendyfutsuy/base-go/modules/backing/usecase"
+
+	_postController "github.com/rendyfutsuy/base-go/modules/post/delivery/http"
+	_postRepo "github.com/rendyfutsuy/base-go/modules/post/repository"
+	_postService "github.com/rendyfutsuy/base-go/modules/post/usecase"
 )
 
 func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
@@ -145,6 +149,8 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 	backingRepo := _backingRepo.NewBackingRepository(gormDB) // Using GORM for backing
 
 	expeditionRepo := _expeditionRepo.NewExpeditionRepository(gormDB) // Using GORM for expedition
+
+	postRepo := _postRepo.NewPostRepository(gormDB) // Using GORM for Post
 
 	// Middlewares ------------------------------------------------------------------------------------------------------------------------------------------------------
 	middlewareAuth := authmiddleware.NewMiddlewareAuth()
@@ -276,6 +282,16 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 	_expeditionController.NewExpeditionHandler(
 		router,
 		expeditionService,
+		middlewarePageRequest,
+		middlewareAuth,
+		middlewarePermission,
+	)
+
+	// post management (public index & detail, protected create/update/delete)
+	postService := _postService.NewPostUsecase(postRepo, parameterRepo)
+	_postController.NewPostHandler(
+		router,
+		postService,
 		middlewarePageRequest,
 		middlewareAuth,
 		middlewarePermission,
