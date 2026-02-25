@@ -1,3 +1,6 @@
 package constants
 
-const ()
+const (
+	ModuleTypePost    = "post"
+	FileTypeThumbnail = "thumbnail"
+)

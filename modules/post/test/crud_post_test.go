@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
+	fileDto "github.com/rendyfutsuy/base-go/modules/file/dto"
 	paramDto "github.com/rendyfutsuy/base-go/modules/parameter/dto"
 	postDto "github.com/rendyfutsuy/base-go/modules/post/dto"
 	postUsecase "github.com/rendyfutsuy/base-go/modules/post/usecase"
@@ -110,11 +111,27 @@ func (m *MockParameterRepository) RemoveParametersFromModule(ctx context.Context
 	return args.Error(0)
 }
 
+// Minimal mock for file usecase to satisfy constructor
+type MockFileUsecase struct{}
+
+func (m *MockFileUsecase) Upload(ctx context.Context, input fileDto.UploadInput) (*models.File, error) {
+	return nil, nil
+}
+func (m *MockFileUsecase) AssignFiles(ctx context.Context, input fileDto.AssignFilesToModule) error {
+	return nil
+}
+func (m *MockFileUsecase) UnassignFiles(ctx context.Context, input fileDto.UnassignFilesFromModule) error {
+	return nil
+}
+func (m *MockFileUsecase) Delete(ctx context.Context, id string) error {
+	return nil
+}
+
 func TestPostUsecase_Create_TypeValidation(t *testing.T) {
 	ctx := context.Background()
 	mockPostRepo := new(MockPostRepository)
 	mockParamRepo := new(MockParameterRepository)
-	useCase := postUsecase.NewPostUsecase(mockPostRepo, mockParamRepo)
+	useCase := postUsecase.NewPostUsecase(mockPostRepo, mockParamRepo, new(MockFileUsecase))
 
 	langID := uuid.New()
 	topicID := uuid.New()

@@ -1,27 +1,29 @@
 package usecase
 
 import (
-	"bytes"
 	"context"
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
+	fileDto "github.com/rendyfutsuy/base-go/modules/file/dto"
+	fileUsecase "github.com/rendyfutsuy/base-go/modules/file/usecase"
 	paramMod "github.com/rendyfutsuy/base-go/modules/parameter"
 	"github.com/rendyfutsuy/base-go/modules/post"
 	"github.com/rendyfutsuy/base-go/modules/post/dto"
 	"github.com/rendyfutsuy/base-go/utils"
-	utilsServices "github.com/rendyfutsuy/base-go/utils/services"
 )
 
 type postUsecase struct {
 	repo      post.Repository
 	paramRepo paramMod.Repository
+	fileUC    fileUsecase.Usecase
 }
 
-func NewPostUsecase(repo post.Repository, paramRepo paramMod.Repository) post.Usecase {
-	return &postUsecase{repo: repo, paramRepo: paramRepo}
+func NewPostUsecase(repo post.Repository, paramRepo paramMod.Repository, fileUC fileUsecase.Usecase) post.Usecase {
+	return &postUsecase{repo: repo, paramRepo: paramRepo, fileUC: fileUC}
 }
 
 func (u *postUsecase) Create(ctx context.Context, req *dto.ReqCreatePost, authId string, thumbnailData []byte, thumbnailName string) (*models.Post, error) {
@@ -42,18 +44,25 @@ func (u *postUsecase) Create(ctx context.Context, req *dto.ReqCreatePost, authId
 		}
 	}
 
-	// Upload thumbnail first if provided, so URL can be saved in a single create
+	// Upload thumbnail via file module first (optional)
 	var uploadedURL *string
+	var uploadedFile *models.File
 	if len(thumbnailData) > 0 && thumbnailName != "" {
-		var buf bytes.Buffer
-		buf.Write(thumbnailData)
 		key := uuid.NewString()
-		destinatedPath := "posts/thumbnails/" + key
-		url, err := utilsServices.UploadFile(buf, thumbnailName, destinatedPath)
+		f, err := u.fileUC.Upload(ctx, fileDto.UploadInput{
+			Data:             thumbnailData,
+			OriginalFileName: thumbnailName,
+			DestRoot:         "posts/thumbnails",
+			ExtraPath:        &key,
+			Description:      nil,
+		})
 		if err != nil {
 			return nil, errors.New("Failed to upload thumbnail file")
 		}
-		uploadedURL = &url
+		uploadedFile = f
+		if f != nil && f.FilePath != nil {
+			uploadedURL = f.FilePath
+		}
 	}
 
 	c, err := u.repo.Create(ctx, createdBy, dto.ToDBPost{
@@ -75,12 +84,24 @@ func (u *postUsecase) Create(ctx context.Context, req *dto.ReqCreatePost, authId
 		return nil, err
 	}
 
+	// Assign uploaded thumbnail to module as "thumbnail"
+	if uploadedFile != nil {
+		typ := constants.FileTypeThumbnail
+		_ = u.fileUC.AssignFiles(ctx, fileDto.AssignFilesToModule{
+			ModuleID:   c.ID,
+			ModuleType: constants.ModuleTypePost,
+			Items: []fileDto.AssignFileItem{
+				{FileID: uploadedFile.ID, Type: &typ},
+			},
+		})
+	}
+
 	// Assign relations via parameters_to_module
-	if err := u.paramRepo.AssignParametersToModule(ctx, "post", c.ID, []uuid.UUID{req.LangID}); err != nil {
+	if err := u.paramRepo.AssignParametersToModule(ctx, constants.ModuleTypePost, c.ID, []uuid.UUID{req.LangID}); err != nil {
 		return nil, err
 	}
 	if len(req.TopicIDs) > 0 {
-		if err := u.paramRepo.AssignParametersToModule(ctx, "post", c.ID, req.TopicIDs); err != nil {
+		if err := u.paramRepo.AssignParametersToModule(ctx, constants.ModuleTypePost, c.ID, req.TopicIDs); err != nil {
 			return nil, err
 		}
 	}
@@ -103,17 +124,25 @@ func (u *postUsecase) Update(ctx context.Context, id string, req *dto.ReqUpdateP
 		return nil, err
 	}
 
-	// Upload thumbnail first if provided
+	// Upload thumbnail via file module first if provided
 	var uploadedURL *string
+	var uploadedFile *models.File
 	if len(thumbnailData) > 0 && thumbnailName != "" {
-		var buf bytes.Buffer
-		buf.Write(thumbnailData)
-		destinatedPath := "posts/thumbnails/" + id
-		url, err := utilsServices.UploadFile(buf, thumbnailName, destinatedPath)
+		extra := id
+		f, err := u.fileUC.Upload(ctx, fileDto.UploadInput{
+			Data:             thumbnailData,
+			OriginalFileName: thumbnailName,
+			DestRoot:         "posts/thumbnails",
+			ExtraPath:        &extra,
+			Description:      nil,
+		})
 		if err != nil {
 			return nil, errors.New("Failed to upload thumbnail file")
 		}
-		uploadedURL = &url
+		uploadedFile = f
+		if f != nil && f.FilePath != nil {
+			uploadedURL = f.FilePath
+		}
 	}
 
 	c, err := u.repo.Update(ctx, cid, dto.ToDBPost{
@@ -136,17 +165,40 @@ func (u *postUsecase) Update(ctx context.Context, id string, req *dto.ReqUpdateP
 		return nil, err
 	}
 
+	// Update file-module relations
+	if req.RemoveThumbnail && uploadedFile == nil {
+		_ = u.fileUC.UnassignFiles(ctx, fileDto.UnassignFilesFromModule{
+			ModuleID:   c.ID,
+			ModuleType: "post",
+		})
+	}
+	if uploadedFile != nil {
+		// Replace previous relations then assign new
+		_ = u.fileUC.UnassignFiles(ctx, fileDto.UnassignFilesFromModule{
+			ModuleID:   c.ID,
+			ModuleType: constants.ModuleTypePost,
+		})
+		typ := constants.FileTypeThumbnail
+		_ = u.fileUC.AssignFiles(ctx, fileDto.AssignFilesToModule{
+			ModuleID:   c.ID,
+			ModuleType: constants.ModuleTypePost,
+			Items: []fileDto.AssignFileItem{
+				{FileID: uploadedFile.ID, Type: &typ},
+			},
+		})
+	}
+
 	// Clear existing relations
 	if err := u.paramRepo.RemoveParametersFromModule(ctx, "post", c.ID); err != nil {
 		return nil, err
 	}
 
 	// Re-assign relations: for simplicity, append new assignments (idempotency relies on unique checks if needed)
-	if err := u.paramRepo.AssignParametersToModule(ctx, "post", c.ID, []uuid.UUID{req.LangID}); err != nil {
+	if err := u.paramRepo.AssignParametersToModule(ctx, constants.ModuleTypePost, c.ID, []uuid.UUID{req.LangID}); err != nil {
 		return nil, err
 	}
 	if len(req.TopicIDs) > 0 {
-		if err := u.paramRepo.AssignParametersToModule(ctx, "post", c.ID, req.TopicIDs); err != nil {
+		if err := u.paramRepo.AssignParametersToModule(ctx, constants.ModuleTypePost, c.ID, req.TopicIDs); err != nil {
 			return nil, err
 		}
 	}

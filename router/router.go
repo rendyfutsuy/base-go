@@ -80,6 +80,8 @@ import (
 	_postController "github.com/rendyfutsuy/base-go/modules/post/delivery/http"
 	_postRepo "github.com/rendyfutsuy/base-go/modules/post/repository"
 	_postService "github.com/rendyfutsuy/base-go/modules/post/usecase"
+	_fileRepo "github.com/rendyfutsuy/base-go/modules/file/repository"
+	_fileService "github.com/rendyfutsuy/base-go/modules/file/usecase"
 )
 
 func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
@@ -151,6 +153,7 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 	expeditionRepo := _expeditionRepo.NewExpeditionRepository(gormDB) // Using GORM for expedition
 
 	postRepo := _postRepo.NewPostRepository(gormDB) // Using GORM for Post
+	fileRepo := _fileRepo.NewFileRepository(gormDB) // Using GORM for File
 
 	// Middlewares ------------------------------------------------------------------------------------------------------------------------------------------------------
 	middlewareAuth := authmiddleware.NewMiddlewareAuth()
@@ -288,7 +291,8 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 	)
 
 	// post management (public index & detail, protected create/update/delete)
-	postService := _postService.NewPostUsecase(postRepo, parameterRepo)
+	fileService := _fileService.NewFileUsecase(fileRepo)
+	postService := _postService.NewPostUsecase(postRepo, parameterRepo, fileService)
 	_postController.NewPostHandler(
 		router,
 		postService,
