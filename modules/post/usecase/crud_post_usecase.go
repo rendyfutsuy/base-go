@@ -137,7 +137,7 @@ func (u *postUsecase) Update(ctx context.Context, id string, req *dto.ReqUpdateP
 	}
 
 	// Clear existing relations
-	if err := u.paramRepo.ClearParametersForModule(ctx, "post", c.ID); err != nil {
+	if err := u.paramRepo.RemoveParametersFromModule(ctx, "post", c.ID); err != nil {
 		return nil, err
 	}
 

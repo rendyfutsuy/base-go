@@ -21,5 +21,5 @@ type Repository interface {
 	ExistsByName(ctx context.Context, name string, excludeID uuid.UUID) (bool, error)
 	AssignParametersToModule(ctx context.Context, moduleType string, moduleID uuid.UUID, parameterIDs []uuid.UUID) error
 	GetByModule(ctx context.Context, moduleType string, moduleID uuid.UUID) ([]models.Parameter, error)
-	ClearParametersForModule(ctx context.Context, moduleType string, moduleID uuid.UUID) error
+	RemoveParametersFromModule(ctx context.Context, moduleType string, moduleID uuid.UUID) error
 }

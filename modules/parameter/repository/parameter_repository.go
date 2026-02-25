@@ -227,7 +227,7 @@ func (r *parameterRepository) GetByModule(ctx context.Context, moduleType string
 	return params, nil
 }
 
-func (r *parameterRepository) ClearParametersForModule(ctx context.Context, moduleType string, moduleID uuid.UUID) error {
+func (r *parameterRepository) RemoveParametersFromModule(ctx context.Context, moduleType string, moduleID uuid.UUID) error {
 	return r.DB.WithContext(ctx).
 		Where("module_type = ? AND module_id = ?", moduleType, moduleID).
 		Delete(&models.ParametersToModule{}).Error

@@ -94,7 +94,7 @@ func (m *MockParameterRepository) GetByModule(ctx context.Context, moduleType st
 	}
 	return args.Get(0).([]models.Parameter), args.Error(1)
 }
-func (m *MockParameterRepository) ClearParametersForModule(ctx context.Context, moduleType string, moduleID uuid.UUID) error {
+func (m *MockParameterRepository) RemoveParametersFromModule(ctx context.Context, moduleType string, moduleID uuid.UUID) error {
 	args := m.Called(ctx, moduleType, moduleID)
 	return args.Error(0)
 }
