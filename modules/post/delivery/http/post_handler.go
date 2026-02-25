@@ -238,12 +238,11 @@ func (h *PostHandler) GetByID(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-	level, lang, topics, err := h.Usecase.GetParameterReferences(ctx, id)
+	_, lang, topics, err := h.Usecase.GetParameterReferences(ctx, id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.SetErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 	out := dto.ToRespPost(*res)
-	out.Level = level
 	out.Lang = lang
 	out.Topics = topics
 	resp := response.NonPaginationResponse{}

@@ -26,9 +26,6 @@ func NewPostUsecase(repo post.Repository, paramRepo paramMod.Repository) post.Us
 
 func (u *postUsecase) Create(ctx context.Context, req *dto.ReqCreatePost, authId string, thumbnailData []byte, thumbnailName string) (*models.Post, error) {
 	// Validate parameter types
-	if err := u.validateParameterType(ctx, req.LevelID, "post_level"); err != nil {
-		return nil, err
-	}
 	if err := u.validateParameterType(ctx, req.LangID, "lang"); err != nil {
 		return nil, err
 	}
@@ -65,7 +62,6 @@ func (u *postUsecase) Create(ctx context.Context, req *dto.ReqCreatePost, authId
 		ShortDescription: req.ShortDescription,
 		Price:            req.Price,
 		DiscountRate:     req.DiscountRate,
-		LevelID:          req.LevelID,
 		LangID:           req.LangID,
 		TopicIDs:         req.TopicIDs,
 		ThumbnailURL: func() *string {
@@ -80,9 +76,6 @@ func (u *postUsecase) Create(ctx context.Context, req *dto.ReqCreatePost, authId
 	}
 
 	// Assign relations via parameters_to_module
-	if err := u.paramRepo.AssignParametersToModule(ctx, "post", c.ID, []uuid.UUID{req.LevelID}); err != nil {
-		return nil, err
-	}
 	if err := u.paramRepo.AssignParametersToModule(ctx, "post", c.ID, []uuid.UUID{req.LangID}); err != nil {
 		return nil, err
 	}
@@ -96,9 +89,6 @@ func (u *postUsecase) Create(ctx context.Context, req *dto.ReqCreatePost, authId
 
 func (u *postUsecase) Update(ctx context.Context, id string, req *dto.ReqUpdatePost, authId string, thumbnailData []byte, thumbnailName string) (*models.Post, error) {
 	// Validate parameter types
-	if err := u.validateParameterType(ctx, req.LevelID, "post_level"); err != nil {
-		return nil, err
-	}
 	if err := u.validateParameterType(ctx, req.LangID, "lang"); err != nil {
 		return nil, err
 	}
@@ -133,7 +123,6 @@ func (u *postUsecase) Update(ctx context.Context, id string, req *dto.ReqUpdateP
 		Price:            req.Price,
 		DiscountRate:     req.DiscountRate,
 		RemoveThumbnail:  req.RemoveThumbnail,
-		LevelID:          req.LevelID,
 		LangID:           req.LangID,
 		TopicIDs:         req.TopicIDs,
 		ThumbnailURL: func() *string {
@@ -148,9 +137,6 @@ func (u *postUsecase) Update(ctx context.Context, id string, req *dto.ReqUpdateP
 	}
 
 	// Re-assign relations: for simplicity, append new assignments (idempotency relies on unique checks if needed)
-	if err := u.paramRepo.AssignParametersToModule(ctx, "post", c.ID, []uuid.UUID{req.LevelID}); err != nil {
-		return nil, err
-	}
 	if err := u.paramRepo.AssignParametersToModule(ctx, "post", c.ID, []uuid.UUID{req.LangID}); err != nil {
 		return nil, err
 	}
@@ -195,8 +181,6 @@ func (u *postUsecase) GetParameterReferences(ctx context.Context, id string) (*d
 			continue
 		}
 		switch *p.Type {
-		case "post_level":
-			level = &dto.ReferenceObject{ID: p.ID, Name: p.Name}
 		case "lang":
 			lang = &dto.ReferenceObject{ID: p.ID, Name: p.Name}
 		case "topic":

@@ -1,25 +1,28 @@
--- Seed Permission Groups for Module "Course"
-INSERT INTO "permission_groups" ("id", "created_at", "updated_at", "name", "deletable", "description", "module") 
+-- Seed Permission Groups for Module "Post"
+INSERT INTO "permission_groups" 
+    ("id", "created_at", "updated_at", "name", "deletable", "description", "module") 
 VALUES 
-    ('c1a9a6e8-7c3f-4c9a-9b6e-1f2d3e4a5b6c', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Create', false, 'Have Full Access for Create Course Sub-Module', 'Post'),
-    ('b2b8a7d9-8d4e-4e0b-8c7f-2e3f4a5b6c7d', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Update', false, 'Have Full Access for Update Course Sub-Module', 'Post'),
-    ('a3c7b8e9-9e5f-4f1c-9d8e-3f4a5b6c7d8e', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Delete', false, 'Have Full Access for Delete Course Sub-Module', 'Post')
+    ('9f3c2a7e-6b41-4d8c-9a2f-1c7e5b8d2f10', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Create', false, 'Have Full Access for Create Course Sub-Module', 'Post'),
+    ('2c6e9b14-3f8a-4a7d-b5c2-8d1e4f7a9b33', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Update', false, 'Have Full Access for Update Course Sub-Module', 'Post'),
+    ('7a1d5e3c-8b92-4f6a-91c7-3e2b4d8f6a21', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Delete', false, 'Have Full Access for Delete Course Sub-Module', 'Post')
 ON CONFLICT (id) DO NOTHING;
 
--- Seed Permissions for Module "Course"
-INSERT INTO "permissions" ("id", "created_at", "updated_at", "name", "deletable")
+-- Seed Permissions for Module "Post"
+INSERT INTO "permissions" 
+    ("id", "created_at", "updated_at", "name", "deletable")
 VALUES
-    ('d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'post.create', false),
-    ('e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'post.update', false),
-    ('f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'post.delete', false)
+    ('4b8e2c71-9d53-4f1a-a6c8-2e7d5b3f9a44', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'post.create', false),
+    ('8c2f6a19-1e4b-4d7c-b3a8-5f9d2e6c7a55', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'post.update', false),
+    ('1e7b3c5a-6d9f-4a2e-8c1b-7d3f5a9c2e66', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'post.delete', false)
 ON CONFLICT (id) DO NOTHING;
 
--- Map Permission Groups <-> Permissions for Module "Course"
-INSERT INTO "permissions_modules" ("permission_group_id", "permission_id")
+-- Map Permission Groups <-> Permissions
+INSERT INTO "permissions_modules" 
+    ("permission_group_id", "permission_id")
 VALUES
-    ('c1a9a6e8-7c3f-4c9a-9b6e-1f2d3e4a5b6c', 'd4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a'),
-    ('b2b8a7d9-8d4e-4e0b-8c7f-2e3f4a5b6c7d', 'e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b'),
-    ('a3c7b8e9-9e5f-4f1c-9d8e-3f4a5b6c7d8e', 'f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c')
+    ('9f3c2a7e-6b41-4d8c-9a2f-1c7e5b8d2f10', '4b8e2c71-9d53-4f1a-a6c8-2e7d5b3f9a44'),
+    ('2c6e9b14-3f8a-4a7d-b5c2-8d1e4f7a9b33', '8c2f6a19-1e4b-4d7c-b3a8-5f9d2e6c7a55'),
+    ('7a1d5e3c-8b92-4f6a-91c7-3e2b4d8f6a21', '1e7b3c5a-6d9f-4a2e-8c1b-7d3f5a9c2e66')
 ON CONFLICT DO NOTHING;
 
 -- Assign Permission Groups to Super Admin Role
@@ -28,16 +31,7 @@ INSERT INTO "modules_roles" (
     "role_id"
 )
 VALUES
-    (   
-        'c1a9a6e8-7c3f-4c9a-9b6e-1f2d3e4a5b6c',
-        'a43a5e5f-a172-42d1-a70e-8834bf653eb0'
-    ),
-    (   
-        'b2b8a7d9-8d4e-4e0b-8c7f-2e3f4a5b6c7d',
-        'a43a5e5f-a172-42d1-a70e-8834bf653eb0'
-    ),
-    (   
-        'a3c7b8e9-9e5f-4f1c-9d8e-3f4a5b6c7d8e',
-        'a43a5e5f-a172-42d1-a70e-8834bf653eb0'
-    )
+    ('9f3c2a7e-6b41-4d8c-9a2f-1c7e5b8d2f10', 'a43a5e5f-a172-42d1-a70e-8834bf653eb0'),
+    ('2c6e9b14-3f8a-4a7d-b5c2-8d1e4f7a9b33', 'a43a5e5f-a172-42d1-a70e-8834bf653eb0'),
+    ('7a1d5e3c-8b92-4f6a-91c7-3e2b4d8f6a21', 'a43a5e5f-a172-42d1-a70e-8834bf653eb0')
 ON CONFLICT DO NOTHING;

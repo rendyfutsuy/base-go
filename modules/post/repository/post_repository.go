@@ -96,18 +96,6 @@ func (r *postRepository) GetIndex(ctx context.Context, req request.PageRequest, 
 	query = request.ApplySearchConditionFromInterface(query, req.Search, csearch.NewPostSearchHelper())
 
 	// Filters by parameter relations
-	if len(filter.LevelIDs) > 0 {
-		query = query.Where(`
-			EXISTS (
-				SELECT 1 FROM parameters_to_module ptm
-				JOIN parameters p ON p.id = ptm.parameter_id
-				WHERE ptm.module_type = 'post'
-				  AND ptm.module_id = c.id
-				  AND p.type = 'post_level'
-				  AND p.id IN (?)
-			)
-		`, filter.LevelIDs)
-	}
 	if len(filter.LangIDs) > 0 {
 		query = query.Where(`
 			EXISTS (
@@ -175,18 +163,6 @@ func (r *postRepository) GetAll(ctx context.Context, filter dto.ReqPostIndexFilt
 	query = request.ApplySearchConditionFromInterface(query, filter.Search, csearch.NewPostSearchHelper())
 
 	// Filters (same as index)
-	if len(filter.LevelIDs) > 0 {
-		query = query.Where(`
-			EXISTS (
-				SELECT 1 FROM parameters_to_module ptm
-				JOIN parameters p ON p.id = ptm.parameter_id
-				WHERE ptm.module_type = 'post'
-				  AND ptm.module_id = c.id
-				  AND p.type = 'post_level'
-				  AND p.id IN (?)
-			)
-		`, filter.LevelIDs)
-	}
 	if len(filter.LangIDs) > 0 {
 		query = query.Where(`
 			EXISTS (
