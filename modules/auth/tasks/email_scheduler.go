@@ -23,24 +23,13 @@ func RunEmailScheduler() error {
 	utils.InitializedLogger(newRelicApp)
 	log.Println("Starting email scheduler")
 
-	redisSetting := asynq.RedisClientOpt{
-		Addr:     utils.ConfigVars.String("redis.address"),
-		Password: utils.ConfigVars.String("redis.password"),
-		DB:       utils.ConfigVars.Int("redis.db"),
-	}
-
-	config := asynq.Config{
-		Concurrency: 10,
-		Queues: map[string]int{
-			"critical": 6,
-			"default":  3,
-			"low":      1,
-		},
-	}
-
 	emailService, _ := services.NewEmailService()
 
-	srv := asynq.NewServer(redisSetting, config)
+	q := services.NewQueueService()
+	srv, err := q.NewAsynqServer()
+	if err != nil {
+		return err
+	}
 	mux := asynq.NewServeMux()
 
 	// Register all handlers
@@ -49,7 +38,10 @@ func RunEmailScheduler() error {
 	})
 	RegisterVerificationEmailHandler(mux, emailService)
 
-	scheduler := asynq.NewScheduler(redisSetting, nil)
+	scheduler, err := q.NewAsynqScheduler()
+	if err != nil {
+		return err
+	}
 
 	// Run server in goroutine
 	go func() {
