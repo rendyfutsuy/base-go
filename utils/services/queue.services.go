@@ -11,6 +11,7 @@ import (
 const (
 	RedisDriver    = "redis"
 	RabbitMQDriver = "rabbitmq"
+	KafkaDriver    = "kafka"
 )
 
 var (
@@ -20,13 +21,15 @@ var (
 )
 
 // GetQueue returns a queue service instance based on the driver name.
-// It supports redis and rabbitmq drivers.
+// It supports redis, rabbitmq, and kafka drivers.
 func GetQueue(driver string) (queue.QueueService, error) {
 	switch driver {
 	case RedisDriver:
 		return queue.NewRedisHandler(), nil
 	case RabbitMQDriver:
 		return queue.NewRabbitMQHandler(), nil
+	case KafkaDriver:
+		return queue.NewKafkaHandler(), nil
 	default:
 		zap.S().Errorf("unsupported queue driver: %s", driver)
 		return nil, nil
@@ -49,5 +52,11 @@ func NewQueueService() queue.QueueService {
 		zap.S().Errorf("failed to create queue service: %v", err)
 		return queue.NewRedisHandler() // fallback to redis
 	}
+
+	if q == nil {
+		zap.S().Warnf("queue service is nil, falling back to redis")
+		return queue.NewRedisHandler()
+	}
+
 	return q
 }
