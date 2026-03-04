@@ -1,4 +1,4 @@
--- Seed Parameters for Course Levels, Languages, and Topics (with parent relationships)
+-- Seed Parameters for Post Levels, Languages, and Topics (with parent relationships)
 INSERT INTO "parameters" (
     "id",
     "code",

@@ -2,9 +2,9 @@
 INSERT INTO "permission_groups" 
     ("id", "created_at", "updated_at", "name", "deletable", "description", "module") 
 VALUES 
-    ('9f3c2a7e-6b41-4d8c-9a2f-1c7e5b8d2f10', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Create', false, 'Have Full Access for Create Course Sub-Module', 'Post'),
-    ('2c6e9b14-3f8a-4a7d-b5c2-8d1e4f7a9b33', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Update', false, 'Have Full Access for Update Course Sub-Module', 'Post'),
-    ('7a1d5e3c-8b92-4f6a-91c7-3e2b4d8f6a21', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Delete', false, 'Have Full Access for Delete Course Sub-Module', 'Post')
+    ('9f3c2a7e-6b41-4d8c-9a2f-1c7e5b8d2f10', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Create', false, 'Have Full Access for Create Post Sub-Module', 'Post'),
+    ('2c6e9b14-3f8a-4a7d-b5c2-8d1e4f7a9b33', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Update', false, 'Have Full Access for Update Post Sub-Module', 'Post'),
+    ('7a1d5e3c-8b92-4f6a-91c7-3e2b4d8f6a21', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Delete', false, 'Have Full Access for Delete Post Sub-Module', 'Post')
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Permissions for Module "Post"
