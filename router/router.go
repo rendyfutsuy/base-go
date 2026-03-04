@@ -214,6 +214,7 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 		roleManagementRepo,
 		authRepo,
 		timeoutContext,
+		queueClient,
 	)
 	_userManagementController.NewUserManagementHandler(
 		router,

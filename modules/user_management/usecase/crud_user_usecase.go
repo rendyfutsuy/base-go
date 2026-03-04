@@ -15,7 +15,6 @@ import (
 	"github.com/rendyfutsuy/base-go/modules/auth/tasks"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
-	"github.com/rendyfutsuy/base-go/utils/services"
 	"github.com/rendyfutsuy/base-go/utils/token_storage"
 
 	"github.com/google/uuid"
@@ -177,17 +176,11 @@ func (u *userUsecase) SendVerificationCode(ctx context.Context, email string) er
 	if err != nil {
 		return err
 	}
-	q := services.NewQueueService()
-	client, err := q.NewAsynqClient()
-	if err != nil {
-		return err
-	}
-	defer client.Close()
 	task, err := tasks.NewEmailVerificationTask(user.ID, email, code)
 	if err != nil {
 		return err
 	}
-	_, err = client.Enqueue(task, asynq.MaxRetry(5))
+	_, err = u.queueClient.Enqueue(task, asynq.MaxRetry(5))
 	return err
 }
 

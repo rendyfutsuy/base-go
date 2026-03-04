@@ -579,7 +579,7 @@ func createTestUsecase() (user_management.Usecase, *MockUserRepository, *MockAut
 	mockRoleRepo := new(MockRoleRepository)
 	timeout := 5 * time.Second
 
-	usecaseInstance := usecase.NewTestUserUsecase(mockUserRepo, mockRoleRepo, mockAuthRepo, timeout)
+	usecaseInstance := usecase.NewTestUserUsecase(mockUserRepo, mockRoleRepo, mockAuthRepo, timeout, nil)
 
 	return usecaseInstance, mockUserRepo, mockAuthRepo, mockRoleRepo
 }
