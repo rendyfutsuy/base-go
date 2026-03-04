@@ -46,6 +46,8 @@ func NewQueueService() queue.QueueService {
 	if utils.ConfigVars.Exists("queue.driver") {
 		driver = utils.ConfigVars.String("queue.driver")
 	}
+
+	// Default to redis if no driver is specified
 	if driver == "" {
 		driver = RedisDriver
 	}
