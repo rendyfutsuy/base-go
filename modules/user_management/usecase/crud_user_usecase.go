@@ -15,6 +15,7 @@ import (
 	"github.com/rendyfutsuy/base-go/modules/auth/tasks"
 	"github.com/rendyfutsuy/base-go/modules/user_management/dto"
 	"github.com/rendyfutsuy/base-go/utils"
+	"github.com/rendyfutsuy/base-go/utils/services"
 	"github.com/rendyfutsuy/base-go/utils/token_storage"
 
 	"github.com/google/uuid"
@@ -176,12 +177,11 @@ func (u *userUsecase) SendVerificationCode(ctx context.Context, email string) er
 	if err != nil {
 		return err
 	}
-	redisOpt := asynq.RedisClientOpt{
-		Addr:     utils.ConfigVars.String("redis.address"),
-		Password: utils.ConfigVars.String("redis.password"),
-		DB:       utils.ConfigVars.Int("redis.db"),
+	q := services.NewQueueService()
+	client, err := q.NewAsynqClient()
+	if err != nil {
+		return err
 	}
-	client := asynq.NewClient(redisOpt)
 	defer client.Close()
 	task, err := tasks.NewEmailVerificationTask(user.ID, email, code)
 	if err != nil {
