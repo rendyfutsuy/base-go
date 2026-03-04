@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/utils"
 	utilsServices "github.com/rendyfutsuy/base-go/utils/services"
 	"gorm.io/gorm"
@@ -28,12 +29,14 @@ type User struct {
 	Counter           int            `gorm:"column:counter;default:0" json:"counter"`
 	IsFirstTimeLogin  bool           `gorm:"column:is_first_time_login" json:"is_first_time_login"`
 	Deletable         bool           `gorm:"column:deletable;default:true;not null" json:"deletable"`
-	Avatar            string         `gorm:"column:avatar;type:text" json:"avatar"`
+	// Files relation (pivot)
+	Files []File `gorm:"many2many:files_to_module;joinForeignKey:ID;joinReferences:FileID" json:"-"`
 
 	// mutator - not stored in DB
 	ActiveStatus     utils.NullString `gorm:"column:active_status;<-:false" json:"active_status"` // Read-only: used for fetch, ignored on insert/update
 	IsBlocked        bool             `gorm:"column:is_blocked;<-:false" json:"is_blocked"`       // Read-only: used for fetch, ignored on insert/update
 	RoleName         string           `gorm:"column:role_name;<-:false" json:"role_name"`         // Read-only: used for fetch, ignored on insert/update
+	AvatarURL        *string          `gorm:"column:avatar_url;<-:false" json:"avatar_url"`       // Read-only from pivot
 	Permissions      []string         `gorm:"-" json:"permissions"`
 	PermissionGroups []string         `gorm:"-" json:"permission_groups"`
 	Modules          []string         `gorm:"-" json:"modules"`
@@ -45,10 +48,35 @@ func (User) TableName() string {
 }
 
 func (user User) GetAvatarURL() string {
-	presignedURL, err := utilsServices.GeneratePresignedURL(user.Avatar)
+	if user.AvatarURL == nil {
+		return ""
+	}
+	presignedURL, err := utilsServices.GeneratePresignedURL(*user.AvatarURL)
 	if err != nil {
 		return ""
 	}
 
 	return presignedURL
+}
+
+// AfterFind computes AvatarURL from files_to_module pivot with type = "avatar"
+func (u *User) AfterFind(tx *gorm.DB) (err error) {
+	if u == nil || u.ID == uuid.Nil {
+		return nil
+	}
+	var filePath *string
+	err = tx.Table("files_to_module ftm").
+		Select("f.file_path").
+		Joins("JOIN files f ON f.id = ftm.file_id AND f.deleted_at IS NULL").
+		Where("ftm.module_type = ? AND ftm.module_id = ? AND ftm.type = ?", constants.ModuleTypeUser, u.ID, constants.FileTypeAvatar).
+		Order("ftm.created_at DESC").
+		Limit(1).
+		Scan(&filePath).Error
+	if err != nil {
+		return nil // do not block read on error
+	}
+	if filePath != nil {
+		u.AvatarURL = filePath
+	}
+	return nil
 }

@@ -45,3 +45,8 @@ const (
 	UserEmailAlreadyVerified         = "Email sudah diverifikasi"
 	UserEmailEmptyAskAdmin           = "Email Kosong, tolong minta admin isi"
 )
+
+const (
+	ModuleTypeUser = "user"
+	FileTypeAvatar = "avatar"
+)

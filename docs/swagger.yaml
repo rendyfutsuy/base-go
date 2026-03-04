@@ -1,4 +1,11 @@
 definitions:
+  dto.ReferenceObject:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   dto.ReqAuthUser:
     properties:
       login:
@@ -127,6 +134,36 @@ definitions:
     required:
     - code
     - name
+    type: object
+  dto.ReqCreatePost:
+    properties:
+      description:
+        type: string
+      discount_rate:
+        type: number
+      lang_id:
+        type: string
+      price:
+        type: number
+      short_description:
+        maxLength: 255
+        type: string
+      thumbnailURL:
+        description: mutate from thumbnail file
+        type: string
+      title:
+        maxLength: 255
+        type: string
+      topic_ids:
+        items:
+          type: string
+        type: array
+    required:
+    - description
+    - discount_rate
+    - price
+    - short_description
+    - title
     type: object
   dto.ReqCreateProvince:
     properties:
@@ -349,6 +386,39 @@ definitions:
     required:
     - new_password
     - password_confirmation
+    type: object
+  dto.ReqUpdatePost:
+    properties:
+      description:
+        type: string
+      discount_rate:
+        type: number
+      lang_id:
+        type: string
+      price:
+        type: number
+      remove_thumbnail:
+        default: false
+        type: boolean
+      short_description:
+        maxLength: 255
+        type: string
+      thumbnailURL:
+        description: mutate from thumbnail file
+        type: string
+      title:
+        maxLength: 255
+        type: string
+      topic_ids:
+        items:
+          type: string
+        type: array
+    required:
+    - description
+    - discount_rate
+    - price
+    - short_description
+    - title
     type: object
   dto.ReqUpdateProfile:
     properties:
@@ -688,6 +758,8 @@ definitions:
         type: string
       created_at:
         type: string
+      deletable:
+        type: boolean
       desc:
         type: string
       id:
@@ -709,6 +781,8 @@ definitions:
         type: string
       created_at:
         type: string
+      deletable:
+        type: boolean
       id:
         type: string
       name:
@@ -743,6 +817,54 @@ definitions:
           $ref: '#/definitions/dto.RespPermissionGroup'
         type: array
       name:
+        type: string
+    type: object
+  dto.RespPost:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      discount_rate:
+        type: number
+      discounted_price:
+        type: number
+      id:
+        type: string
+      lang:
+        $ref: '#/definitions/dto.ReferenceObject'
+      price:
+        type: number
+      short_description:
+        type: string
+      thumbnail_url:
+        type: string
+      title:
+        type: string
+      topics:
+        items:
+          $ref: '#/definitions/dto.ReferenceObject'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  dto.RespPostIndex:
+    properties:
+      created_at:
+        type: string
+      discount_rate:
+        type: number
+      discounted_price:
+        type: number
+      id:
+        type: string
+      price:
+        type: number
+      short_description:
+        type: string
+      thumbnail_url:
+        type: string
+      title:
         type: string
     type: object
   dto.RespProvince:
@@ -3110,6 +3232,207 @@ paths:
       summary: Export parameters to Excel
       tags:
       - Parameter
+  /v1/post:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of posts with optional filtering
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      - description: Sort column
+        in: query
+        name: sort_by
+        type: string
+      - description: Sort order (asc/desc)
+        in: query
+        name: sort_order
+        type: string
+      - description: Search query
+        in: query
+        name: search
+        type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          type: string
+        name: lang_ids
+        type: array
+      - in: query
+        name: search
+        type: string
+      - in: query
+        name: sort_by
+        type: string
+      - in: query
+        name: sort_order
+        type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          type: string
+        name: topic_ids
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.PaginationResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RespPostIndex'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      summary: Get paginated list of posts
+      tags:
+      - Post
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Create a post with optional thumbnail upload
+      parameters:
+      - description: Post payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqCreatePost'
+      - description: Thumbnail file
+        in: formData
+        name: thumbnail
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespPost'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Create post
+      tags:
+      - Post
+  /v1/post/{id}:
+    delete:
+      description: Delete a post by ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete post
+      tags:
+      - Post
+    get:
+      description: Retrieve post detail and its parameters
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespPost'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      summary: Get post by ID
+      tags:
+      - Post
+    put:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Update a post with optional thumbnail upload
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Post payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReqUpdatePost'
+      - description: Thumbnail file
+        in: formData
+        name: thumbnail
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.NonPaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RespPost'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.NonPaginationResponse'
+      security:
+      - BearerAuth: []
+      summary: Update post
+      tags:
+      - Post
   /v1/province:
     get:
       consumes:

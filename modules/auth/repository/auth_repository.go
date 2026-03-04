@@ -272,23 +272,6 @@ func (repo *authRepository) UpdateProfileById(ctx context.Context, profileChunks
 	return true, nil
 }
 
-func (repo *authRepository) UpdateAvatarById(ctx context.Context, avatarURL string, userId uuid.UUID) (bool, error) {
-	updates := map[string]interface{}{
-		"avatar":     avatarURL,
-		"updated_at": time.Now().UTC(),
-	}
-	err := repo.DB.WithContext(ctx).
-		Model(&models.User{}).
-		Where("id = ?", userId).
-		Updates(updates).Error
-
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
-
 // UpdatePasswordById updates the password of a user identified by their userId.
 //
 // Parameters:
