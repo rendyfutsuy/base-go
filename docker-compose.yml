@@ -13,6 +13,15 @@ services:
     networks:
       - base-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - base-network
+
 #Docker Networks
 networks:
   base-network:
