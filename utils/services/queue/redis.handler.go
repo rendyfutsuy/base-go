@@ -45,3 +45,14 @@ func (h *RedisHandler) NewAsynqServer() (*asynq.Server, error) {
 func (h *RedisHandler) NewAsynqScheduler() (*asynq.Scheduler, error) {
 	return asynq.NewScheduler(h.redisOpt(), nil), nil
 }
+
+// Send enqueues a task to Redis using Asynq
+func (h *RedisHandler) Send(queueName string, payload []byte) error {
+	client, err := h.NewAsynqClient()
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+	_, err = client.Enqueue(asynq.NewTask(queueName, payload), asynq.MaxRetry(5))
+	return err
+}

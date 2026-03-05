@@ -3,11 +3,12 @@ package queue
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/hibiken/asynq"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
-	"time"
 )
 
 type KafkaHandler struct {
@@ -41,6 +42,11 @@ func (h *KafkaHandler) NewAsynqServer() (*asynq.Server, error) {
 
 func (h *KafkaHandler) NewAsynqScheduler() (*asynq.Scheduler, error) {
 	return nil, fmt.Errorf("kafka handler does not support asynq scheduler - use redis handler instead")
+}
+
+// Send publishes a message to Kafka (uses queueName as topic, with a default key)
+func (h *KafkaHandler) Send(queueName string, payload []byte) error {
+	return h.PublishMessage(queueName, "default", payload)
 }
 
 func (h *KafkaHandler) CreateTopic(topic string) error {
@@ -111,9 +117,9 @@ func (h *KafkaHandler) PublishMessage(topic string, key string, value []byte) er
 func (h *KafkaHandler) ConsumeMessages(topic string, groupID string, handler func([]byte) error) error {
 	if h.reader == nil {
 		h.reader = kafka.NewReader(kafka.ReaderConfig{
-			Brokers: h.getKafkaBrokers(),
-			Topic:   topic,
-			GroupID: groupID,
+			Brokers:  h.getKafkaBrokers(),
+			Topic:    topic,
+			GroupID:  groupID,
 			MinBytes: 1,
 			MaxBytes: 10e6, // 10MB
 		})

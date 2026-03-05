@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hibiken/asynq"
 	"github.com/rendyfutsuy/base-go/constants"
 	models "github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth"
 	"github.com/rendyfutsuy/base-go/modules/auth/dto"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/rendyfutsuy/base-go/utils/services"
+	"github.com/rendyfutsuy/base-go/utils/services/queue"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -22,14 +22,14 @@ import (
 type authRepository struct {
 	DB           *gorm.DB
 	EmailService *services.EmailService
-	QueueClient  *asynq.Client
+	Queue        queue.QueueService
 }
 
-func NewAuthRepository(DB *gorm.DB, EmailService *services.EmailService, QueueClient *asynq.Client) auth.Repository {
+func NewAuthRepository(DB *gorm.DB, EmailService *services.EmailService, Q queue.QueueService) auth.Repository {
 	return &authRepository{
 		DB:           DB,
 		EmailService: EmailService,
-		QueueClient:  QueueClient,
+		Queue:        Q,
 	}
 }
 

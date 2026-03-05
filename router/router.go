@@ -122,17 +122,11 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 		panic(err)
 	}
 
-	// Initialize the Queue client for Asynq
-	q := services.NewQueueService()
-	queueClient, err := q.NewAsynqClient()
-
-	// render error if failed to create queue client
-	if err != nil {
-		panic(err)
-	}
-
 	// Repositories ------------------------------------------------------------------------------------------------------------------------------------------------------
-	authRepo := _authRepo.NewAuthRepository(gormDB, emailServices, queueClient)   // Using GORM for auth
+	// Initialize queue once and inject
+	qsvc := services.NewQueueService()
+
+	authRepo := _authRepo.NewAuthRepository(gormDB, emailServices, qsvc)          // Using GORM for auth
 	roleManagementRepo := _roleManagementRepo.NewRoleManagementRepository(gormDB) // Using GORM for role_management
 
 	userManagementRepo := _userManagementRepo.NewUserManagementRepository(gormDB) // Using GORM for user_management
@@ -214,7 +208,7 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 		roleManagementRepo,
 		authRepo,
 		timeoutContext,
-		queueClient,
+		qsvc,
 	)
 	_userManagementController.NewUserManagementHandler(
 		router,

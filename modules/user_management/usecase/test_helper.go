@@ -3,23 +3,23 @@ package usecase
 import (
 	"time"
 
-	"github.com/hibiken/asynq"
 	auth "github.com/rendyfutsuy/base-go/modules/auth"
 	roleManagement "github.com/rendyfutsuy/base-go/modules/role_management"
 	"github.com/rendyfutsuy/base-go/modules/user_management"
 	"github.com/rendyfutsuy/base-go/utils"
+	"github.com/rendyfutsuy/base-go/utils/services/queue"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 // NewTestUserUsecase creates a new userUsecase instance for testing purposes
 // This allows test packages to create userUsecase instances with custom configurations
-func NewTestUserUsecase(r user_management.Repository, rm roleManagement.Repository, authRepo auth.Repository, timeout time.Duration, queueClient *asynq.Client) *userUsecase {
+func NewTestUserUsecase(r user_management.Repository, rm roleManagement.Repository, authRepo auth.Repository, timeout time.Duration, q queue.QueueService) *userUsecase {
 	return &userUsecase{
 		userRepo:       r,
 		roleManagement: rm,
 		auth:           authRepo,
-		queueClient:    queueClient,
+		queue:          q,
 		contextTimeout: timeout,
 	}
 }

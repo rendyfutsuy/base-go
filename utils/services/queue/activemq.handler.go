@@ -73,6 +73,11 @@ func (h *ActiveMQHandler) NewAsynqScheduler() (*asynq.Scheduler, error) {
 	return nil, fmt.Errorf("activemq handler does not support asynq scheduler - use redis handler instead")
 }
 
+// Send publishes a message to ActiveMQ
+func (h *ActiveMQHandler) Send(queueName string, payload []byte) error {
+	return h.PublishMessage(queueName, payload)
+}
+
 func (h *ActiveMQHandler) PublishMessage(queueName string, body []byte) error {
 	if err := h.connect(); err != nil {
 		return err

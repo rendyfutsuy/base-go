@@ -75,6 +75,11 @@ func (h *RabbitMQHandler) NewAsynqScheduler() (*asynq.Scheduler, error) {
 	return nil, fmt.Errorf("rabbitmq handler does not support asynq scheduler - use redis handler instead")
 }
 
+// Send publishes a message to RabbitMQ
+func (h *RabbitMQHandler) Send(queueName string, payload []byte) error {
+	return h.PublishMessage(queueName, payload)
+}
+
 func (h *RabbitMQHandler) DeclareQueue(queueName string) (amqp.Queue, error) {
 	if err := h.connect(); err != nil {
 		return amqp.Queue{}, err

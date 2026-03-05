@@ -63,12 +63,27 @@ func loadEnvFile(path string) {
 		if len(m) == 3 {
 			key := strings.TrimSpace(m[1])
 			val := strings.TrimSpace(m[2])
+
+			quoted := false
 			if strings.HasPrefix(val, "\"") && strings.HasSuffix(val, "\"") && len(val) >= 2 {
+				quoted = true
 				val = strings.TrimSuffix(strings.TrimPrefix(val, "\""), "\"")
-			}
-			if strings.HasPrefix(val, "'") && strings.HasSuffix(val, "'") && len(val) >= 2 {
+			} else if strings.HasPrefix(val, "'") && strings.HasSuffix(val, "'") && len(val) >= 2 {
+				quoted = true
 				val = strings.TrimSuffix(strings.TrimPrefix(val, "'"), "'")
 			}
+
+			if !quoted {
+				if idx := strings.IndexByte(val, '#'); idx >= 0 {
+					if idx > 0 {
+						prev := val[idx-1]
+						if prev == ' ' || prev == '\t' {
+							val = strings.TrimSpace(val[:idx])
+						}
+					}
+				}
+			}
+
 			os.Setenv(key, val)
 		}
 	}
