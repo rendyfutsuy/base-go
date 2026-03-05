@@ -1,10 +1,9 @@
 package tasks
 
 import (
-	"context"
+	"encoding/json"
 	"log"
 
-	"github.com/hibiken/asynq"
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/rendyfutsuy/base-go/utils/services"
@@ -26,37 +25,25 @@ func RunEmailScheduler() error {
 	emailService, _ := services.NewEmailService()
 
 	q := services.NewQueueService()
-	srv, err := q.NewAsynqServer()
-	if err != nil {
+	workers := map[string]func([]byte) error{
+		TypeEmailDelivery: func(body []byte) error {
+			var p EmailDeliveryPayload
+			if err := json.Unmarshal(body, &p); err != nil {
+				return err
+			}
+			return emailService.SendPasswordResetEmail(p.Email, p.Session)
+		},
+		TypeEmailVerification: func(body []byte) error {
+			var p VerificationEmailPayload
+			if err := json.Unmarshal(body, &p); err != nil {
+				return err
+			}
+			return emailService.SendVerificationEmail(p.Email, p.Code)
+		},
+	}
+	if err := q.Run(workers); err != nil {
 		return err
 	}
-	mux := asynq.NewServeMux()
-
-	// Register all handlers
-	mux.HandleFunc(TypeEmailDelivery, func(ctx context.Context, t *asynq.Task) error {
-		return HandleEmailResetPasswordRequestTask(ctx, t, emailService)
-	})
-	RegisterVerificationEmailHandler(mux, emailService)
-
-	scheduler, err := q.NewAsynqScheduler()
-	if err != nil {
-		return err
-	}
-
-	// Run server in goroutine
-	go func() {
-		if err := srv.Run(mux); err != nil {
-			log.Fatalf("could not run asynq server: %v", err)
-		}
-	}()
-
-	// Start scheduler
-	if err := scheduler.Run(); err != nil {
-		log.Fatalf("could not run scheduler: %v", err)
-		return err
-	}
-
-	defer srv.Stop()
 
 	return nil
 }

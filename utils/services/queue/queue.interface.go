@@ -12,4 +12,6 @@ type QueueService interface {
 	NewAsynqScheduler() (*asynq.Scheduler, error)
 	// Send publishes a message to a queue name using the underlying driver
 	Send(queueName string, payload []byte) error
+	// Run starts processing for given queue handlers, abstracting driver differences
+	Run(workers map[string]func([]byte) error) error
 }

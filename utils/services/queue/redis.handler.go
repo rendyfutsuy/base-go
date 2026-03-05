@@ -1,6 +1,8 @@
 package queue
 
 import (
+	"context"
+
 	"github.com/hibiken/asynq"
 	"github.com/rendyfutsuy/base-go/utils"
 )
@@ -55,4 +57,27 @@ func (h *RedisHandler) Send(queueName string, payload []byte) error {
 	defer client.Close()
 	_, err = client.Enqueue(asynq.NewTask(queueName, payload), asynq.MaxRetry(5))
 	return err
+}
+
+// Run starts Asynq server and scheduler, wiring provided workers into ServeMux
+func (h *RedisHandler) Run(workers map[string]func([]byte) error) error {
+	srv, err := h.NewAsynqServer()
+	if err != nil {
+		return err
+	}
+	mux := asynq.NewServeMux()
+	for qname, handler := range workers {
+		h := handler
+		mux.HandleFunc(qname, func(ctx context.Context, t *asynq.Task) error {
+			return h(t.Payload())
+		})
+	}
+	scheduler, err := h.NewAsynqScheduler()
+	if err != nil {
+		return err
+	}
+	go func() {
+		_ = srv.Run(mux)
+	}()
+	return scheduler.Run()
 }

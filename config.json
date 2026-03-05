@@ -1,6 +1,9 @@
 {
   "app_name": "base v2.0",
   "app_env": "development",
+  "context": {
+    "timeout": 30
+  },
   "database": {
     "host": "localhost",
     "port": 5432,
@@ -9,6 +12,9 @@
     "db_name": "",
     "sslmode": "disable",
     "token_storage": "local"
+  },
+  "queue": {
+    "driver": "redis"
   },
   "user": {
     "default_password_template": "temp"
@@ -30,10 +36,27 @@
     "validation_scope": "gmail.com|mailinator.com|company.com"
   },
   "redis": {
+    "address": "127.0.0.1:6379",
     "addr": "127.0.0.1:6379",
     "password": "",
-    "db": "db0",
+    "db": 0,
     "concurrency": 10
+  },
+  "rabbitmq": {
+    "host": "localhost",
+    "port": "5672",
+    "username": "",
+    "password": ""
+  },
+  "kafka": {
+    "broker": "localhost:9092",
+    "group_id": "email-workers"
+  },
+  "activemq": {
+    "host": "localhost",
+    "port": "61613",
+    "username": "",
+    "password": ""
   },
   "auth": {
     "redis_ttl_seconds": 172800,

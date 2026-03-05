@@ -78,6 +78,16 @@ func (h *ActiveMQHandler) Send(queueName string, payload []byte) error {
 	return h.PublishMessage(queueName, payload)
 }
 
+// Run starts consuming provided workers from ActiveMQ and blocks
+func (h *ActiveMQHandler) Run(workers map[string]func([]byte) error) error {
+	for qname, handler := range workers {
+		if err := h.ConsumeMessages(qname, handler); err != nil {
+			return err
+		}
+	}
+	select {}
+}
+
 func (h *ActiveMQHandler) PublishMessage(queueName string, body []byte) error {
 	if err := h.connect(); err != nil {
 		return err

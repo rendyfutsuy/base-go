@@ -49,6 +49,21 @@ func (h *KafkaHandler) Send(queueName string, payload []byte) error {
 	return h.PublishMessage(queueName, "default", payload)
 }
 
+// Run starts consuming provided workers from Kafka and blocks
+func (h *KafkaHandler) Run(workers map[string]func([]byte) error) error {
+	groupID := utils.ConfigVars.String("kafka.group_id")
+	// If groupID is not set, use a default value
+	if groupID == "" {
+		groupID = "email-workers"
+	}
+	for topic, handler := range workers {
+		if err := h.ConsumeMessages(topic, groupID, handler); err != nil {
+			return err
+		}
+	}
+	select {}
+}
+
 func (h *KafkaHandler) CreateTopic(topic string) error {
 	conn, err := kafka.Dial("tcp", h.getKafkaBrokers()[0])
 	if err != nil {

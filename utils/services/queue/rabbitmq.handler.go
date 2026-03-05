@@ -80,6 +80,16 @@ func (h *RabbitMQHandler) Send(queueName string, payload []byte) error {
 	return h.PublishMessage(queueName, payload)
 }
 
+// Run starts consuming provided workers from RabbitMQ and blocks
+func (h *RabbitMQHandler) Run(workers map[string]func([]byte) error) error {
+	for qname, handler := range workers {
+		if err := h.ConsumeMessages(qname, handler); err != nil {
+			return err
+		}
+	}
+	select {}
+}
+
 func (h *RabbitMQHandler) DeclareQueue(queueName string) (amqp.Queue, error) {
 	if err := h.connect(); err != nil {
 		return amqp.Queue{}, err
