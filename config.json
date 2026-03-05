@@ -11,7 +11,7 @@
     "password": "",
     "db_name": "",
     "sslmode": "disable",
-    "token_storage": "local"
+    "token_storage": "" // "local" or "redis"
   },
   "queue": {
     "driver": "redis"

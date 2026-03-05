@@ -25,7 +25,6 @@ const (
 	AuthNewPasswordSameAsOld     = "New Password should not be same with Current Password"
 	AuthEmailNotFound            = "Email not found, please be sure no typo on email input..."
 	AuthInvalidToken             = "Invalid token"
-	StorageTokenRedis            = "redis"
 
 	// Success messages
 	AuthResetEmailSent         = "Successfully Send Reset Email Request"

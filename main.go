@@ -9,7 +9,6 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/redis/go-redis/v9"
-	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/database"
 	"github.com/rendyfutsuy/base-go/router"
 	"github.com/rendyfutsuy/base-go/utils"
@@ -53,7 +52,8 @@ func init() {
 	}
 
 	// Connect to Redis to save tokens
-	if utils.ConfigVars.String("database.token_storage") == constants.StorageTokenRedis {
+	if utils.ConfigVars.String("database.token_storage") == token_storage.TokenStorageRedis {
+		utils.Logger.Info("Attempting to Connecting to " + utils.ConfigVars.String("database.token_storage"))
 		// Connect to Redis only if token storage is set to redis
 		app.RedisClient = database.ConnectToRedis()
 		if app.RedisClient == nil {
