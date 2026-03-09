@@ -3,13 +3,13 @@ package repository
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hibiken/asynq"
 	"github.com/rendyfutsuy/base-go/constants"
 	models "github.com/rendyfutsuy/base-go/models"
 	"github.com/rendyfutsuy/base-go/modules/auth/tasks"
@@ -45,15 +45,19 @@ func (repo *authRepository) RequestResetPassword(ctx context.Context, email stri
 		return err
 	}
 
-	// enqueue task
-	task, err := tasks.NewEmailResetPasswordRequestTask(user.ID, user.Email, session)
+	// enqueue message via queue service (driver injected)
+	if repo.Queue == nil {
+		return errors.New("queue service not initialized")
+	}
+	payload, err := json.Marshal(tasks.EmailDeliveryPayload{
+		UserID:  user.ID,
+		Email:   user.Email,
+		Session: session,
+	})
 	if err != nil {
-		utils.Logger.Error(err.Error())
 		return err
 	}
-
-	_, err = repo.QueueClient.Enqueue(task, asynq.MaxRetry(5))
-	if err != nil {
+	if err := repo.Queue.Send(tasks.TypeEmailDelivery, payload); err != nil {
 		utils.Logger.Error(err.Error())
 		return err
 	}

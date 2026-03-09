@@ -22,28 +22,6 @@ type EmailDeliveryPayload struct {
 	Session string
 }
 
-// creates a new task for resetting the user's password via email.
-//
-// Parameters:
-// - userID: The unique identifier of the user.
-// - email: The user's email address.
-// - session: The session for password reset.
-//
-// Returns:
-// - *asynq.Task: The task to reset the password.
-// - error: An error if task creation fails.
-func NewEmailResetPasswordRequestTask(userID uuid.UUID, email, session string) (*asynq.Task, error) {
-	payload, err := json.Marshal(EmailDeliveryPayload{
-		UserID:  userID,
-		Email:   email,
-		Session: session,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return asynq.NewTask(TypeEmailDelivery, payload), nil
-}
-
 // runs the email scheduler for resetting passwords.
 //
 // ctx: the context.Context for the task

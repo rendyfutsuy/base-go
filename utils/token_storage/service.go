@@ -38,6 +38,10 @@ func GetTokenStorage(driver string, db *gorm.DB, redisClient *redis.Client) (Tok
 func InitTokenStorage(driver string, db *gorm.DB, redisClient *redis.Client) error {
 	var err error
 	tokenStorageOnce.Do(func() {
+		// Fallback to local storage if Redis driver selected but client is nil
+		if driver == TokenStorageRedis && redisClient == nil {
+			driver = TokenStorageLocal
+		}
 		defaultTokenStorage, err = GetTokenStorage(driver, db, redisClient)
 	})
 	return err

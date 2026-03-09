@@ -323,6 +323,97 @@ docker-compose up -d
 
 Aplikasi akan berjalan di `http://localhost:9000`.
 
+### Menjalankan Antrian (Queue) melalui Message Broker dengan Docker Compose
+
+Proyek ini mendukung beberapa driver antrian yang dapat dikonfigurasi melalui variabel lingkungan `QUEUE__DRIVER` di dalam file `.env` Anda.
+
+Nilai yang didukung untuk `QUEUE__DRIVER`:
+- `redis` (default)
+- `rabbitmq`
+- `kafka`
+- `activemq`
+
+#### 1. Menjalankan RabbitMQ
+
+1.  **Atur Driver**:
+    Ubah nilai `QUEUE__DRIVER` di file `.env` Anda menjadi `rabbitmq`.
+
+    ```env
+    QUEUE__DRIVER=rabbitmq
+    ```
+
+2.  **Jalankan Docker Compose**:
+    Gunakan file `docker-compose/docker-compose.rabbitmq.yml` untuk memulai container RabbitMQ.
+
+    ```sh
+    docker-compose -f docker-compose/docker-compose.rabbitmq.yml up -d
+    ```
+
+    Layanan RabbitMQ akan tersedia di `localhost:5672` dan panel manajemen di `http://localhost:15672`.
+
+#### 2. Menjalankan Kafka
+
+1.  **Atur Driver**:
+    Ubah nilai `QUEUE__DRIVER` di file `.env` Anda menjadi `kafka`.
+
+    ```env
+    QUEUE__DRIVER=kafka
+    ```
+
+2.  **Jalankan Docker Compose**:
+    Gunakan file `docker-compose/docker-compose.kafka.yml` untuk memulai container Kafka, Zookeeper, dan Kafka UI.
+
+    ```sh
+    docker-compose -f docker-compose/docker-compose.kafka.yml up -d
+    ```
+
+    Broker Kafka akan tersedia di `localhost:9092` dan Kafka UI di `http://localhost:8080`.
+
+#### 3. Menjalankan ActiveMQ
+
+1.  **Atur Driver**:
+    Ubah nilai `QUEUE__DRIVER` di file `.env` Anda menjadi `activemq`.
+
+    ```env
+    QUEUE__DRIVER=activemq
+    ```
+
+2.  **Jalankan Docker Compose**:
+    Gunakan file `docker-compose/docker-compose.activemq.yml` untuk memulai container ActiveMQ.
+
+    ```sh
+    docker-compose -f docker-compose/docker-compose.activemq.yml up -d
+    ```
+
+    Layanan ActiveMQ (STOMP) akan tersedia di `localhost:61613` dan konsol web di `http://localhost:8161`.
+
+#### 4. Menjalankan Redis (Default)
+
+Redis digunakan secara default dan konfigurasinya sudah terintegrasi dengan `docker-compose.yml` utama.
+
+1.  **Atur Driver**:
+    Pastikan `QUEUE__DRIVER` di file `.env` diatur ke `redis`.
+
+    ```env
+    QUEUE__DRIVER=redis
+    ```
+
+2.  **Jalankan Docker Compose**:
+    Jalankan file `docker-compose.yml` utama.
+
+    ```sh
+    docker-compose up -d
+    ```
+
+#### Menghentikan Layanan
+
+Untuk menghentikan container yang sedang berjalan, gunakan perintah `down` dengan file compose yang sesuai:
+
+```sh
+# Contoh untuk menghentikan ActiveMQ
+docker-compose -f docker-compose/docker-compose.activemq.yml down
+```
+
 ## 📁 Struktur Proyek
 
 ```

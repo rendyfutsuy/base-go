@@ -1,0 +1,36 @@
+version: '3.8'
+services:
+  activemq:
+    image: rmohr/activemq:latest
+    container_name: activemq
+    hostname: activemq
+    ports:
+      - "61616:61616"  # OpenWire (JMS)
+      - "61613:61613"  # STOMP
+      - "8161:8161"    # Web Console
+      - "5672:5672"    # AMQP
+    environment:
+      ACTIVEMQ_ADMIN_LOGIN: admin
+      ACTIVEMQ_ADMIN_PASSWORD: admin
+    volumes:
+      - activemq_data:/data
+      - activemq_conf:/opt/activemq/conf
+    networks:
+      - mq_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "61616"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  activemq_data:
+    driver: local
+  activemq_conf:
+    driver: local
+
+networks:
+  mq_network:
+    driver: bridge

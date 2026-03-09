@@ -3,12 +3,12 @@ package usecase
 import (
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
 
-	"github.com/hibiken/asynq"
-
+	"github.com/google/uuid"
 	"github.com/rendyfutsuy/base-go/constants"
 	"github.com/rendyfutsuy/base-go/helpers/request"
 	"github.com/rendyfutsuy/base-go/models"
@@ -17,7 +17,6 @@ import (
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/rendyfutsuy/base-go/utils/token_storage"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -176,19 +175,20 @@ func (u *userUsecase) SendVerificationCode(ctx context.Context, email string) er
 	if err != nil {
 		return err
 	}
-	redisOpt := asynq.RedisClientOpt{
-		Addr:     utils.ConfigVars.String("redis.address"),
-		Password: utils.ConfigVars.String("redis.password"),
-		DB:       utils.ConfigVars.Int("redis.db"),
-	}
-	client := asynq.NewClient(redisOpt)
-	defer client.Close()
-	task, err := tasks.NewEmailVerificationTask(user.ID, email, code)
+	// Publish via queue service (driver handled internally)
+	payload, err := json.Marshal(tasks.VerificationEmailPayload{
+		UserID: user.ID,
+		Email:  email,
+		Code:   code,
+	})
 	if err != nil {
 		return err
 	}
-	_, err = client.Enqueue(task, asynq.MaxRetry(5))
-	return err
+	if u.queue == nil {
+		// In tests or environments without queue, skip sending
+		return nil
+	}
+	return u.queue.Send(tasks.TypeEmailVerification, payload)
 }
 
 func (u *userUsecase) VerifyOTP(ctx context.Context, email string, token string) (*models.User, error) {

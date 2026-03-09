@@ -15,7 +15,6 @@ import (
 	// "github.com/go-playground/validator/v10"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/hibiken/asynq"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/newrelic/go-agent/v3/integrations/nrecho-v4"
@@ -24,6 +23,7 @@ import (
 	_ "github.com/rendyfutsuy/base-go/docs"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/rendyfutsuy/base-go/utils/services"
+	"github.com/rendyfutsuy/base-go/utils/services/queue"
 	"github.com/rendyfutsuy/base-go/worker"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"gorm.io/gorm"
@@ -77,14 +77,14 @@ import (
 	_backingRepo "github.com/rendyfutsuy/base-go/modules/backing/repository"
 	_backingService "github.com/rendyfutsuy/base-go/modules/backing/usecase"
 
+	_fileRepo "github.com/rendyfutsuy/base-go/modules/file/repository"
+	_fileService "github.com/rendyfutsuy/base-go/modules/file/usecase"
 	_postController "github.com/rendyfutsuy/base-go/modules/post/delivery/http"
 	_postRepo "github.com/rendyfutsuy/base-go/modules/post/repository"
 	_postService "github.com/rendyfutsuy/base-go/modules/post/usecase"
-	_fileRepo "github.com/rendyfutsuy/base-go/modules/file/repository"
-	_fileService "github.com/rendyfutsuy/base-go/modules/file/usecase"
 )
 
-func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
+func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, qsvc queue.QueueService, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
 	router := echo.New()
 
 	// queries := sqlc.New(db)
@@ -123,17 +123,9 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 		panic(err)
 	}
 
-	// Initialize the Redis client for Asynq
-	redisSetting := asynq.RedisClientOpt{
-		Addr:     utils.ConfigVars.String("redis.address"),
-		Password: utils.ConfigVars.String("redis.password"),
-		DB:       utils.ConfigVars.Int("redis.db"),
-	}
-
-	queueClient := asynq.NewClient(redisSetting)
-
 	// Repositories ------------------------------------------------------------------------------------------------------------------------------------------------------
-	authRepo := _authRepo.NewAuthRepository(gormDB, emailServices, queueClient)   // Using GORM for auth
+
+	authRepo := _authRepo.NewAuthRepository(gormDB, emailServices, qsvc)          // Using GORM for auth
 	roleManagementRepo := _roleManagementRepo.NewRoleManagementRepository(gormDB) // Using GORM for role_management
 
 	userManagementRepo := _userManagementRepo.NewUserManagementRepository(gormDB) // Using GORM for user_management
@@ -215,6 +207,7 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 		roleManagementRepo,
 		authRepo,
 		timeoutContext,
+		qsvc,
 	)
 	_userManagementController.NewUserManagementHandler(
 		router,
