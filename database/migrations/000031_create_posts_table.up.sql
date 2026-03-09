@@ -4,8 +4,6 @@ CREATE TABLE IF NOT EXISTS posts (
   title VARCHAR(255) NOT NULL,
   description TEXT NOT NULL,
   short_description VARCHAR(255) NOT NULL,
-  price DECIMAL(18,2) NOT NULL,
-  discount_rate DECIMAL(5,2) NOT NULL,
   thumbnail_url TEXT,
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL

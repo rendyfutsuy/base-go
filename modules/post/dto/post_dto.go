@@ -12,8 +12,6 @@ type ReqCreatePost struct {
 	Title            string      `json:"title" validate:"required,max=255" form:"title"`
 	Description      string      `json:"description" validate:"required" form:"description"`
 	ShortDescription string      `json:"short_description" validate:"required,max=255" form:"short_description"`
-	Price            float64     `json:"price" validate:"required" form:"price"`
-	DiscountRate     float64     `json:"discount_rate" validate:"required" form:"discount_rate"`
 	LangID           uuid.UUID   `json:"lang_id" form:"lang_id"`
 	TopicIDs         []uuid.UUID `json:"topic_ids" form:"topic_ids"`
 	ThumbnailURL     *string     // mutate from thumbnail file
@@ -23,8 +21,6 @@ type ReqUpdatePost struct {
 	Title            string      `json:"title" validate:"required,max=255" form:"title"`
 	Description      string      `json:"description" validate:"required" form:"description"`
 	ShortDescription string      `json:"short_description" validate:"required,max=255" form:"short_description"`
-	Price            float64     `json:"price" validate:"required" form:"price"`
-	DiscountRate     float64     `json:"discount_rate" validate:"required" form:"discount_rate"`
 	RemoveThumbnail  bool        `json:"remove_thumbnail" form:"remove_thumbnail" default:"false"`
 	LangID           uuid.UUID   `json:"lang_id" form:"lang_id"`
 	TopicIDs         []uuid.UUID `json:"topic_ids" form:"topic_ids"`
@@ -35,9 +31,6 @@ type RespPostIndex struct {
 	ID               uuid.UUID `json:"id"`
 	Title            string    `json:"title"`
 	ShortDescription string    `json:"short_description"`
-	Price            float64   `json:"price"`
-	DiscountRate     float64   `json:"discount_rate"`
-	DiscountedPrice  float64   `json:"discounted_price"`
 	ThumbnailURL     *string   `json:"thumbnail_url"`
 	CreatedAt        time.Time `json:"created_at"`
 }
@@ -46,8 +39,6 @@ type ToDBPost struct {
 	Title            string
 	Description      string
 	ShortDescription string
-	Price            float64
-	DiscountRate     float64
 	RemoveThumbnail  bool
 	LangID           uuid.UUID
 	TopicIDs         []uuid.UUID
@@ -55,14 +46,10 @@ type ToDBPost struct {
 }
 
 func ToRespPostIndex(m models.Post) RespPostIndex {
-	discounted := m.Price - (m.Price * (m.DiscountRate / 100.0))
 	return RespPostIndex{
 		ID:               m.ID,
 		Title:            m.Title,
 		ShortDescription: m.ShortDescription,
-		Price:            m.Price,
-		DiscountRate:     m.DiscountRate,
-		DiscountedPrice:  discounted,
 		ThumbnailURL:     m.ThumbnailURL,
 		CreatedAt:        m.CreatedAt,
 	}
@@ -78,9 +65,6 @@ type RespPost struct {
 	Title            string            `json:"title"`
 	Description      string            `json:"description"`
 	ShortDescription string            `json:"short_description"`
-	Price            float64           `json:"price"`
-	DiscountRate     float64           `json:"discount_rate"`
-	DiscountedPrice  float64           `json:"discounted_price"`
 	Lang             *ReferenceObject  `json:"lang"`
 	Topics           []ReferenceObject `json:"topics"`
 	ThumbnailURL     *string           `json:"thumbnail_url"`
@@ -89,8 +73,6 @@ type RespPost struct {
 }
 
 func ToRespPost(m models.Post) RespPost {
-	discounted := m.Price - (m.Price * (m.DiscountRate / 100.0))
-
 	var presignedURL string
 	if m.ThumbnailURL != nil {
 		presignedURL, _ = utilsServices.GeneratePresignedURL(*m.ThumbnailURL)
@@ -101,9 +83,6 @@ func ToRespPost(m models.Post) RespPost {
 		Title:            m.Title,
 		Description:      m.Description,
 		ShortDescription: m.ShortDescription,
-		Price:            m.Price,
-		DiscountRate:     m.DiscountRate,
-		DiscountedPrice:  discounted,
 		ThumbnailURL:     &presignedURL,
 		CreatedAt:        m.CreatedAt,
 		UpdatedAt:        m.UpdatedAt,

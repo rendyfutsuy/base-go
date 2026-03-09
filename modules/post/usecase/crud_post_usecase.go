@@ -69,8 +69,6 @@ func (u *postUsecase) Create(ctx context.Context, req *dto.ReqCreatePost, authId
 		Title:            req.Title,
 		Description:      req.Description,
 		ShortDescription: req.ShortDescription,
-		Price:            req.Price,
-		DiscountRate:     req.DiscountRate,
 		LangID:           req.LangID,
 		TopicIDs:         req.TopicIDs,
 		ThumbnailURL: func() *string {
@@ -149,8 +147,6 @@ func (u *postUsecase) Update(ctx context.Context, id string, req *dto.ReqUpdateP
 		Title:            req.Title,
 		Description:      req.Description,
 		ShortDescription: req.ShortDescription,
-		Price:            req.Price,
-		DiscountRate:     req.DiscountRate,
 		RemoveThumbnail:  req.RemoveThumbnail,
 		LangID:           req.LangID,
 		TopicIDs:         req.TopicIDs,

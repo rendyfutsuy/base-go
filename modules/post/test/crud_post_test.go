@@ -141,8 +141,6 @@ func TestPostUsecase_Create_TypeValidation(t *testing.T) {
 		Title:            "A",
 		Description:      "B",
 		ShortDescription: "C",
-		Price:            100,
-		DiscountRate:     10,
 		LangID:           langID,
 		TopicIDs:         []uuid.UUID{topicID},
 	}
@@ -160,7 +158,7 @@ func TestPostUsecase_Create_TypeValidation(t *testing.T) {
 
 	cID := uuid.New()
 	mockPostRepo.On("Create", ctx, uuid.Nil, mock.Anything).
-		Return(&models.Post{ID: cID, Title: "A", Description: "B", ShortDescription: "C", Price: 100, DiscountRate: 10, CreatedAt: time.Now(), UpdatedAt: time.Now()}, nil).Once()
+		Return(&models.Post{ID: cID, Title: "A", Description: "B", ShortDescription: "C", CreatedAt: time.Now(), UpdatedAt: time.Now()}, nil).Once()
 	mockParamRepo.On("AssignParametersToModule", ctx, "post", cID, []uuid.UUID{langID}).Return(nil).Once()
 	mockParamRepo.On("AssignParametersToModule", ctx, "post", cID, []uuid.UUID{topicID}).Return(nil).Once()
 
@@ -168,8 +166,6 @@ func TestPostUsecase_Create_TypeValidation(t *testing.T) {
 		Title:            "A",
 		Description:      "B",
 		ShortDescription: "C",
-		Price:            100,
-		DiscountRate:     10,
 		LangID:           langID,
 		TopicIDs:         []uuid.UUID{topicID},
 	}, "", nil, "")

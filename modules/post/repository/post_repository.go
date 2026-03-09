@@ -29,8 +29,6 @@ func (r *postRepository) Create(ctx context.Context, createdBy uuid.UUID, data d
 		Title:            data.Title,
 		Description:      data.Description,
 		ShortDescription: data.ShortDescription,
-		Price:            data.Price,
-		DiscountRate:     data.DiscountRate,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -45,8 +43,6 @@ func (r *postRepository) Update(ctx context.Context, id uuid.UUID, data dto.ToDB
 		"title":             data.Title,
 		"description":       data.Description,
 		"short_description": data.ShortDescription,
-		"price":             data.Price,
-		"discount_rate":     data.DiscountRate,
 		"updated_at":        time.Now().UTC(),
 	}
 
@@ -69,7 +65,7 @@ func (r *postRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Pos
 	c := &models.Post{}
 	if err := r.DB.WithContext(ctx).
 		Table("posts c").
-		Select(`c.id, c.created_by, c.title, c.description, c.short_description, c.price, c.discount_rate,
+		Select(`c.id, c.created_by, c.title, c.description, c.short_description,
 			(SELECT f.file_path FROM files_to_module ftm
 				JOIN files f ON f.id = ftm.file_id AND f.deleted_at IS NULL
 				WHERE ftm.module_type = ? AND ftm.module_id = c.id AND ftm.type = ?
@@ -90,7 +86,7 @@ func (r *postRepository) GetIndex(ctx context.Context, req request.PageRequest, 
 	var posts []models.Post
 	query := r.DB.WithContext(ctx).
 		Table("posts c").
-		Select(`c.id, c.title, c.short_description, c.price, c.discount_rate,
+		Select(`c.id, c.title, c.short_description,
 			(SELECT f.file_path FROM files_to_module ftm
 				JOIN files f ON f.id = ftm.file_id AND f.deleted_at IS NULL
 				WHERE ftm.module_type = ? AND ftm.module_id = c.id AND ftm.type = ?
@@ -144,10 +140,6 @@ func (r *postRepository) GetIndex(ctx context.Context, req request.PageRequest, 
 				return "c.title"
 			case "short_description":
 				return "c.short_description"
-			case "price":
-				return "c.price"
-			case "discount_rate":
-				return "c.discount_rate"
 			case "created_at":
 				return "c.created_at"
 			default:
@@ -166,7 +158,7 @@ func (r *postRepository) GetAll(ctx context.Context, filter dto.ReqPostIndexFilt
 	var posts []models.Post
 	query := r.DB.WithContext(ctx).
 		Table("posts c").
-		Select(`c.id, c.title, c.short_description, c.price, c.discount_rate,
+		Select(`c.id, c.title, c.short_description,
 			(SELECT f.file_path FROM files_to_module ftm
 				JOIN files f ON f.id = ftm.file_id AND f.deleted_at IS NULL
 				WHERE ftm.module_type = ? AND ftm.module_id = c.id AND ftm.type = ?
