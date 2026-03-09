@@ -79,12 +79,12 @@ func (l *LocalStorage) DeleteFile(fileURL string) error {
 
 func (l *LocalStorage) GeneratePresignedURL(fullURL string) (string, error) {
 	// For local storage, just return the same URL
-	return "http://localhost:" + utils.ConfigVars.String("app_port") + fullURL, nil
+	return utils.ConfigVars.String("app_url") + ":" + utils.ConfigVars.String("app_port") + fullURL, nil
 }
 
 func (l *LocalStorage) GeneratePresignedURLWithPreview(fullURL string) (string, error) {
 	// For local storage, just return the same URL
-	return "http://localhost:" + utils.ConfigVars.String("app_port") + fullURL, nil
+	return utils.ConfigVars.String("app_url") + ":" + utils.ConfigVars.String("app_port") + fullURL, nil
 }
 
 func (l *LocalStorage) DownloadFile(fileURL string) (*bytes.Buffer, error) {
