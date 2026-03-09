@@ -6955,8 +6955,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "description",
-                "discount_rate",
-                "price",
                 "short_description",
                 "title"
             ],
@@ -6964,14 +6962,8 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "discount_rate": {
-                    "type": "number"
-                },
                 "lang_id": {
                     "type": "string"
-                },
-                "price": {
-                    "type": "number"
                 },
                 "short_description": {
                     "type": "string",
@@ -7317,8 +7309,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "description",
-                "discount_rate",
-                "price",
                 "short_description",
                 "title"
             ],
@@ -7326,14 +7316,8 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "discount_rate": {
-                    "type": "number"
-                },
                 "lang_id": {
                     "type": "string"
-                },
-                "price": {
-                    "type": "number"
                 },
                 "remove_thumbnail": {
                     "type": "boolean",
@@ -7968,20 +7952,11 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "discount_rate": {
-                    "type": "number"
-                },
-                "discounted_price": {
-                    "type": "number"
-                },
                 "id": {
                     "type": "string"
                 },
                 "lang": {
                     "$ref": "#/definitions/dto.ReferenceObject"
-                },
-                "price": {
-                    "type": "number"
                 },
                 "short_description": {
                     "type": "string"
@@ -8009,17 +7984,8 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
-                "discount_rate": {
-                    "type": "number"
-                },
-                "discounted_price": {
-                    "type": "number"
-                },
                 "id": {
                     "type": "string"
-                },
-                "price": {
-                    "type": "number"
                 },
                 "short_description": {
                     "type": "string"

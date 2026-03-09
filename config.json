@@ -22,6 +22,7 @@
   "format": {
     "time": "2006-01-02T15:04:05.999Z07:00"
   },
+  "app_url": "http://localhost",
   "app_port": 9090,
   "queue_port": 9091,
   "jwt_key": "",
