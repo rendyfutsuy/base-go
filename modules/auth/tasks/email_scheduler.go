@@ -16,8 +16,10 @@ import (
 func RunEmailScheduler() error {
 	utils.InitConfig("config.json")
 	var newRelicApp *newrelic.Application
-	if utils.ConfigVars.Exists("newrelic.enable_new_relic_logging") && utils.ConfigVars.Bool("newrelic.enable_new_relic_logging") {
-		newRelicApp = utils.InitializeNewRelic()
+	if utils.ConfigVars.Exists("newrelic.enable_new_relic_logging") {
+		if utils.ConfigVars.Bool("newrelic.enable_new_relic_logging") {
+			newRelicApp = utils.InitializeNewRelic()
+		}
 	}
 	utils.InitializedLogger(newRelicApp)
 	log.Println("Starting email scheduler")
