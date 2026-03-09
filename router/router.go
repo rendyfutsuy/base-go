@@ -23,6 +23,7 @@ import (
 	_ "github.com/rendyfutsuy/base-go/docs"
 	"github.com/rendyfutsuy/base-go/utils"
 	"github.com/rendyfutsuy/base-go/utils/services"
+	"github.com/rendyfutsuy/base-go/utils/services/queue"
 	"github.com/rendyfutsuy/base-go/worker"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"gorm.io/gorm"
@@ -83,7 +84,7 @@ import (
 	_postService "github.com/rendyfutsuy/base-go/modules/post/usecase"
 )
 
-func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
+func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, qsvc queue.QueueService, timeoutContext time.Duration, v *validator.Validate, nrApp *newrelic.Application) *echo.Echo {
 	router := echo.New()
 
 	// queries := sqlc.New(db)
@@ -123,8 +124,6 @@ func InitializedRouter(gormDB *gorm.DB, redisClient *redis.Client, timeoutContex
 	}
 
 	// Repositories ------------------------------------------------------------------------------------------------------------------------------------------------------
-	// Initialize queue once and inject
-	qsvc := services.NewQueueService()
 
 	authRepo := _authRepo.NewAuthRepository(gormDB, emailServices, qsvc)          // Using GORM for auth
 	roleManagementRepo := _roleManagementRepo.NewRoleManagementRepository(gormDB) // Using GORM for role_management

@@ -12,7 +12,9 @@ import (
 	"github.com/rendyfutsuy/base-go/database"
 	"github.com/rendyfutsuy/base-go/router"
 	"github.com/rendyfutsuy/base-go/utils"
+	"github.com/rendyfutsuy/base-go/utils/services"
 	utilsServices "github.com/rendyfutsuy/base-go/utils/services"
+	"github.com/rendyfutsuy/base-go/utils/services/queue"
 	"github.com/rendyfutsuy/base-go/utils/token_storage"
 	"gorm.io/gorm"
 )
@@ -24,7 +26,7 @@ var (
 		Router      *echo.Echo
 		NewRelicApp *newrelic.Application
 		Validator   *validator.Validate
-		// QueueClient          *asynq.Client
+		QueueClient queue.QueueService
 	}
 )
 
@@ -66,6 +68,10 @@ func init() {
 		panic("Can't initialize token storage: " + err.Error())
 	}
 
+	// Initialize queue once and inject
+	app.QueueClient = services.NewQueueService()
+
+	// Initialize validator
 	app.Validator = validator.New()
 	utils.RegisterCustomValidator(app.Validator)
 }
@@ -77,7 +83,7 @@ func main() {
 	// Set a timeout for each endpoint
 	timeoutContext := time.Duration(utils.ConfigVars.Int("context.timeout")) * time.Second
 
-	app.Router = router.InitializedRouter(app.GormDB, app.RedisClient, timeoutContext, app.Validator, app.NewRelicApp)
+	app.Router = router.InitializedRouter(app.GormDB, app.RedisClient, app.QueueClient, timeoutContext, app.Validator, app.NewRelicApp)
 
 	app.Router.Validator = &utils.CustomValidator{Validator: app.Validator}
 
